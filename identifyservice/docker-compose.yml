@@ -1,0 +1,60 @@
+# ===========================================
+# DOCKER COMPOSE PARA IDENTIFYSERVICE
+# ===========================================
+
+services:
+  # Servicio de identificación
+  identifyservice:
+    build:
+      context: .
+      dockerfile: Dockerfile.simple
+    container_name: flowlite-identifyservice
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Configuración de la aplicación
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8080
+      
+      # Configuración de JWT
+      JWT_SECRET: mi_clave_super_secreta_de_32_caracteres_minimo_123456789
+      
+      # Configuración de base de datos (usando base de datos externa)
+      SPRING_DATASOURCE_URL: jdbc:mysql://flowlite-shared-mysql:3306/identifyservice?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: identifyservice_user
+      SPRING_DATASOURCE_PASSWORD: identifyservice_pass
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      
+      # Configuración JPA/Hibernate
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "true"
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "true"
+      
+      # Configuración de Swagger
+      SPRINGDOC_API_DOCS_PATH: /api-docs
+      SPRINGDOC_SWAGGER_UI_PATH: /swagger-ui.html
+      SPRINGDOC_SWAGGER_UI_ENABLED: "true"
+      SPRINGDOC_SWAGGER_UI_TRY_IT_OUT_ENABLED: "true"
+      
+      # Configuración OAuth2 Google
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_ID: 679071626695-l5pqvg0kf0uqmu2rtse6621qilnl834p.apps.googleusercontent.com
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: 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
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_SCOPE: openid,profile,email
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI: "{baseUrl}/login/oauth2/code/{registrationId}"
+    networks:
+      - flowlite-shared-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+
+# Red compartida (debe existir previamente)
+networks:
+  flowlite-shared-network:
+    external: true
+    name: database_flowlite-shared-network

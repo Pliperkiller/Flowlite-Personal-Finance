@@ -1,0 +1,55 @@
+# ===========================================
+# DOCKER COMPOSE PARA BASE DE DATOS COMPARTIDA
+# ===========================================
+
+services:
+  # Base de datos MySQL compartida
+  mysql:
+    image: mysql:8.0
+    container_name: flowlite-shared-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: Flowlite10+
+      MYSQL_DATABASE: flowlite_shared
+      MYSQL_USER: flowlite
+      MYSQL_PASSWORD: Flowlite10+
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_shared_data:/var/lib/mysql
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+    networks:
+      - flowlite-shared-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # phpMyAdmin para administración (opcional)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: flowlite-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: Flowlite10+
+    ports:
+      - "8081:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - flowlite-shared-network
+
+# Volúmenes persistentes
+volumes:
+  mysql_shared_data:
+    driver: local
+
+# Red compartida
+networks:
+  flowlite-shared-network:
+    driver: bridge
+    external: false
