@@ -236,7 +236,7 @@ Ejemplo:
 | Fecha      | Descripción           | Referencia | Valor      |
 |------------|-----------------------|------------|------------|
 | 2025-10-05 | TRANSF PEDRO PEREZ |            | 23.0    |
-| 2025-09-26 | PAGO DE NOMI   | 811004057  | 123.0  |
+| 2025-09-26 | PAGO DE NOMI   | 1004057  | 123.0  |
 
 ## Agregar Soporte para Nuevos Bancos
 
