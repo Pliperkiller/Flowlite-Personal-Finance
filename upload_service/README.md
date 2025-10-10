@@ -235,8 +235,8 @@ El archivo debe tener las siguientes columnas:
 Ejemplo:
 | Fecha      | Descripción           | Referencia | Valor      |
 |------------|-----------------------|------------|------------|
-| 2025-10-05 | TRANSF DE JOIVER GONZ |            | 29900.0    |
-| 2025-09-26 | PAGO DE NOMI PRAGMA   | 811004057  | 1950000.0  |
+| 2025-10-05 | TRANSF PEDRO PEREZ |            | 23.0    |
+| 2025-09-26 | PAGO DE NOMI   | 811004057  | 123.0  |
 
 ## Agregar Soporte para Nuevos Bancos
 
