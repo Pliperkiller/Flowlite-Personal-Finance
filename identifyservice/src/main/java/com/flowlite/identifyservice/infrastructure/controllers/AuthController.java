@@ -9,7 +9,6 @@ import com.flowlite.identifyservice.infrastructure.security.jwt.JwtTokenProvider
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -66,5 +65,35 @@ public class AuthController {
     public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest request) {
         String jwt = loginUserService.login(request.getUsername(), request.getPassword());
         return ResponseEntity.ok(Map.of("access_token", jwt));
+    }
+
+    @GetMapping("/success")
+    @Operation(summary = "Página de éxito de autenticación OAuth2", 
+               description = "Endpoint al que se redirige después de una autenticación OAuth2 exitosa. " +
+                           "Recibe el token como parámetro de consulta para que las aplicaciones móviles puedan capturarlo.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Página de éxito mostrada correctamente"),
+            @ApiResponse(responseCode = "400", description = "Token no proporcionado")
+    })
+    public ResponseEntity<Map<String, String>> oauth2Success(@RequestParam String token) {
+        return ResponseEntity.ok(Map.of(
+            "message", "Autenticación OAuth2 exitosa",
+            "access_token", token,
+            "note", "Este endpoint es usado para aplicaciones móviles que necesitan capturar el token"
+        ));
+    }
+
+    @GetMapping("/error")
+    @Operation(summary = "Página de error de autenticación OAuth2", 
+               description = "Endpoint al que se redirige cuando ocurre un error durante la autenticación OAuth2.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "400", description = "Error en la autenticación OAuth2")
+    })
+    public ResponseEntity<Map<String, String>> oauth2Error(@RequestParam(required = false) String message) {
+        return ResponseEntity.badRequest().body(Map.of(
+            "error", "Error en la autenticación OAuth2",
+            "message", message != null ? message : "Error desconocido",
+            "note", "Contacte al administrador si el problema persiste"
+        ));
     }
 }

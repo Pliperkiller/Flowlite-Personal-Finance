@@ -38,16 +38,22 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             String jwt = tokenProvider.generateToken(user);
             System.out.println("JWT generated successfully");
             
-            response.setContentType("application/json");
-            response.getWriter().write("{\"access_token\":\"" + jwt + "\"}");
-            System.out.println("Response sent successfully");
+            // Redirigir a /auth/success con el token como parámetro para aplicaciones móviles
+            String redirectUrl = "/auth/success?token=" + jwt;
+            response.sendRedirect(redirectUrl);
+            System.out.println("Redirected to: " + redirectUrl);
             
         } catch (Exception e) {
             System.err.println("Error in OAuth2LoginSuccessHandler: " + e.getMessage());
             e.printStackTrace();
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\":\"Internal server error: " + e.getMessage() + "\"}");
+            // Redirigir a una página de error en caso de fallo
+            try {
+                response.sendRedirect("/auth/error?message=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+            } catch (IOException ioException) {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.setContentType("text/plain");
+                response.getWriter().write("Error interno del servidor: " + e.getMessage());
+            }
         }
     }
 }
