@@ -69,8 +69,8 @@ public class AuthController {
 
     @GetMapping("/success")
     @Operation(summary = "Página de éxito de autenticación OAuth2", 
-               description = "Endpoint al que se redirige después de una autenticación OAuth2 exitosa. " +
-                           "Recibe el token como parámetro de consulta para que las aplicaciones móviles puedan capturarlo.")
+               description = "Endpoint de fallback para navegadores. Las aplicaciones móviles reciben el token " +
+                           "a través del URL scheme personalizado: flowliteapp://auth/success?token=JWT_TOKEN")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Página de éxito mostrada correctamente"),
             @ApiResponse(responseCode = "400", description = "Token no proporcionado")
@@ -79,21 +79,25 @@ public class AuthController {
         return ResponseEntity.ok(Map.of(
             "message", "Autenticación OAuth2 exitosa",
             "access_token", token,
-            "note", "Este endpoint es usado para aplicaciones móviles que necesitan capturar el token"
+            "mobile_redirect", "flowliteapp://auth/success?token=" + token,
+            "note", "Las aplicaciones móviles reciben este token a través del URL scheme personalizado"
         ));
     }
 
     @GetMapping("/error")
     @Operation(summary = "Página de error de autenticación OAuth2", 
-               description = "Endpoint al que se redirige cuando ocurre un error durante la autenticación OAuth2.")
+               description = "Endpoint de fallback para navegadores. Las aplicaciones móviles reciben el error " +
+                           "a través del URL scheme personalizado: flowliteapp://auth/error?message=ERROR_MESSAGE")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "400", description = "Error en la autenticación OAuth2")
     })
     public ResponseEntity<Map<String, String>> oauth2Error(@RequestParam(required = false) String message) {
+        String errorMessage = message != null ? message : "Error desconocido";
         return ResponseEntity.badRequest().body(Map.of(
             "error", "Error en la autenticación OAuth2",
-            "message", message != null ? message : "Error desconocido",
-            "note", "Contacte al administrador si el problema persiste"
+            "message", errorMessage,
+            "mobile_redirect", "flowliteapp://auth/error?message=" + java.net.URLEncoder.encode(errorMessage, java.nio.charset.StandardCharsets.UTF_8),
+            "note", "Las aplicaciones móviles reciben este error a través del URL scheme personalizado"
         ));
     }
 }

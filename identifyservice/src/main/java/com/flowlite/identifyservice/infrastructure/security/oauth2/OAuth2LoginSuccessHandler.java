@@ -38,17 +38,19 @@ public class OAuth2LoginSuccessHandler implements AuthenticationSuccessHandler {
             String jwt = tokenProvider.generateToken(user);
             System.out.println("JWT generated successfully");
             
-            // Redirigir a /auth/success con el token como parámetro para aplicaciones móviles
-            String redirectUrl = "/auth/success?token=" + jwt;
+            // Redirigir a URL scheme personalizado para aplicaciones móviles
+            String redirectUrl = "flowliteapp://auth/success?token=" + jwt;
             response.sendRedirect(redirectUrl);
-            System.out.println("Redirected to: " + redirectUrl);
+            System.out.println("Redirected to mobile app: " + redirectUrl);
             
         } catch (Exception e) {
             System.err.println("Error in OAuth2LoginSuccessHandler: " + e.getMessage());
             e.printStackTrace();
-            // Redirigir a una página de error en caso de fallo
+            // Redirigir a URL scheme personalizado para errores en aplicaciones móviles
             try {
-                response.sendRedirect("/auth/error?message=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+                String errorUrl = "flowliteapp://auth/error?message=" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8");
+                response.sendRedirect(errorUrl);
+                System.out.println("Redirected to mobile app error: " + errorUrl);
             } catch (IOException ioException) {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 response.setContentType("text/plain");
