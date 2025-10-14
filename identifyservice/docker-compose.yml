@@ -43,6 +43,12 @@ services:
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_CLIENT_SECRET: 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
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_SCOPE: openid,profile,email
       SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_GOOGLE_REDIRECT_URI: "{baseUrl}/login/oauth2/code/{registrationId}"
+      
+      # Configuración Redis para blacklist de tokens (Redis en red compartida)
+      SPRING_DATA_REDIS_HOST: flowlite-redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_DATABASE: 0
+      SPRING_DATA_REDIS_TIMEOUT: 2000ms
     networks:
       - flowlite-shared-network
     healthcheck:
@@ -51,7 +57,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-
 
 # Red compartida (debe existir previamente)
 networks:

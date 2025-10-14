@@ -26,4 +26,11 @@ public class User {
     public Optional<Password> getPassword() {
         return Optional.ofNullable(password);
     }
+    
+    // Getters adicionales para compatibilidad
+    public Username getUsername() { return username; }
+    public Email getEmail() { return email; }
+    public UUID getId() { return id; }
+    public Role getRole() { return role; }
+    public boolean isActive() { return active; }
 }

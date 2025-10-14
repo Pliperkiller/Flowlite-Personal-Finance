@@ -7,6 +7,9 @@ info:
     - Login con credenciales
     - Autenticación OAuth2 con Google
     - Generación de JWT tokens
+    - Revocación de tokens con Redis
+    - Validación de tokens
+    - Gestión de información de usuarios
   version: 1.0.0
   contact:
     name: Identity Service Team
@@ -213,6 +216,273 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Cerrar sesión y revocar token
+      description: |
+        Invalida el token JWT del usuario, cerrando su sesión de forma segura.
+        El token se agrega a Redis (blacklist) para evitar su reutilización.
+        Funciona para cualquier plataforma (web/mobile).
+        Acepta token en header Authorization (web) o como parámetro (mobile).
+      operationId: logoutUser
+      parameters:
+        - name: token
+          in: query
+          description: JWT token a revocar (para aplicaciones móviles)
+          required: false
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Sesión cerrada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Sesión cerrada exitosamente"
+                  status:
+                    type: string
+                    example: "success"
+                  note:
+                    type: string
+                    example: "El token ha sido revocado y ya no es válido"
+        '401':
+          description: Token inválido o expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Token no proporcionado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/validate:
+    get:
+      tags:
+        - Authentication
+      summary: Validar token JWT
+      description: |
+        Verifica si un token JWT es válido y no está revocado.
+        Útil para verificar el estado de un token antes de usarlo.
+        Consulta Redis para verificar si el token está en la blacklist.
+      operationId: validateToken
+      parameters:
+        - name: token
+          in: query
+          description: JWT token a validar
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token válido y activo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+                  revoked:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Token válido y activo"
+                  status:
+                    type: string
+                    example: "active"
+                  username:
+                    type: string
+                    example: "johndoe"
+                  userId:
+                    type: string
+                    example: "123e4567-e89b-12d3-a456-426614174000"
+                  note:
+                    type: string
+                    example: "Token puede ser usado para autenticación"
+        '401':
+          description: Token inválido o revocado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: false
+                  revoked:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Token revocado - no puede ser usado"
+                  status:
+                    type: string
+                    example: "revoked"
+        '400':
+          description: Error en la validación
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: false
+                  revoked:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Error al validar token: Token malformado"
+                  status:
+                    type: string
+                    example: "error"
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Obtener información del usuario autenticado
+      description: |
+        Devuelve la información del usuario basada en el token JWT proporcionado.
+        Incluye ID, username, email y estado del token.
+        Funciona para aplicaciones web (header Authorization) y móviles (parámetro token).
+      operationId: getCurrentUser
+      parameters:
+        - name: token
+          in: query
+          description: JWT token (para aplicaciones móviles)
+          required: false
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Información del usuario obtenida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    example: "123e4567-e89b-12d3-a456-426614174000"
+                  username:
+                    type: string
+                    example: "johndoe"
+                  tokenStatus:
+                    type: string
+                    example: "active"
+                  message:
+                    type: string
+                    example: "Información del usuario obtenida exitosamente"
+        '401':
+          description: Token inválido o revocado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Token no proporcionado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/success:
+    get:
+      tags:
+        - OAuth2
+      summary: Página de éxito de autenticación OAuth2
+      description: |
+        Endpoint de fallback para navegadores. Las aplicaciones móviles reciben el token
+        a través del URL scheme personalizado: flowliteapp://auth/success?token=JWT_TOKEN
+      operationId: oauth2Success
+      parameters:
+        - name: token
+          in: query
+          description: JWT token generado
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Página de éxito mostrada correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Autenticación OAuth2 exitosa"
+                  access_token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  mobile_redirect:
+                    type: string
+                    example: "flowliteapp://auth/success?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  note:
+                    type: string
+                    example: "Las aplicaciones móviles reciben este token a través del URL scheme personalizado"
+        '400':
+          description: Token no proporcionado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/error:
+    get:
+      tags:
+        - OAuth2
+      summary: Página de error de autenticación OAuth2
+      description: |
+        Endpoint de fallback para navegadores. Las aplicaciones móviles reciben el error
+        a través del URL scheme personalizado: flowliteapp://auth/error?message=ERROR_MESSAGE
+      operationId: oauth2Error
+      parameters:
+        - name: message
+          in: query
+          description: Mensaje de error
+          required: false
+          schema:
+            type: string
+      responses:
+        '400':
+          description: Error en la autenticación OAuth2
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error en la autenticación OAuth2"
+                  message:
+                    type: string
+                    example: "Error desconocido"
+                  mobile_redirect:
+                    type: string
+                    example: "flowliteapp://auth/error?message=Error%20desconocido"
+                  note:
+                    type: string
+                    example: "Las aplicaciones móviles reciben este error a través del URL scheme personalizado"
+
 components:
   schemas:
     RegisterRequest:
@@ -306,6 +576,14 @@ security:
 
 tags:
   - name: Authentication
-    description: Endpoints para autenticación tradicional (registro y login)
+    description: |
+      Endpoints para autenticación, gestión de tokens y información del usuario autenticado.
+      Incluye registro, login, logout, validación de tokens y obtención de información del usuario actual.
+      Soporte para aplicaciones web (header Authorization) y móviles (parámetro token).
+      Integración con Redis para blacklist de tokens revocados.
+      Optimizado para microservicios que necesitan identificar al usuario autenticado.
   - name: OAuth2
-    description: Endpoints para autenticación OAuth2 con proveedores externos
+    description: |
+      Endpoints para autenticación OAuth2 con proveedores externos.
+      Incluye flujo de Google OAuth2 con soporte para aplicaciones móviles.
+      Redirección a URL schemes personalizados para captura de tokens.
