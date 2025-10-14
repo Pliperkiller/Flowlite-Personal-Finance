@@ -10,6 +10,7 @@ from ..dependencies import (
     get_categoria_repository,
     get_lote_repository,
     get_clasificador,
+    get_db_session_factory,
 )
 from ...infrastructure.parsers import ParserFactory
 
@@ -31,6 +32,7 @@ async def upload_archivos(
     categoria_repo=Depends(get_categoria_repository),
     lote_repo=Depends(get_lote_repository),
     clasificador=Depends(get_clasificador),
+    session_factory=Depends(get_db_session_factory),
 ):
     """
     Endpoint para cargar archivos de Excel con transacciones
@@ -78,6 +80,7 @@ async def upload_archivos(
         categoria_repo=categoria_repo,
         lote_repo=lote_repo,
         clasificador=clasificador,
+        session_factory=session_factory,
     )
 
     try:

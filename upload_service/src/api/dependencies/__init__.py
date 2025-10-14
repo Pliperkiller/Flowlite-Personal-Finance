@@ -5,6 +5,7 @@ from .repositories import (
     get_categoria_repository,
     get_lote_repository,
     get_usuario_repository,
+    get_db_session_factory,
 )
 from .services import get_clasificador
 
@@ -15,5 +16,6 @@ __all__ = [
     "get_categoria_repository",
     "get_lote_repository",
     "get_usuario_repository",
+    "get_db_session_factory",
     "get_clasificador",
 ]

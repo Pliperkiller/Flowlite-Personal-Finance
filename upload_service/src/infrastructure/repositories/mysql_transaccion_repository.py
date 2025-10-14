@@ -14,6 +14,9 @@ class MySQLTransaccionRepository(TransaccionRepositoryPort):
         models = [self._to_model(tx) for tx in transacciones]
         self.session.add_all(models)
         await self.session.flush()
+        # Refresh para cargar los valores por defecto de la BD (created_at, updated_at)
+        for model in models:
+            await self.session.refresh(model)
         return [self._to_entity(model) for model in models]
 
     async def get_by_id(self, id: int) -> Optional[Transaccion]:

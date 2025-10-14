@@ -1,6 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...infrastructure.database import get_database
+from sqlalchemy.orm import sessionmaker
+from ...infrastructure.database import get_database, get_session_factory
 from ...infrastructure.repositories import (
     MySQLTransaccionRepository,
     MySQLBancoRepository,
@@ -38,3 +39,11 @@ async def get_usuario_repository(
     db: AsyncSession = Depends(get_database),
 ) -> MySQLUsuarioRepository:
     return MySQLUsuarioRepository(db)
+
+
+def get_db_session_factory() -> sessionmaker:
+    """
+    Dependency para obtener el session factory.
+    Útil para tareas background que necesitan crear sus propias sesiones.
+    """
+    return get_session_factory()

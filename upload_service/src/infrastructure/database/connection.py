@@ -32,3 +32,8 @@ async def init_database():
     from .models import Base
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+
+def get_session_factory():
+    """Retorna el session maker para crear sesiones independientes en tareas background"""
+    return async_session_maker

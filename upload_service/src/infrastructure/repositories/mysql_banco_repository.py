@@ -21,6 +21,7 @@ class MySQLBancoRepository(BancoRepositoryPort):
         model = self._to_model(banco)
         self.session.add(model)
         await self.session.flush()
+        await self.session.refresh(model)
         return self._to_entity(model)
 
     async def get_by_id(self, id: int) -> Optional[Banco]:
