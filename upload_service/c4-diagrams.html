@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagramas C4 - Upload Service</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .diagram-section {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .diagram-section h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .diagram-section .description {
+            color: #555;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .mermaid {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .level-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-left: 10px;
+            font-weight: bold;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .info-box strong {
+            color: #1976D2;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            margin-top: 30px;
+            font-size: 0.9em;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .diagram-section {
+                page-break-after: always;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Diagramas C4 Model</h1>
+            <p class="subtitle">Upload Service - Sistema de Procesamiento de Transacciones Bancarias</p>
+        </header>
+
+        <!-- Diagrama de Componentes (C3) -->
+        <div class="diagram-section">
+            <h2>
+                Diagrama de Componentes
+                <span class="level-badge">C3 - Component</span>
+            </h2>
+            <p class="description">
+                Este diagrama muestra los componentes principales del sistema Upload Service,
+                incluyendo las capas de API, Application, Domain e Infrastructure, y cómo
+                interactúan entre sí siguiendo los principios de Arquitectura Hexagonal.
+            </p>
+            <div class="info-box">
+                <strong>📌 Nivel C3:</strong> Muestra cómo los componentes dentro del contenedor interactúan
+                entre sí, revelando las responsabilidades de cada componente y los detalles de implementación.
+            </div>
+            <div class="mermaid">
+graph LR
+    CLIENT[Cliente HTTP/API]
+
+    subgraph API["API Layer - FastAPI"]
+        ROUTES[Transacciones Router]
+        AUTH[Auth Dependencies]
+    end
+
+    subgraph APP["Application Layer"]
+        UC1[ProcesarArchivosUseCase]
+        UC2[ConsultarEstadoLoteUseCase]
+    end
+
+    subgraph DOMAIN["Domain Layer"]
+        ENTITIES[Entities]
+        PORTS[Ports/Interfaces]
+    end
+
+    subgraph INFRA["Infrastructure Layer"]
+        REPOS[MySQL Repositories]
+        PARSERS[Excel Parsers]
+        CLASIF[Clasificador]
+    end
+
+    DB[(MySQL Database)]
+
+    CLIENT -->|HTTP| ROUTES
+    ROUTES --> AUTH
+    ROUTES --> UC1
+    ROUTES --> UC2
+    UC1 --> PORTS
+    UC2 --> PORTS
+    UC1 --> ENTITIES
+    UC2 --> ENTITIES
+    PORTS -.implements.- REPOS
+    PORTS -.implements.- PARSERS
+    PORTS -.implements.- CLASIF
+    REPOS --> DB
+
+    classDef apiStyle fill:#e1f5ff,stroke:#01579b,stroke-width:3px
+    classDef appStyle fill:#f3e5f5,stroke:#4a148c,stroke-width:3px
+    classDef domainStyle fill:#fff3e0,stroke:#e65100,stroke-width:3px
+    classDef infraStyle fill:#e8f5e9,stroke:#1b5e20,stroke-width:3px
+    classDef externalStyle fill:#ffebee,stroke:#b71c1c,stroke-width:3px
+
+    class ROUTES,AUTH apiStyle
+    class UC1,UC2 appStyle
+    class ENTITIES,PORTS domainStyle
+    class REPOS,PARSERS,CLASIF infraStyle
+    class DB,CLIENT externalStyle
+            </div>
+        </div>
+
+        <!-- Diagrama de Código - Entidades -->
+        <div class="diagram-section">
+            <h2>
+                Diagrama de Código - Entidades del Dominio
+                <span class="level-badge">C4 - Code</span>
+            </h2>
+            <p class="description">
+                Este diagrama muestra las clases principales del dominio con sus atributos, métodos
+                y relaciones. Representa el modelo de datos central del sistema siguiendo los
+                principios de Domain-Driven Design.
+            </p>
+            <div class="info-box">
+                <strong>📌 Nivel C4:</strong> Muestra cómo se implementa un componente específico,
+                revelando clases, interfaces, métodos y sus relaciones a nivel de código.
+            </div>
+            <div class="mermaid">
+classDiagram
+    class Banco {
+        +int id
+        +str nombre
+        +str codigo
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    class Categoria {
+        +int id
+        +str nombre
+        +str descripcion
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    class Transaccion {
+        +int id
+        +int usuario_id
+        +int banco_id
+        +int categoria_id
+        +int lote_id
+        +datetime fecha
+        +str descripcion
+        +str referencia
+        +Decimal valor
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    class LoteTransaccion {
+        +int id
+        +int usuario_id
+        +int banco_id
+        +EstadoLote estado
+        +int total_registros
+        +int registros_procesados
+        +datetime created_at
+        +datetime updated_at
+        +porcentaje_procesado() float
+    }
+
+    class EstadoLote {
+        &lt;&lt;enumeration&gt;&gt;
+        PENDIENTE
+        PROCESANDO
+        COMPLETADO
+        ERROR
+    }
+
+    Transaccion --> Banco
+    Transaccion --> Categoria
+    Transaccion --> LoteTransaccion
+    LoteTransaccion --> Banco
+    LoteTransaccion --> EstadoLote
+            </div>
+        </div>
+
+        <!-- Diagrama de Código - Puertos -->
+        <div class="diagram-section">
+            <h2>
+                Diagrama de Código - Arquitectura Hexagonal (Ports & Adapters)
+                <span class="level-badge">C4 - Code</span>
+            </h2>
+            <p class="description">
+                Este diagrama ilustra el patrón de Arquitectura Hexagonal, mostrando los puertos
+                (interfaces) del dominio y sus adaptadores (implementaciones) en la capa de
+                infraestructura, garantizando la inversión de dependencias.
+            </p>
+            <div class="info-box">
+                <strong>📌 Patrón Hexagonal:</strong> El dominio define los puertos (interfaces),
+                y la infraestructura los implementa, permitiendo cambiar tecnologías sin afectar
+                la lógica de negocio.
+            </div>
+            <div class="mermaid">
+classDiagram
+    class BancoRepositoryPort {
+        &lt;&lt;interface&gt;&gt;
+        +get_by_codigo(codigo)* Banco
+        +save(banco)* Banco
+        +get_by_id(id)* Banco
+    }
+
+    class CategoriaRepositoryPort {
+        &lt;&lt;interface&gt;&gt;
+        +get_by_nombre(nombre)* Categoria
+        +save(categoria)* Categoria
+        +get_by_id(id)* Categoria
+    }
+
+    class TransaccionRepositoryPort {
+        &lt;&lt;interface&gt;&gt;
+        +save_batch(transacciones)* List
+        +get_by_id(id)* Transaccion
+    }
+
+    class LoteRepositoryPort {
+        &lt;&lt;interface&gt;&gt;
+        +save(lote)* LoteTransaccion
+        +get_by_id(id)* LoteTransaccion
+        +update(lote)* LoteTransaccion
+    }
+
+    class ExcelParserPort {
+        &lt;&lt;interface&gt;&gt;
+        +parse(file_content)* List
+        +get_banco_codigo()* str
+    }
+
+    class ClasificadorPort {
+        &lt;&lt;interface&gt;&gt;
+        +clasificar(descripcion)* str
+    }
+
+    class MySQLBancoRepository {
+        -session
+        +get_by_codigo(codigo) Banco
+        +save(banco) Banco
+        +get_by_id(id) Banco
+    }
+
+    class MySQLCategoriaRepository {
+        -session
+        +get_by_nombre(nombre) Categoria
+        +save(categoria) Categoria
+        +get_by_id(id) Categoria
+    }
+
+    class MySQLTransaccionRepository {
+        -session
+        +save_batch(transacciones) List
+        +get_by_id(id) Transaccion
+    }
+
+    class MySQLLoteRepository {
+        -session
+        +save(lote) LoteTransaccion
+        +get_by_id(id) LoteTransaccion
+        +update(lote) LoteTransaccion
+    }
+
+    class BancolombiaParser {
+        +BANCO_CODIGO
+        +parse(file_content) List
+        +get_banco_codigo() str
+    }
+
+    class ClasificadorSimple {
+        +clasificar(descripcion) str
+    }
+
+    class ProcesarArchivosUseCase {
+        -transaccion_repo
+        -banco_repo
+        -categoria_repo
+        -lote_repo
+        -clasificador
+        +execute() int
+    }
+
+    class ConsultarEstadoLoteUseCase {
+        -lote_repo
+        +execute() LoteStatusDTO
+    }
+
+    MySQLBancoRepository ..|> BancoRepositoryPort
+    MySQLCategoriaRepository ..|> CategoriaRepositoryPort
+    MySQLTransaccionRepository ..|> TransaccionRepositoryPort
+    MySQLLoteRepository ..|> LoteRepositoryPort
+    BancolombiaParser ..|> ExcelParserPort
+    ClasificadorSimple ..|> ClasificadorPort
+
+    ProcesarArchivosUseCase --> BancoRepositoryPort
+    ProcesarArchivosUseCase --> CategoriaRepositoryPort
+    ProcesarArchivosUseCase --> TransaccionRepositoryPort
+    ProcesarArchivosUseCase --> LoteRepositoryPort
+    ProcesarArchivosUseCase --> ClasificadorPort
+    ProcesarArchivosUseCase --> ExcelParserPort
+
+    ConsultarEstadoLoteUseCase --> LoteRepositoryPort
+            </div>
+        </div>
+
+        <!-- Diagrama de Secuencia - Upload de Archivos -->
+        <div class="diagram-section">
+            <h2>
+                Diagrama de Secuencia - Upload de Archivos
+                <span class="level-badge">Secuencia</span>
+            </h2>
+            <p class="description">
+                Este diagrama muestra la secuencia de interacciones entre los componentes del sistema
+                cuando un usuario carga archivos de Excel con transacciones bancarias. Ilustra el flujo
+                completo desde la recepción de la petición HTTP hasta el procesamiento asíncrono en background.
+            </p>
+            <div class="info-box">
+                <strong>📌 Flujo principal:</strong> La API recibe los archivos, valida el usuario,
+                crea un lote y lanza el procesamiento en background, retornando inmediatamente un ID
+                de lote al cliente para consultar el progreso.
+            </div>
+            <div class="mermaid">
+sequenceDiagram
+    actor Usuario
+    participant API as FastAPI Router
+    participant Auth as Authentication
+    participant UC as ProcesarArchivosUseCase
+    participant Parser as ExcelParser
+    participant BRepo as BancoRepository
+    participant LRepo as LoteRepository
+    participant Task as Background Task
+    participant TRepo as TransaccionRepository
+    participant CRepo as CategoriaRepository
+    participant Clasif as Clasificador
+    participant DB as MySQL Database
+
+    Usuario->>API: POST /api/v1/transacciones/upload
+    API->>Auth: validate token
+    Auth-->>API: usuario_id
+
+    API->>Parser: ParserFactory.get_parser(banco_codigo)
+    Parser-->>API: parser instance
+
+    API->>UC: execute(archivos_content, parser, usuario_id)
+
+    UC->>Parser: parse(file_content)
+    Parser-->>UC: List[TransaccionRaw]
+
+    UC->>BRepo: get_by_codigo(banco_codigo)
+    BRepo->>DB: SELECT * FROM bancos
+    DB-->>BRepo: banco_data
+    BRepo-->>UC: Banco
+
+    UC->>LRepo: save(lote)
+    LRepo->>DB: INSERT INTO lotes_transaccion
+    DB-->>LRepo: lote_id
+    LRepo-->>UC: LoteTransaccion
+
+    UC->>Task: create_task(procesar_async)
+    UC-->>API: lote_id
+    API-->>Usuario: 202 Accepted {lote_id, message}
+
+    Note over Task,DB: Procesamiento Asíncrono
+
+    loop Para cada batch de 500 transacciones
+        Task->>Clasif: clasificar(descripcion)
+        Clasif-->>Task: nombre_categoria
+
+        Task->>CRepo: get_by_nombre(nombre_categoria)
+        CRepo->>DB: SELECT * FROM categorias
+        DB-->>CRepo: categoria_data
+        CRepo-->>Task: Categoria
+
+        Task->>TRepo: save_batch(transacciones)
+        TRepo->>DB: INSERT INTO transacciones (batch)
+        DB-->>TRepo: inserted_ids
+        TRepo-->>Task: List[Transaccion]
+
+        Task->>LRepo: update(lote)
+        LRepo->>DB: UPDATE lotes_transaccion
+        DB-->>LRepo: ok
+        LRepo-->>Task: LoteTransaccion
+    end
+
+    Task->>LRepo: update(lote, estado=COMPLETADO)
+    LRepo->>DB: UPDATE lotes_transaccion
+    DB-->>LRepo: ok
+            </div>
+        </div>
+
+        <!-- Diagrama de Secuencia - Consultar Estado -->
+        <div class="diagram-section">
+            <h2>
+                Diagrama de Secuencia - Consultar Estado de Lote
+                <span class="level-badge">Secuencia</span>
+            </h2>
+            <p class="description">
+                Este diagrama muestra la secuencia de interacciones cuando un usuario consulta el
+                estado de procesamiento de un lote de transacciones. El sistema valida la autorización
+                del usuario y retorna el estado actual con el porcentaje de progreso.
+            </p>
+            <div class="info-box">
+                <strong>📌 Flujo de consulta:</strong> El usuario puede consultar el estado del lote
+                en cualquier momento usando el ID retornado al subir los archivos. El sistema verifica
+                que el lote pertenezca al usuario antes de retornar la información.
+            </div>
+            <div class="mermaid">
+sequenceDiagram
+    actor Usuario
+    participant API as FastAPI Router
+    participant Auth as Authentication
+    participant UC as ConsultarEstadoLoteUseCase
+    participant LRepo as LoteRepository
+    participant DB as MySQL Database
+
+    Usuario->>API: GET /api/v1/transacciones/lote/{lote_id}
+    API->>Auth: validate token
+    Auth-->>API: usuario_id
+
+    API->>UC: execute(lote_id)
+    UC->>LRepo: get_by_id(lote_id)
+    LRepo->>DB: SELECT * FROM lotes_transaccion WHERE id = ?
+    DB-->>LRepo: lote_data
+    LRepo-->>UC: LoteTransaccion
+
+    UC-->>API: LoteStatusDTO
+
+    API->>LRepo: get_by_id(lote_id)
+    LRepo->>DB: SELECT * FROM lotes_transaccion WHERE id = ?
+    DB-->>LRepo: lote_data
+    LRepo-->>API: LoteTransaccion
+
+    alt usuario_id coincide con lote.usuario_id
+        API-->>Usuario: 200 OK {LoteStatusDTO}
+    else usuario_id no coincide
+        API-->>Usuario: 403 Forbidden
+    end
+            </div>
+        </div>
+
+        <footer>
+            <p>📄 Upload Service - Diagramas C4 Model</p>
+            <p>Generado con Mermaid.js</p>
+        </footer>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            class: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+    </script>
+</body>
+</html>
