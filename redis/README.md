@@ -1,184 +1,139 @@
-# 🚀 Redis para Flowlite - Blacklist de Tokens
+# Gestión de Redis para Flowlite
 
-Este directorio contiene la configuración independiente de Redis para el sistema de blacklist de tokens JWT de Flowlite.
+Este directorio contiene scripts para gestionar Redis de manera fácil y consistente en diferentes sistemas operativos.
 
-## 📁 Estructura
+## Scripts Disponibles
 
-```
-redis/
-├── docker-compose.yml    # Configuración de Redis
-├── manage-redis.sh        # Script de gestión
-└── README.md             # Este archivo
-```
+### 🐧 Linux/macOS
+- **`manage-redis.sh`** - Script bash optimizado para sistemas Unix/Linux
 
-## 🚀 Inicio Rápido
+### 🪟 Windows
+- **`manage-redis.ps1`** - Script PowerShell (recomendado)
+- **`manage-redis.bat`** - Script batch (alternativa)
 
-### 1. Iniciar Redis
+## Uso
+
+### En Linux/macOS
 ```bash
-cd redis
+# Hacer ejecutable
+chmod +x manage-redis.sh
+
+# Usar el script
 ./manage-redis.sh start
-```
-
-### 2. Verificar Estado
-```bash
+./manage-redis.sh stop
 ./manage-redis.sh status
 ```
 
-### 3. Conectar a Redis CLI
-```bash
-./manage-redis.sh connect
+### En Windows (PowerShell)
+```powershell
+# Ejecutar con PowerShell
+.\manage-redis.ps1 start
+.\manage-redis.ps1 stop
+.\manage-redis.ps1 status
 ```
 
-## 🔧 Comandos Disponibles
+### En Windows (CMD/Batch)
+```cmd
+# Ejecutar con CMD
+manage-redis.bat start
+manage-redis.bat stop
+manage-redis.bat status
+```
+
+## Comandos Disponibles
+
+Todos los scripts soportan los mismos comandos:
 
 | Comando | Descripción |
 |---------|-------------|
 | `start` | Iniciar Redis |
 | `stop` | Detener Redis |
 | `restart` | Reiniciar Redis |
-| `status` | Ver estado |
-| `logs` | Ver logs |
-| `connect` | Conectar a CLI |
-| `clean` | Limpiar datos |
+| `status` | Ver estado de Redis |
+| `logs` | Ver logs de Redis |
+| `connect` | Conectar a Redis CLI |
+| `clean` | Limpiar datos de Redis |
 | `help` | Mostrar ayuda |
 
-## ⚙️ Configuración
+## Requisitos Previos
 
-### Puerto
+### Docker y Docker Compose
+- Docker Desktop instalado y ejecutándose
+- Docker Compose disponible
+
+### En Windows
+- **PowerShell**: Windows PowerShell 5.1+ o PowerShell Core 6+
+- **Batch**: CMD estándar de Windows
+
+### En Linux/macOS
+- Bash shell
+- Permisos de ejecución
+
+## Configuración
+
+Los scripts utilizan el archivo `docker-compose.yml` en el mismo directorio para configurar Redis con:
+
 - **Puerto**: 6379
 - **Host**: localhost
+- **Contenedor**: flowlite-redis
+- **Volumen persistente**: redis_data
+- **Red**: flowlite-shared-network
 
-### Volúmenes
-- **Datos**: `redis_data` (persistente)
-- **Configuración**: In-memory con persistencia AOF
+## Solución de Problemas
 
-### Características
-- ✅ **Persistencia**: AOF (Append Only File)
-- ✅ **Memoria**: 256MB máximo
-- ✅ **Política**: LRU (Least Recently Used)
-- ✅ **Health Check**: Ping cada 30s
-- ✅ **Restart**: Automático
-
-## 🔗 Conexión desde Flowlite
-
-### Variables de Entorno
+### Error de permisos en Linux/macOS
 ```bash
-SPRING_DATA_REDIS_HOST=localhost
-SPRING_DATA_REDIS_PORT=6379
-SPRING_DATA_REDIS_DATABASE=0
+chmod +x manage-redis.sh
 ```
 
-### Configuración en application.properties
-```properties
-spring.data.redis.host=localhost
-spring.data.redis.port=6379
-spring.data.redis.database=0
+### Error de ejecución en Windows PowerShell
+```powershell
+# Si aparece error de política de ejecución
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-## 🧪 Pruebas
+### Docker no encontrado
+- Verificar que Docker Desktop esté instalado y ejecutándose
+- Verificar que `docker` y `docker-compose` estén en el PATH
 
-### 1. Verificar Conexión
+### Red no encontrada
 ```bash
-./manage-redis.sh connect
-> ping
-PONG
+# Crear la red compartida si no existe
+docker network create database_flowlite-shared-network
 ```
 
-### 2. Probar Blacklist
+## Ejemplos de Uso
+
+### Desarrollo Local
 ```bash
-./manage-redis.sh connect
-> SADD revoked_tokens "test_token_123"
-> SISMEMBER revoked_tokens "test_token_123"
-> SMEMBERS revoked_tokens
-```
+# Iniciar Redis para desarrollo
+./manage-redis.sh start
 
-### 3. Ver Estadísticas
-```bash
-./manage-redis.sh connect
-> INFO memory
-> INFO keyspace
-```
-
-## 🔍 Monitoreo
-
-### Logs en Tiempo Real
-```bash
-./manage-redis.sh logs
-```
-
-### Estado del Contenedor
-```bash
-./manage-redis.sh status
-```
-
-### Información de Redis
-```bash
-./manage-redis.sh connect
-> INFO
-```
-
-## 🛠️ Troubleshooting
-
-### Redis No Inicia
-```bash
-# Ver logs
+# Ver logs en tiempo real
 ./manage-redis.sh logs
 
-# Verificar puerto
-netstat -tulpn | grep 6379
+# Conectar a Redis CLI para pruebas
+./manage-redis.sh connect
 ```
 
-### Conexión Fallida
+### Limpieza de Datos
 ```bash
-# Verificar contenedor
-docker ps | grep redis
-
-# Reiniciar
-./manage-redis.sh restart
-```
-
-### Limpiar Datos
-```bash
+# Limpiar todos los datos de Redis
 ./manage-redis.sh clean
 ```
 
-## 📊 Uso en Flowlite
+### Monitoreo
+```bash
+# Ver estado actual
+./manage-redis.sh status
 
-### Estrategia de Revocación
-```properties
-# En application.properties
-app.token-revocation.strategy=redis
+# Ver logs históricos
+./manage-redis.sh logs
 ```
 
-### Endpoints de Blacklist
-- `POST /auth/logout` - Revocar token
-- `GET /auth/validate` - Validar token
+## Notas Importantes
 
-### TTL Automático
-- **Tokens revocados**: 30 días
-- **Limpieza automática**: Por TTL
-- **Memoria optimizada**: LRU policy
-
-## 🔒 Seguridad
-
-### Configuración de Red
-- Redis solo accesible desde localhost
-- No exposición externa por defecto
-- Red interna para contenedores
-
-### Persistencia
-- Datos encriptados en disco
-- Backup automático con AOF
-- Recuperación ante fallos
-
-## 📈 Escalabilidad
-
-### Para Producción
-- Usar Redis Cluster
-- Configurar replicación
-- Monitoreo con Redis Sentinel
-
-### Para Desarrollo
-- Redis standalone (actual)
-- Persistencia local
-- Configuración simple
+- Los scripts están diseñados para trabajar con la configuración específica de Flowlite
+- La red `flowlite-shared-network` debe existir antes de ejecutar los scripts
+- Los datos se persisten en el volumen `redis_data`
+- El contenedor se reinicia automáticamente a menos que se detenga manualmente

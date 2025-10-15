@@ -1,10 +1,17 @@
 #!/bin/bash
 
 # ===========================================
-# SCRIPT DE GESTIÓN DE BASE DE DATOS COMPARTIDA
+# SCRIPT DE GESTIÓN DE BASE DE DATOS COMPARTIDA (CROSS-PLATFORM)
 # ===========================================
 
 set -e
+
+# Detectar sistema operativo
+if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]] || [[ "$OSTYPE" == "win32" ]]; then
+    IS_WINDOWS=true
+else
+    IS_WINDOWS=false
+fi
 
 # Colores para output
 RED='\033[0;31m'
@@ -39,16 +46,24 @@ show_help() {
 # Función para iniciar base de datos
 start_database() {
     echo -e "${YELLOW}Iniciando base de datos compartida...${NC}"
-    docker-compose -f docker-compose.database.yml up -d
-    echo -e "${GREEN}Base de datos iniciada correctamente${NC}"
-    echo -e "${BLUE}phpMyAdmin disponible en: http://localhost:8081${NC}"
+    if docker-compose -f docker-compose.database.yml up -d; then
+        echo -e "${GREEN}Base de datos iniciada correctamente${NC}"
+        echo -e "${BLUE}phpMyAdmin disponible en: http://localhost:8081${NC}"
+    else
+        echo -e "${RED}❌ Error al iniciar la base de datos${NC}"
+        exit 1
+    fi
 }
 
 # Función para detener base de datos
 stop_database() {
     echo -e "${YELLOW}Deteniendo base de datos compartida...${NC}"
-    docker-compose -f docker-compose.database.yml down
-    echo -e "${GREEN}Base de datos detenida${NC}"
+    if docker-compose -f docker-compose.database.yml down; then
+        echo -e "${GREEN}Base de datos detenida${NC}"
+    else
+        echo -e "${RED}❌ Error al detener la base de datos${NC}"
+        exit 1
+    fi
 }
 
 # Función para iniciar aplicación

@@ -1,10 +1,17 @@
 #!/bin/bash
 
 # ===========================================
-# SCRIPT DE GESTIÓN PARA REDIS
+# SCRIPT DE GESTIÓN PARA REDIS (CROSS-PLATFORM)
 # ===========================================
 
 set -e
+
+# Detectar sistema operativo
+if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]] || [[ "$OSTYPE" == "win32" ]]; then
+    IS_WINDOWS=true
+else
+    IS_WINDOWS=false
+fi
 
 # Colores para output
 RED='\033[0;31m'
@@ -36,25 +43,37 @@ show_help() {
 # Función para iniciar Redis
 start_redis() {
     echo -e "${GREEN}🚀 Iniciando Redis...${NC}"
-    docker-compose up -d
-    echo -e "${GREEN}✅ Redis iniciado correctamente${NC}"
-    echo -e "${BLUE}📍 Puerto: 6379${NC}"
-    echo -e "${BLUE}📍 Host: localhost${NC}"
+    if docker-compose up -d; then
+        echo -e "${GREEN}✅ Redis iniciado correctamente${NC}"
+        echo -e "${BLUE}📍 Puerto: 6379${NC}"
+        echo -e "${BLUE}📍 Host: localhost${NC}"
+    else
+        echo -e "${RED}❌ Error al iniciar Redis${NC}"
+        exit 1
+    fi
 }
 
 # Función para detener Redis
 stop_redis() {
     echo -e "${YELLOW}🛑 Deteniendo Redis...${NC}"
-    docker-compose down
-    echo -e "${GREEN}✅ Redis detenido correctamente${NC}"
+    if docker-compose down; then
+        echo -e "${GREEN}✅ Redis detenido correctamente${NC}"
+    else
+        echo -e "${RED}❌ Error al detener Redis${NC}"
+        exit 1
+    fi
 }
 
 # Función para reiniciar Redis
 restart_redis() {
     echo -e "${YELLOW}🔄 Reiniciando Redis...${NC}"
     docker-compose down
-    docker-compose up -d
-    echo -e "${GREEN}✅ Redis reiniciado correctamente${NC}"
+    if docker-compose up -d; then
+        echo -e "${GREEN}✅ Redis reiniciado correctamente${NC}"
+    else
+        echo -e "${RED}❌ Error al reiniciar Redis${NC}"
+        exit 1
+    fi
 }
 
 # Función para ver estado

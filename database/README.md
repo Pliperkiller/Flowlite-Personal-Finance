@@ -9,24 +9,36 @@ database/
 ├── README.md                    # Este archivo
 ├── docker-compose.database.yml  # Configuración de MySQL y phpMyAdmin
 ├── init-databases.sql          # Script de inicialización de bases de datos
-├── manage-database.sh          # Script de gestión automatizada
+├── manage-database.sh          # Script de gestión automatizada (Linux/macOS)
+├── manage-database.ps1         # Script PowerShell (Windows)
+├── manage-database.bat         # Script Batch (Windows)
 └── DATABASE_SHARING_GUIDE.md   # Guía completa de uso
 ```
 
 ## 🚀 Inicio Rápido
 
-### 1. Iniciar Base de Datos
+### 🐧 Linux/macOS
 ```bash
 cd database
 ./manage-database.sh start-db
-```
-
-### 2. Ver Estado
-```bash
 ./manage-database.sh status
 ```
 
-### 3. Acceder a phpMyAdmin
+### 🪟 Windows (PowerShell - Recomendado)
+```powershell
+cd database
+.\manage-database.ps1 start-db
+.\manage-database.ps1 status
+```
+
+### 🪟 Windows (CMD/Batch)
+```cmd
+cd database
+manage-database.bat start-db
+manage-database.bat status
+```
+
+### 🌐 Acceder a phpMyAdmin
 - **URL**: http://localhost:8081
 - **Usuario**: `root`
 - **Contraseña**: `Flowlite10+`
@@ -47,6 +59,7 @@ cd database
 
 ## 🛠️ Comandos Disponibles
 
+### 🐧 Linux/macOS
 ```bash
 ./manage-database.sh start-db      # Iniciar base de datos
 ./manage-database.sh stop-db       # Detener base de datos
@@ -55,6 +68,28 @@ cd database
 ./manage-database.sh logs-db       # Ver logs
 ./manage-database.sh clean         # Limpiar todo (¡CUIDADO!)
 ./manage-database.sh help          # Mostrar ayuda
+```
+
+### 🪟 Windows (PowerShell)
+```powershell
+.\manage-database.ps1 start-db     # Iniciar base de datos
+.\manage-database.ps1 stop-db      # Detener base de datos
+.\manage-database.ps1 restart-db   # Reiniciar base de datos
+.\manage-database.ps1 status       # Ver estado
+.\manage-database.ps1 logs-db      # Ver logs
+.\manage-database.ps1 clean        # Limpiar todo (¡CUIDADO!)
+.\manage-database.ps1 help         # Mostrar ayuda
+```
+
+### 🪟 Windows (CMD/Batch)
+```cmd
+manage-database.bat start-db       # Iniciar base de datos
+manage-database.bat stop-db        # Detener base de datos
+manage-database.bat restart-db    # Reiniciar base de datos
+manage-database.bat status        # Ver estado
+manage-database.bat logs-db       # Ver logs
+manage-database.bat clean         # Limpiar todo (¡CUIDADO!)
+manage-database.bat help          # Mostrar ayuda
 ```
 
 ## 🔗 Conexión desde Servicios
@@ -121,6 +156,22 @@ docker network ls | grep flowlite-shared
 # Conectar y crear
 docker exec -it flowlite-shared-mysql mysql -u root -p
 CREATE DATABASE tu_database;
+```
+
+### Problema: Scripts no funcionan en Windows
+```powershell
+# Si aparece error de política de ejecución en PowerShell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Verificar que Docker esté ejecutándose
+docker --version
+docker-compose --version
+```
+
+### Problema: Permisos en Linux/macOS
+```bash
+# Hacer ejecutable el script
+chmod +x manage-database.sh
 ```
 
 ## 📈 Para Producción
