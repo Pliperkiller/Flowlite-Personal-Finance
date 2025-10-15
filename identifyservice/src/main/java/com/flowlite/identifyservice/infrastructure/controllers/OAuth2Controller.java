@@ -13,7 +13,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/oauth2")
-@Tag(name = "OAuth2", description = "Endpoints para autenticación OAuth2 con proveedores externos")
+@Tag(name = "OAuth2", description = "Endpoints para autenticación OAuth2 con proveedores externos. Incluye flujo de Google OAuth2 con soporte para aplicaciones móviles. Redirección a URL schemes personalizados para captura de tokens.")
 public class OAuth2Controller {
 
     @GetMapping("/authorization/google")

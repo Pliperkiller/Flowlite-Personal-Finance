@@ -10,6 +10,7 @@ info:
     - Revocación de tokens con Redis
     - Validación de tokens
     - Gestión de información de usuarios
+    - Endpoints protegidos para administración
   version: 1.0.0
   contact:
     name: Identity Service Team
@@ -142,80 +143,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /oauth2/authorization/google:
-    get:
-      tags:
-        - OAuth2
-      summary: Iniciar autenticación OAuth2 con Google
-      description: |
-        Inicia el flujo de autenticación OAuth2 con Google.
-        Redirige al usuario a Google para autorización.
-        Después de autorizar, Google redirige de vuelta con un código de autorización.
-      operationId: initiateGoogleOAuth2
-      responses:
-        '302':
-          description: Redirección a Google para autorización
-          headers:
-            Location:
-              description: URL de autorización de Google
-              schema:
-                type: string
-                example: "https://accounts.google.com/oauth/authorize?client_id=..."
-        '500':
-          description: Error interno del servidor
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /login/oauth2/code/google:
-    get:
-      tags:
-        - OAuth2
-      summary: Callback de OAuth2 Google
-      description: |
-        Endpoint de callback que Google llama después de la autorización.
-        Procesa el código de autorización y genera un JWT token.
-        Este endpoint es llamado automáticamente por Google, no por el cliente.
-      operationId: handleGoogleOAuth2Callback
-      parameters:
-        - name: code
-          in: query
-          description: Código de autorización de Google
-          required: true
-          schema:
-            type: string
-        - name: state
-          in: query
-          description: Estado para prevenir ataques CSRF
-          required: false
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Autenticación OAuth2 exitosa
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-              examples:
-                success:
-                  summary: OAuth2 exitoso
-                  value:
-                    access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-        '400':
-          description: Error en el código de autorización
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Error interno del servidor
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
   /auth/logout:
     post:
       tags:
@@ -224,16 +151,8 @@ paths:
       description: |
         Invalida el token JWT del usuario, cerrando su sesión de forma segura.
         El token se agrega a Redis (blacklist) para evitar su reutilización.
-        Funciona para cualquier plataforma (web/mobile).
-        Acepta token en header Authorization (web) o como parámetro (mobile).
+        Requiere header Authorization: Bearer TOKEN.
       operationId: logoutUser
-      parameters:
-        - name: token
-          in: query
-          description: JWT token a revocar (para aplicaciones móviles)
-          required: false
-          schema:
-            type: string
       security:
         - BearerAuth: []
       responses:
@@ -357,17 +276,10 @@ paths:
         - Authentication
       summary: Obtener información del usuario autenticado
       description: |
-        Devuelve la información del usuario basada en el token JWT proporcionado.
+        Devuelve la información del usuario basada en el token JWT proporcionado en el header Authorization.
         Incluye ID, username, email y estado del token.
-        Funciona para aplicaciones web (header Authorization) y móviles (parámetro token).
+        Requiere header Authorization: Bearer TOKEN.
       operationId: getCurrentUser
-      parameters:
-        - name: token
-          in: query
-          description: JWT token (para aplicaciones móviles)
-          required: false
-          schema:
-            type: string
       security:
         - BearerAuth: []
       responses:
@@ -483,6 +395,81 @@ paths:
                     type: string
                     example: "Las aplicaciones móviles reciben este error a través del URL scheme personalizado"
 
+  /oauth2/authorization/google:
+    get:
+      tags:
+        - OAuth2
+      summary: Iniciar autenticación OAuth2 con Google
+      description: |
+        Inicia el flujo de autenticación OAuth2 con Google.
+        Redirige al usuario a Google para autorización.
+        Después de autorizar, Google redirige de vuelta con un código de autorización.
+      operationId: initiateGoogleOAuth2
+      responses:
+        '302':
+          description: Redirección a Google para autorización
+          headers:
+            Location:
+              description: URL de autorización de Google
+              schema:
+                type: string
+                example: "https://accounts.google.com/oauth/authorize?client_id=..."
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /login/oauth2/code/google:
+    get:
+      tags:
+        - OAuth2
+      summary: Callback de OAuth2 Google
+      description: |
+        Endpoint de callback que Google llama después de la autorización.
+        Procesa el código de autorización y genera un JWT token.
+        Este endpoint es llamado automáticamente por Google, no por el cliente.
+      operationId: handleGoogleOAuth2Callback
+      parameters:
+        - name: code
+          in: query
+          description: Código de autorización de Google
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          description: Estado para prevenir ataques CSRF
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Autenticación OAuth2 exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                success:
+                  summary: OAuth2 exitoso
+                  value:
+                    access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          description: Error en el código de autorización
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
 components:
   schemas:
     RegisterRequest:
@@ -579,7 +566,7 @@ tags:
     description: |
       Endpoints para autenticación, gestión de tokens y información del usuario autenticado.
       Incluye registro, login, logout, validación de tokens y obtención de información del usuario actual.
-      Soporte para aplicaciones web (header Authorization) y móviles (parámetro token).
+      Requiere header Authorization: Bearer TOKEN para endpoints protegidos.
       Integración con Redis para blacklist de tokens revocados.
       Optimizado para microservicios que necesitan identificar al usuario autenticado.
   - name: OAuth2
