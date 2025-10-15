@@ -23,7 +23,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "Endpoints para autenticación, gestión de tokens y información del usuario autenticado. " +
         "Incluye registro, login, logout, validación de tokens y obtención de información del usuario actual. " +
-        "Soporte para aplicaciones web (header Authorization) y móviles (parámetro token). " +
+        "Requiere header Authorization: Bearer TOKEN para endpoints protegidos. " +
         "Integración con Redis para blacklist de tokens revocados. " +
         "Optimizado para microservicios que necesitan identificar al usuario autenticado.")
 public class AuthController {
@@ -35,7 +35,8 @@ public class AuthController {
     @PostMapping("/register")
     @Operation(summary = "Registrar nuevo usuario", 
                description = "Crea una nueva cuenta de usuario con email, username y contraseña. " +
-                           "Devuelve un JWT token para autenticación.")
+                           "Devuelve un JWT token para autenticación. " +
+                           "**Endpoint PÚBLICO** - No requiere autenticación.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuario registrado exitosamente",
                     content = @Content(mediaType = "application/json",
@@ -59,7 +60,8 @@ public class AuthController {
     @PostMapping("/login")
     @Operation(summary = "Iniciar sesión", 
                description = "Autentica un usuario existente con username/email y contraseña. " +
-                           "Devuelve un JWT token para autenticación.")
+                           "Devuelve un JWT token para autenticación. " +
+                           "**Endpoint PÚBLICO** - No requiere autenticación.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Login exitoso",
                     content = @Content(mediaType = "application/json",
@@ -78,7 +80,8 @@ public class AuthController {
     @GetMapping("/success")
     @Operation(summary = "Página de éxito de autenticación OAuth2", 
                description = "Endpoint de fallback para navegadores. Las aplicaciones móviles reciben el token " +
-                           "a través del URL scheme personalizado: flowliteapp://auth/success?token=JWT_TOKEN")
+                           "a través del URL scheme personalizado: flowliteapp://auth/success?token=JWT_TOKEN. " +
+                           "**Endpoint PÚBLICO** - No requiere autenticación.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Página de éxito mostrada correctamente",
                     content = @Content(mediaType = "application/json",
@@ -106,7 +109,8 @@ public class AuthController {
     @GetMapping("/error")
     @Operation(summary = "Página de error de autenticación OAuth2", 
                description = "Endpoint de fallback para navegadores. Las aplicaciones móviles reciben el error " +
-                           "a través del URL scheme personalizado: flowliteapp://auth/error?message=ERROR_MESSAGE")
+                           "a través del URL scheme personalizado: flowliteapp://auth/error?message=ERROR_MESSAGE. " +
+                           "**Endpoint PÚBLICO** - No requiere autenticación.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "400", description = "Error en la autenticación OAuth2",
                     content = @Content(mediaType = "application/json",
@@ -133,7 +137,8 @@ public class AuthController {
     @Operation(summary = "Cerrar sesión y revocar token", 
                description = "Invalida el token JWT del usuario, cerrando su sesión de forma segura. " +
                            "El token se agrega a Redis (blacklist) para evitar su reutilización. " +
-                           "Requiere header Authorization: Bearer TOKEN.")
+                           "Requiere header Authorization: Bearer TOKEN. " +
+                           "**Endpoint PROTEGIDO** - Requiere autenticación.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Sesión cerrada exitosamente",
                     content = @Content(mediaType = "application/json",
@@ -191,7 +196,8 @@ public class AuthController {
     @Operation(summary = "Validar token JWT", 
                description = "Verifica si un token JWT es válido y no está revocado. " +
                            "Útil para verificar el estado de un token antes de usarlo. " +
-                           "Consulta Redis para verificar si el token está en la blacklist.")
+                           "Consulta Redis para verificar si el token está en la blacklist. " +
+                           "**Endpoint PÚBLICO** - No requiere autenticación.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Token válido y activo",
                     content = @Content(mediaType = "application/json",
@@ -281,7 +287,8 @@ public class AuthController {
     @Operation(summary = "Obtener información del usuario autenticado", 
                description = "Devuelve la información del usuario basada en el token JWT proporcionado en el header Authorization. " +
                            "Incluye ID, username, email y estado del token. " +
-                           "Requiere header Authorization: Bearer TOKEN.")
+                           "Requiere header Authorization: Bearer TOKEN. " +
+                           "**Endpoint PROTEGIDO** - Requiere autenticación.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Información del usuario obtenida",
                     content = @Content(mediaType = "application/json",

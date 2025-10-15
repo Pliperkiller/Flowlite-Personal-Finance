@@ -10,7 +10,21 @@ info:
     - Revocación de tokens con Redis
     - Validación de tokens
     - Gestión de información de usuarios
-    - Endpoints protegidos para administración
+    
+    **Endpoints Públicos (sin autenticación):**
+    - `/auth/register` - Registrar nuevo usuario
+    - `/auth/login` - Iniciar sesión
+    - `/auth/validate` - Validar token JWT
+    - `/auth/success` - Página de éxito OAuth2
+    - `/auth/error` - Página de error OAuth2
+    - `/oauth2/**` - Endpoints OAuth2
+    - `/swagger-ui/**` - Documentación Swagger
+    - `/v3/api-docs/**` - API Docs
+    - `/actuator/**` - Endpoints de monitoreo
+    
+    **Endpoints Protegidos (requieren autenticación):**
+    - `/auth/me` - Obtener información del usuario autenticado
+    - `/auth/logout` - Cerrar sesión y revocar token
   version: 1.0.0
   contact:
     name: Identity Service Team
@@ -566,6 +580,18 @@ tags:
     description: |
       Endpoints para autenticación, gestión de tokens y información del usuario autenticado.
       Incluye registro, login, logout, validación de tokens y obtención de información del usuario actual.
+      
+      **Endpoints Públicos (sin autenticación):**
+      - `/auth/register` - Registrar nuevo usuario
+      - `/auth/login` - Iniciar sesión
+      - `/auth/validate` - Validar token JWT
+      - `/auth/success` - Página de éxito OAuth2
+      - `/auth/error` - Página de error OAuth2
+      
+      **Endpoints Protegidos (requieren autenticación):**
+      - `/auth/me` - Obtener información del usuario autenticado
+      - `/auth/logout` - Cerrar sesión y revocar token
+      
       Requiere header Authorization: Bearer TOKEN para endpoints protegidos.
       Integración con Redis para blacklist de tokens revocados.
       Optimizado para microservicios que necesitan identificar al usuario autenticado.
@@ -574,3 +600,7 @@ tags:
       Endpoints para autenticación OAuth2 con proveedores externos.
       Incluye flujo de Google OAuth2 con soporte para aplicaciones móviles.
       Redirección a URL schemes personalizados para captura de tokens.
+      
+      **Endpoints Públicos (sin autenticación):**
+      - `/oauth2/authorization/google` - Iniciar autenticación OAuth2 con Google
+      - `/login/oauth2/code/google` - Callback de OAuth2 Google

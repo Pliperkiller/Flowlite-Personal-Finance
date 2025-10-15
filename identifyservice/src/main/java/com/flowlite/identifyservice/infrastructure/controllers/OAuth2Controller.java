@@ -29,6 +29,8 @@ public class OAuth2Controller {
             2. Se redirige a Google para autorización
             3. Google redirige de vuelta a `/login/oauth2/code/google`
             4. Se genera un JWT token y se devuelve al usuario
+            
+            **Endpoint PÚBLICO** - No requiere autenticación.
             """
     )
     @ApiResponses(value = {
