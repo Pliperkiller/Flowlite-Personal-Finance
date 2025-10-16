@@ -2,7 +2,7 @@
 
 ## Información del Proyecto
 
-**Nombre:** Sistema de Gestión de Finanzas Personales  
+**Nombre:** Flowlite - Personal finance 
 **Tipo:** Aplicación Móvil  
 **Alcance:** MVP con 3 fases planificadas  
 **Fecha:** Octubre 2025
