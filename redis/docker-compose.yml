@@ -1,0 +1,39 @@
+# ===========================================
+# DOCKER COMPOSE PARA REDIS (INDEPENDIENTE)
+# ===========================================
+
+version: '3.8'
+
+services:
+  # Servicio Redis para blacklist de tokens
+  flowlite-redis:
+    image: redis:7-alpine
+    container_name: flowlite-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    environment:
+      # Configuración de Redis
+      REDIS_PASSWORD: flowlite_redis_pass_2024
+    networks:
+      - flowlite-shared-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+# Volúmenes para persistencia
+volumes:
+  redis_data:
+    driver: local
+
+# Red compartida (debe existir previamente)
+networks:
+  flowlite-shared-network:
+    external: true
+    name: database_flowlite-shared-network

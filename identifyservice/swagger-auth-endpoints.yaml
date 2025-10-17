@@ -1,0 +1,606 @@
+openapi: 3.0.3
+info:
+  title: Identity Service - Authentication API
+  description: |
+    API para autenticación de usuarios con soporte para:
+    - Registro de usuarios tradicional
+    - Login con credenciales
+    - Autenticación OAuth2 con Google
+    - Generación de JWT tokens
+    - Revocación de tokens con Redis
+    - Validación de tokens
+    - Gestión de información de usuarios
+    
+    **Endpoints Públicos (sin autenticación):**
+    - `/auth/register` - Registrar nuevo usuario
+    - `/auth/login` - Iniciar sesión
+    - `/auth/validate` - Validar token JWT
+    - `/auth/success` - Página de éxito OAuth2
+    - `/auth/error` - Página de error OAuth2
+    - `/oauth2/**` - Endpoints OAuth2
+    - `/swagger-ui/**` - Documentación Swagger
+    - `/v3/api-docs/**` - API Docs
+    - `/actuator/**` - Endpoints de monitoreo
+    
+    **Endpoints Protegidos (requieren autenticación):**
+    - `/auth/me` - Obtener información del usuario autenticado
+    - `/auth/logout` - Cerrar sesión y revocar token
+  version: 1.0.0
+  contact:
+    name: Identity Service Team
+    email: support@identifyservice.com
+
+servers:
+  - url: http://localhost:8080
+    description: Servidor de desarrollo local
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Registrar nuevo usuario
+      description: |
+        Crea una nueva cuenta de usuario con email, username y contraseña.
+        Devuelve un JWT token para autenticación.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              example1:
+                summary: Registro básico
+                value:
+                  username: "johndoe"
+                  email: "john@example.com"
+                  password: "SecurePassword123"
+      responses:
+        '200':
+          description: Usuario registrado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                success:
+                  summary: Registro exitoso
+                  value:
+                    access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          description: Error en la petición
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                emailExists:
+                  summary: Email ya registrado
+                  value:
+                    error: "El email ya está registrado"
+                usernameExists:
+                  summary: Username ya en uso
+                  value:
+                    error: "El username ya está en uso"
+                validationError:
+                  summary: Error de validación
+                  value:
+                    error: "Datos de entrada inválidos"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Iniciar sesión
+      description: |
+        Autentica un usuario existente con username/email y contraseña.
+        Devuelve un JWT token para autenticación.
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              example1:
+                summary: Login con username
+                value:
+                  username: "johndoe"
+                  password: "SecurePassword123"
+              example2:
+                summary: Login con email
+                value:
+                  username: "john@example.com"
+                  password: "SecurePassword123"
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                success:
+                  summary: Login exitoso
+                  value:
+                    access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '401':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidCredentials:
+                  summary: Credenciales incorrectas
+                  value:
+                    error: "Credenciales inválidas"
+        '400':
+          description: Error en la petición
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Cerrar sesión y revocar token
+      description: |
+        Invalida el token JWT del usuario, cerrando su sesión de forma segura.
+        El token se agrega a Redis (blacklist) para evitar su reutilización.
+        Requiere header Authorization: Bearer TOKEN.
+      operationId: logoutUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Sesión cerrada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Sesión cerrada exitosamente"
+                  status:
+                    type: string
+                    example: "success"
+                  note:
+                    type: string
+                    example: "El token ha sido revocado y ya no es válido"
+        '401':
+          description: Token inválido o expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Token no proporcionado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/validate:
+    get:
+      tags:
+        - Authentication
+      summary: Validar token JWT
+      description: |
+        Verifica si un token JWT es válido y no está revocado.
+        Útil para verificar el estado de un token antes de usarlo.
+        Consulta Redis para verificar si el token está en la blacklist.
+      operationId: validateToken
+      parameters:
+        - name: token
+          in: query
+          description: JWT token a validar
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token válido y activo
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+                  revoked:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Token válido y activo"
+                  status:
+                    type: string
+                    example: "active"
+                  username:
+                    type: string
+                    example: "johndoe"
+                  userId:
+                    type: string
+                    example: "123e4567-e89b-12d3-a456-426614174000"
+                  note:
+                    type: string
+                    example: "Token puede ser usado para autenticación"
+        '401':
+          description: Token inválido o revocado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: false
+                  revoked:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Token revocado - no puede ser usado"
+                  status:
+                    type: string
+                    example: "revoked"
+        '400':
+          description: Error en la validación
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: false
+                  revoked:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Error al validar token: Token malformado"
+                  status:
+                    type: string
+                    example: "error"
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Obtener información del usuario autenticado
+      description: |
+        Devuelve la información del usuario basada en el token JWT proporcionado en el header Authorization.
+        Incluye ID, username, email y estado del token.
+        Requiere header Authorization: Bearer TOKEN.
+      operationId: getCurrentUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Información del usuario obtenida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    example: "123e4567-e89b-12d3-a456-426614174000"
+                  username:
+                    type: string
+                    example: "johndoe"
+                  tokenStatus:
+                    type: string
+                    example: "active"
+                  message:
+                    type: string
+                    example: "Información del usuario obtenida exitosamente"
+        '401':
+          description: Token inválido o revocado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Token no proporcionado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/success:
+    get:
+      tags:
+        - OAuth2
+      summary: Página de éxito de autenticación OAuth2
+      description: |
+        Endpoint de fallback para navegadores. Las aplicaciones móviles reciben el token
+        a través del URL scheme personalizado: flowliteapp://auth/success?token=JWT_TOKEN
+      operationId: oauth2Success
+      parameters:
+        - name: token
+          in: query
+          description: JWT token generado
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Página de éxito mostrada correctamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Autenticación OAuth2 exitosa"
+                  access_token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  mobile_redirect:
+                    type: string
+                    example: "flowliteapp://auth/success?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  note:
+                    type: string
+                    example: "Las aplicaciones móviles reciben este token a través del URL scheme personalizado"
+        '400':
+          description: Token no proporcionado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/error:
+    get:
+      tags:
+        - OAuth2
+      summary: Página de error de autenticación OAuth2
+      description: |
+        Endpoint de fallback para navegadores. Las aplicaciones móviles reciben el error
+        a través del URL scheme personalizado: flowliteapp://auth/error?message=ERROR_MESSAGE
+      operationId: oauth2Error
+      parameters:
+        - name: message
+          in: query
+          description: Mensaje de error
+          required: false
+          schema:
+            type: string
+      responses:
+        '400':
+          description: Error en la autenticación OAuth2
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error en la autenticación OAuth2"
+                  message:
+                    type: string
+                    example: "Error desconocido"
+                  mobile_redirect:
+                    type: string
+                    example: "flowliteapp://auth/error?message=Error%20desconocido"
+                  note:
+                    type: string
+                    example: "Las aplicaciones móviles reciben este error a través del URL scheme personalizado"
+
+  /oauth2/authorization/google:
+    get:
+      tags:
+        - OAuth2
+      summary: Iniciar autenticación OAuth2 con Google
+      description: |
+        Inicia el flujo de autenticación OAuth2 con Google.
+        Redirige al usuario a Google para autorización.
+        Después de autorizar, Google redirige de vuelta con un código de autorización.
+      operationId: initiateGoogleOAuth2
+      responses:
+        '302':
+          description: Redirección a Google para autorización
+          headers:
+            Location:
+              description: URL de autorización de Google
+              schema:
+                type: string
+                example: "https://accounts.google.com/oauth/authorize?client_id=..."
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /login/oauth2/code/google:
+    get:
+      tags:
+        - OAuth2
+      summary: Callback de OAuth2 Google
+      description: |
+        Endpoint de callback que Google llama después de la autorización.
+        Procesa el código de autorización y genera un JWT token.
+        Este endpoint es llamado automáticamente por Google, no por el cliente.
+      operationId: handleGoogleOAuth2Callback
+      parameters:
+        - name: code
+          in: query
+          description: Código de autorización de Google
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          description: Estado para prevenir ataques CSRF
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Autenticación OAuth2 exitosa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                success:
+                  summary: OAuth2 exitoso
+                  value:
+                    access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          description: Error en el código de autorización
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          description: Nombre de usuario único
+          minLength: 3
+          maxLength: 50
+          example: "johndoe"
+        email:
+          type: string
+          format: email
+          description: Dirección de correo electrónico
+          example: "john@example.com"
+        password:
+          type: string
+          description: Contraseña del usuario
+          minLength: 6
+          maxLength: 100
+          example: "SecurePassword123"
+
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Username o email del usuario
+          example: "johndoe"
+        password:
+          type: string
+          description: Contraseña del usuario
+          example: "SecurePassword123"
+
+    AuthResponse:
+      type: object
+      required:
+        - access_token
+      properties:
+        access_token:
+          type: string
+          description: JWT token para autenticación
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJqb2huZG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+        token_type:
+          type: string
+          description: Tipo de token
+          example: "Bearer"
+        expires_in:
+          type: integer
+          description: Tiempo de expiración en segundos
+          example: 86400
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Mensaje de error
+          example: "El email ya está registrado"
+        message:
+          type: string
+          description: Mensaje detallado del error
+          example: "El email proporcionado ya está asociado con otra cuenta"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp del error
+          example: "2025-09-28T22:30:00Z"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT token obtenido de los endpoints de autenticación.
+        Incluir en el header Authorization como: "Bearer {token}"
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Authentication
+    description: |
+      Endpoints para autenticación, gestión de tokens y información del usuario autenticado.
+      Incluye registro, login, logout, validación de tokens y obtención de información del usuario actual.
+      
+      **Endpoints Públicos (sin autenticación):**
+      - `/auth/register` - Registrar nuevo usuario
+      - `/auth/login` - Iniciar sesión
+      - `/auth/validate` - Validar token JWT
+      - `/auth/success` - Página de éxito OAuth2
+      - `/auth/error` - Página de error OAuth2
+      
+      **Endpoints Protegidos (requieren autenticación):**
+      - `/auth/me` - Obtener información del usuario autenticado
+      - `/auth/logout` - Cerrar sesión y revocar token
+      
+      Requiere header Authorization: Bearer TOKEN para endpoints protegidos.
+      Integración con Redis para blacklist de tokens revocados.
+      Optimizado para microservicios que necesitan identificar al usuario autenticado.
+  - name: OAuth2
+    description: |
+      Endpoints para autenticación OAuth2 con proveedores externos.
+      Incluye flujo de Google OAuth2 con soporte para aplicaciones móviles.
+      Redirección a URL schemes personalizados para captura de tokens.
+      
+      **Endpoints Públicos (sin autenticación):**
+      - `/oauth2/authorization/google` - Iniciar autenticación OAuth2 con Google
+      - `/login/oauth2/code/google` - Callback de OAuth2 Google

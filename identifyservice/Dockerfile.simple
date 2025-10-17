@@ -1,0 +1,50 @@
+# ===========================================
+# DOCKERFILE PARA IDENTIFYSERVICE (multi-stage)
+# ===========================================
+
+# ====== ETAPA 1: Construcción ======
+FROM gradle:8.7-jdk17 AS builder
+WORKDIR /app
+
+# Copiar los archivos de Gradle y el código fuente
+COPY . .
+
+# Construir el JAR sin ejecutar tests
+RUN gradle clean build -x test
+
+# ====== ETAPA 2: Runtime ======
+FROM eclipse-temurin:17-jre
+
+LABEL maintainer="Flowlite Team"
+LABEL description="Identify Service - Microservicio de autenticación y autorización"
+LABEL version="0.0.1-SNAPSHOT"
+
+RUN groupadd -g 1001 flowlite && \
+    useradd -u 1001 -g flowlite -m -s /bin/bash flowlite
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV TZ=America/Bogota
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Copiar el JAR construido desde la etapa anterior
+COPY --from=builder /app/build/libs/*.jar app.jar
+
+RUN mkdir -p /app/logs && chown -R flowlite:flowlite /app
+USER flowlite
+
+EXPOSE 8080
+
+ENV SPRING_PROFILES_ACTIVE=docker
+ENV SERVER_PORT=8080
+ENV JWT_SECRET=mi_clave_super_secreta_de_32_caracteres_minimo_123456789
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
+
+CMD ["java", "-jar", "app.jar"]
