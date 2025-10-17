@@ -53,8 +53,8 @@ src/
 
 1. Clonar el repositorio
 ```bash
-git clone <repository-url>
-cd grado
+git clone https://github.com/Pliperkiller/Flowlite-Personal-Finance.git
+cd Flowlite-Personal-Finance
 ```
 
 2. Crear entorno virtual
