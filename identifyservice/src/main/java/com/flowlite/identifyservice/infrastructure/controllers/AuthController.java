@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.Map;
 
@@ -41,12 +42,23 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "Usuario registrado exitosamente",
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(value = "{\"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\"}"))),
-            @ApiResponse(responseCode = "400", description = "Error en la petición",
+            @ApiResponse(responseCode = "400", description = "Error de validación - campos obligatorios faltantes o formato inválido",
                     content = @Content(mediaType = "application/json",
-                            examples = @ExampleObject(value = "{\"error\": \"El email ya está registrado\"}"))),
+                            examples = @ExampleObject(value = """
+                                {
+                                    "error": "Error de validación",
+                                    "message": "Los campos requeridos no pueden estar vacíos o tienen formato inválido",
+                                    "details": {
+                                        "username": "El nombre de usuario es obligatorio",
+                                        "email": "El formato del email no es válido",
+                                        "password": "La contraseña debe contener al menos una letra minúscula, una mayúscula, un número y un carácter especial"
+                                    },
+                                    "status": "BAD_REQUEST"
+                                }
+                                """))),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<Map<String, String>> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<Map<String, String>> register(@Valid @RequestBody RegisterRequest request) {
         User user = registerUserService.register(
                 request.getUsername(),
                 request.getEmail(),
@@ -69,10 +81,22 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Credenciales inválidas",
                     content = @Content(mediaType = "application/json",
                             examples = @ExampleObject(value = "{\"error\": \"Credenciales inválidas\"}"))),
-            @ApiResponse(responseCode = "400", description = "Error en la petición"),
+            @ApiResponse(responseCode = "400", description = "Error de validación - campos obligatorios faltantes o formato inválido",
+                    content = @Content(mediaType = "application/json",
+                            examples = @ExampleObject(value = """
+                                {
+                                    "error": "Error de validación",
+                                    "message": "Los campos requeridos no pueden estar vacíos o tienen formato inválido",
+                                    "details": {
+                                        "username": "El nombre de usuario es obligatorio",
+                                        "password": "La contraseña debe tener entre 8 y 128 caracteres"
+                                    },
+                                    "status": "BAD_REQUEST"
+                                }
+                                """))),
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<Map<String, String>> login(@Valid @RequestBody LoginRequest request) {
         String jwt = loginUserService.login(request.getUsername(), request.getPassword());
         return ResponseEntity.ok(Map.of("access_token", jwt));
     }
