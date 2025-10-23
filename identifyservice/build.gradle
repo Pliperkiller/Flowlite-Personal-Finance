@@ -63,6 +63,12 @@ dependencies {
 	// Redis para blacklist de tokens
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
+	
+	// Email support
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	
+	// Jackson JSR310 support for LocalDateTime serialization
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 }
 
 dependencyManagement {

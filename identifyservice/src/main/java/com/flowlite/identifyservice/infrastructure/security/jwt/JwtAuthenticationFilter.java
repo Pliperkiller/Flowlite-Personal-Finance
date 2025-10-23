@@ -35,6 +35,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String requestURI = request.getRequestURI();
         if (requestURI.startsWith("/auth/register") ||
             requestURI.startsWith("/auth/login") ||
+            requestURI.startsWith("/auth/preregister") ||
+            requestURI.startsWith("/auth/verify") ||
             requestURI.startsWith("/auth/success") ||
             requestURI.startsWith("/auth/error") ||
             requestURI.startsWith("/auth/validate") ||

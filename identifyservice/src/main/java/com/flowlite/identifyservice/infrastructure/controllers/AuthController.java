@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
+import com.flowlite.identifyservice.infrastructure.config.RegistrationConfig;
 
 import java.util.Map;
 
@@ -32,6 +33,7 @@ public class AuthController {
     private final RegisterUserService registerUserService;
     private final LoginUserService loginUserService;
     private final JwtTokenProvider tokenProvider;
+    private final RegistrationConfig registrationConfig;
 
     @PostMapping("/register")
     @Operation(summary = "Registrar nuevo usuario", 
@@ -59,6 +61,15 @@ public class AuthController {
             @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
     public ResponseEntity<Map<String, String>> register(@Valid @RequestBody RegisterRequest request) {
+        // Verificar si el registro directo está habilitado
+        if (!registrationConfig.isDirectEnabled()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Registro directo deshabilitado",
+                "message", "Use /auth/preregister para registrarse con verificación de email",
+                "status", "DISABLED"
+            ));
+        }
+        
         User user = registerUserService.register(
                 request.getUsername(),
                 request.getEmail(),

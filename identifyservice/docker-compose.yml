@@ -49,6 +49,16 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_DATABASE: 0
       SPRING_DATA_REDIS_TIMEOUT: 2000ms
+      
+      # Configuración de MailHog para desarrollo
+      SPRING_MAIL_HOST: flowlite-mailhog
+      SPRING_MAIL_PORT: 1025
+      SPRING_MAIL_USERNAME: ""
+      SPRING_MAIL_PASSWORD: ""
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "false"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "false"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_ENABLE: "false"
+      APP_EMAIL_FROM: noreply@flowlite.com
     networks:
       - flowlite-shared-network
     healthcheck:
