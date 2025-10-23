@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -100,10 +101,12 @@ public class PreregisterUserService {
         
         // Crear usuario final
         User user = User.builder()
+                .id(UUID.randomUUID())
                 .username(new Username(pendingUser.getUsername()))
                 .email(new Email(pendingUser.getEmail()))
                 .password(new Password(pendingUser.getPassword()))
                 .role(Role.USER)
+                .active(true)
                 .build();
         
         // Guardar usuario final
