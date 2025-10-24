@@ -7,7 +7,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+
+import jakarta.mail.internet.MimeMessage;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Service
@@ -16,6 +23,7 @@ public class EmailServiceImpl implements EmailService {
     
     private final MailSender mailSender;
     private final JavaMailSender javaMailSender;
+    private final TemplateEngine templateEngine;
     
     @Value("${app.email.from:noreply@flowlite.com}")
     private String fromEmail;
@@ -35,38 +43,25 @@ public class EmailServiceImpl implements EmailService {
             log.info("URL de verificación: {}", verificationUrl);
             log.info("=============================================");
             
-            // También intentar enviar a MailHog en desarrollo
+            // También intentar enviar a MailHog en desarrollo usando plantilla HTML
             try {
-                SimpleMailMessage message = new SimpleMailMessage();
-                message.setFrom(fromEmail);
-                message.setTo(email);
-                message.setSubject("Verifica tu cuenta en Flowlite");
+                // Leer plantilla HTML y reemplazar variables
+                String htmlContent = getVerificationEmailTemplate(verificationUrl);
                 
-                String emailBody = String.format("""
-                    ¡Hola!
-                    
-                    Gracias por registrarte en Flowlite. Para completar tu registro, 
-                    por favor verifica tu cuenta haciendo clic en el siguiente enlace:
-                    
-                    %s
-                    
-                    Este enlace será válido por 24 horas.
-                    
-                    Si no solicitaste este registro, puedes ignorar este email.
-                    
-                    ¡Bienvenido a Flowlite!
-                    
-                    El equipo de Flowlite
-                    """, verificationUrl);
+                // Crear mensaje HTML
+                MimeMessage message = javaMailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
                 
-                message.setText(emailBody);
+                helper.setFrom(fromEmail);
+                helper.setTo(email);
+                helper.setSubject("Verifica tu cuenta en Flowlite");
+                helper.setText(htmlContent, true); // true = HTML
                 
-                // Usar JavaMailSender directamente para MailHog
                 javaMailSender.send(message);
-                log.info("Email enviado a MailHog para: {}", email);
+                log.info("Email HTML enviado a MailHog para: {}", email);
                 
             } catch (Exception e) {
-                log.warn("No se pudo enviar email a MailHog: {}", e.getMessage());
+                log.warn("No se pudo enviar email HTML a MailHog: {}", e.getMessage());
             }
             
             return;
@@ -105,6 +100,33 @@ public class EmailServiceImpl implements EmailService {
         } catch (Exception e) {
             log.error("Error enviando email de bienvenida a {}: {}", email, e.getMessage());
             // No lanzamos excepción aquí porque el usuario ya está registrado
+        }
+    }
+    
+    private String extractUsernameFromEmail(String email) {
+        if (email != null && email.contains("@")) {
+            return email.substring(0, email.indexOf("@"));
+        }
+        return "Usuario";
+    }
+    
+    private String getVerificationEmailTemplate(String verificationUrl) {
+        try {
+            // Leer el archivo HTML de la plantilla
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("templates/email/verification.html");
+            if (inputStream == null) {
+                throw new RuntimeException("No se pudo encontrar la plantilla verification.html");
+            }
+            
+            String htmlTemplate = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            inputStream.close();
+            
+            // Reemplazar {verificationUrl} con la URL real
+            return htmlTemplate.replace("{verificationUrl}", verificationUrl);
+            
+        } catch (Exception e) {
+            log.error("Error leyendo plantilla HTML: {}", e.getMessage());
+            throw new RuntimeException("Error procesando plantilla de email", e);
         }
     }
 }

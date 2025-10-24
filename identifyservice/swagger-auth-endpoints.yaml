@@ -4,15 +4,20 @@ info:
   description: |
     API para autenticación de usuarios con soporte para:
     - Registro de usuarios tradicional
+    - Preregistro con verificación de email
+    - Verificación de email desde enlaces
     - Login con credenciales
     - Autenticación OAuth2 con Google
     - Generación de JWT tokens
     - Revocación de tokens con Redis
     - Validación de tokens
     - Gestión de información de usuarios
+    - Envío de emails con plantillas HTML
     
     **Endpoints Públicos (sin autenticación):**
     - `/auth/register` - Registrar nuevo usuario
+    - `/auth/preregister` - Preregistro con verificación de email
+    - `/auth/verify` - Verificar email desde enlace
     - `/auth/login` - Iniciar sesión
     - `/auth/validate` - Validar token JWT
     - `/auth/success` - Página de éxito OAuth2
@@ -94,6 +99,166 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/preregister:
+    post:
+      tags:
+        - Authentication
+      summary: Preregistro con verificación de email
+      description: |
+        Crea un preregistro de usuario que requiere verificación de email antes de activar la cuenta.
+        Envía un email con un enlace de verificación que debe ser clickeado para completar el registro.
+        El usuario no puede iniciar sesión hasta que verifique su email.
+        
+        **Flujo de preregistro:**
+        1. Usuario envía datos de preregistro
+        2. Sistema valida que el email/username no existan
+        3. Se crea un registro temporal en Redis con token de verificación
+        4. Se envía email con enlace de verificación
+        5. Usuario hace clic en el enlace para activar su cuenta
+        6. Usuario puede iniciar sesión normalmente
+        
+        **Diferencias con `/auth/register`:**
+        - `/auth/register`: Registro inmediato, usuario puede iniciar sesión
+        - `/auth/preregister`: Requiere verificación de email antes de poder iniciar sesión
+      operationId: preregisterUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreregisterRequest'
+            examples:
+              example1:
+                summary: Preregistro básico
+                value:
+                  username: "johndoe"
+                  email: "john@example.com"
+                  password: "SecurePassword123"
+      responses:
+        '200':
+          description: Preregistro exitoso, email de verificación enviado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreregisterResponse'
+              examples:
+                success:
+                  summary: Preregistro exitoso
+                  value:
+                    message: "Preregistro exitoso"
+                    status: "success"
+                    email: "john@example.com"
+                    note: "Revisa tu email para verificar tu cuenta. El enlace será válido por 24 horas."
+        '400':
+          description: Error en la petición
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                emailExists:
+                  summary: Email ya registrado
+                  value:
+                    error: "El email ya está registrado"
+                usernameExists:
+                  summary: Username ya en uso
+                  value:
+                    error: "El username ya está en uso"
+                validationError:
+                  summary: Error de validación
+                  value:
+                    error: "Datos de entrada inválidos"
+                preregisterExists:
+                  summary: Preregistro pendiente
+                  value:
+                    error: "Ya existe un preregistro pendiente para este email"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/verify:
+    get:
+      tags:
+        - Authentication
+      summary: Verificar email desde enlace
+      description: |
+        Verifica el email usando el token como parámetro de URL.
+        Útil para enlaces en emails. Redirige a una página de éxito.
+        **Endpoint PÚBLICO** - No requiere autenticación.
+        
+        **Flujo de verificación:**
+        1. Usuario recibe email con enlace de verificación
+        2. Usuario hace clic en el enlace
+        3. Sistema valida el token y activa la cuenta
+        4. Se elimina el preregistro temporal de Redis
+        5. Usuario puede iniciar sesión normalmente
+        
+        **Respuesta:**
+        - Éxito: Página HTML de confirmación
+        - Error: Página HTML de error con mensaje descriptivo
+      operationId: verifyEmail
+      parameters:
+        - name: token
+          in: query
+          description: Token de verificación del email
+          required: true
+          schema:
+            type: string
+            example: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb2huZG9lIiwiZW1haWwiOiJqb2huQGV4YW1wbGUuY29tIiwidHlwZSI6InZlcmlmaWNhdGlvbiIsImlhdCI6MTUxNjIzOTAyMiwiZXhwIjoxNTE2MzI1NDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+      responses:
+        '200':
+          description: Verificación exitosa
+          content:
+            text/html:
+              schema:
+                type: string
+                description: Página HTML de confirmación
+              examples:
+                success:
+                  summary: Página de éxito
+                  value: |
+                    <!DOCTYPE html>
+                    <html>
+                    <head><title>¡Cuenta activada con éxito!</title></head>
+                    <body>
+                      <h1>¡Cuenta activada con éxito!</h1>
+                      <p>Tu cuenta ha sido activada correctamente.<br>Ya puedes iniciar sesión y disfrutar de todos los beneficios.</p>
+                    </body>
+                    </html>
+        '400':
+          description: Token inválido o expirado
+          content:
+            text/html:
+              schema:
+                type: string
+                description: Página HTML de error
+              examples:
+                invalidToken:
+                  summary: Token inválido
+                  value: |
+                    <!DOCTYPE html>
+                    <html>
+                    <head><title>Error de verificación</title></head>
+                    <body>
+                      <h1>Error de verificación</h1>
+                      <p>El enlace de verificación es inválido o ha expirado. Por favor, solicita un nuevo enlace de verificación.</p>
+                    </body>
+                    </html>
+                expiredToken:
+                  summary: Token expirado
+                  value: |
+                    <!DOCTYPE html>
+                    <html>
+                    <head><title>Error de verificación</title></head>
+                    <body>
+                      <h1>Error de verificación</h1>
+                      <p>El enlace de verificación ha expirado. Por favor, solicita un nuevo enlace de verificación.</p>
+                    </body>
+                    </html>
 
   /auth/login:
     post:
@@ -510,6 +675,56 @@ components:
           minLength: 6
           maxLength: 100
           example: "SecurePassword123"
+
+    PreregisterRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          description: Nombre de usuario único
+          minLength: 3
+          maxLength: 50
+          example: "johndoe"
+        email:
+          type: string
+          format: email
+          description: Dirección de correo electrónico que será verificada
+          example: "john@example.com"
+        password:
+          type: string
+          description: Contraseña del usuario
+          minLength: 6
+          maxLength: 100
+          example: "SecurePassword123"
+
+    PreregisterResponse:
+      type: object
+      required:
+        - message
+        - status
+        - email
+      properties:
+        message:
+          type: string
+          description: Mensaje de confirmación
+          example: "Preregistro exitoso"
+        status:
+          type: string
+          description: Estado de la operación
+          example: "success"
+        email:
+          type: string
+          format: email
+          description: Email al que se envió la verificación
+          example: "john@example.com"
+        note:
+          type: string
+          description: Instrucciones adicionales para el usuario
+          example: "Revisa tu email para verificar tu cuenta. El enlace será válido por 24 horas."
 
     LoginRequest:
       type: object

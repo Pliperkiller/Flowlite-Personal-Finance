@@ -153,22 +153,69 @@ public class VerificationController {
                                 """))),
             @ApiResponse(responseCode = "400", description = "Token inválido o expirado")
     })
-    public ResponseEntity<Map<String, String>> verifyEmailGet(@RequestParam String token) {
+    public ResponseEntity<String> verifyEmailGet(@RequestParam String token) {
         try {
             preregisterUserService.verifyAndRegister(token);
             
-            return ResponseEntity.ok(Map.of(
-                "message", "Email verificado exitosamente",
-                "status", "success",
-                "redirect", "http://localhost:3000/verification-success"
-            ));
+            // Retornar la plantilla HTML de éxito
+            return ResponseEntity.ok()
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(getSuccessHtmlTemplate());
             
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Token de verificación inválido",
-                "message", e.getMessage(),
-                "status", "BAD_REQUEST"
-            ));
+            return ResponseEntity.badRequest()
+                .header("Content-Type", "text/html; charset=UTF-8")
+                .body(getErrorHtmlTemplate(e.getMessage()));
         }
+    }
+    
+    private String getSuccessHtmlTemplate() {
+        return """
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>¡Cuenta activada con éxito!</title>
+                <style>
+                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #F9FAFB; }
+                    .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 18px rgba(16,24,40,0.06); }
+                    h1 { color: #1F2937; margin-bottom: 20px; }
+                    p { color: #4B5563; font-size: 16px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>¡Cuenta activada con éxito!</h1>
+                    <p>Tu cuenta ha sido activada correctamente.<br>Ya puedes iniciar sesión y disfrutar de todos los beneficios.</p>
+                </div>
+            </body>
+            </html>
+            """;
+    }
+    
+    private String getErrorHtmlTemplate(String errorMessage) {
+        return String.format("""
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Error de verificación</title>
+                <style>
+                    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #F9FAFB; }
+                    .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 18px rgba(16,24,40,0.06); }
+                    h1 { color: #DC2626; margin-bottom: 20px; }
+                    p { color: #4B5563; font-size: 16px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>Error de verificación</h1>
+                    <p>%s</p>
+                </div>
+            </body>
+            </html>
+            """, errorMessage);
     }
 }
