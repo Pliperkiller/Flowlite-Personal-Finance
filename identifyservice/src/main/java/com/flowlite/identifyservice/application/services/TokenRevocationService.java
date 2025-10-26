@@ -22,12 +22,7 @@ public class TokenRevocationService {
      */
     public boolean revokeToken(String token) {
         try {
-            // Validar que el token sea válido antes de revocarlo
-            if (!tokenProvider.validateToken(token)) {
-                return false;
-            }
-            
-            // Revocar el token
+            // Revocar el token sin validar primero (para tokens de recuperación)
             tokenProvider.revokeToken(token);
             return true;
             

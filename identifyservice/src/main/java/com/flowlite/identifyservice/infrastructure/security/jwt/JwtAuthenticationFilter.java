@@ -40,6 +40,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             requestURI.startsWith("/auth/success") ||
             requestURI.startsWith("/auth/error") ||
             requestURI.startsWith("/auth/validate") ||
+            requestURI.startsWith("/auth/forgot-password") ||
+            requestURI.startsWith("/auth/reset-password") ||
+            requestURI.startsWith("/auth/validate-recovery-token") ||
+            requestURI.startsWith("/auth/forgot-username") ||
             requestURI.startsWith("/oauth2/") ||
             requestURI.startsWith("/swagger-ui/") ||
             requestURI.startsWith("/v3/api-docs/") ||

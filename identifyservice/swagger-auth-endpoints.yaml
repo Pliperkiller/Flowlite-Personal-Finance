@@ -15,6 +15,8 @@ info:
     - Envío de emails con plantillas HTML
     - Gestión de información personal de usuarios
     - Actualización de datos personales con validaciones
+    - Recuperación de contraseñas por email
+    - Recuperación de información de usuario
     
     **Endpoints Públicos (sin autenticación):**
     - `/auth/register` - Registrar nuevo usuario
@@ -22,6 +24,10 @@ info:
     - `/auth/verify` - Verificar email desde enlace
     - `/auth/login` - Iniciar sesión
     - `/auth/validate` - Validar token JWT
+    - `/auth/forgot-password` - Solicitar recuperación de contraseña
+    - `/auth/reset-password` - Resetear contraseña con token
+    - `/auth/validate-recovery-token` - Validar token de recuperación
+    - `/auth/forgot-username` - Recuperar información de usuario
     - `/auth/success` - Página de éxito OAuth2
     - `/auth/error` - Página de error OAuth2
     - `/oauth2/**` - Endpoints OAuth2
@@ -641,6 +647,246 @@ paths:
                     access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
         '400':
           description: Error en el código de autorización
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/forgot-password:
+    post:
+      tags:
+        - Password Recovery
+      summary: Solicitar recuperación de contraseña
+      description: |
+        Envía un email con enlace para recuperar la contraseña del usuario.
+        Por seguridad, siempre devuelve éxito independientemente de si el email existe.
+        El enlace de recuperación expira en 24 horas por defecto.
+        **Endpoint PÚBLICO** - No requiere autenticación.
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordRecoveryRequest'
+            examples:
+              example1:
+                summary: Solicitud de recuperación
+                value:
+                  email: "usuario@example.com"
+      responses:
+        '200':
+          description: Solicitud procesada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Si el email está registrado, recibirás un enlace de recuperación"
+                  status:
+                    type: string
+                    example: "success"
+                  email:
+                    type: string
+                    example: "usuario@example.com"
+                  expirationHours:
+                    type: integer
+                    example: 24
+        '400':
+          description: Email inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/reset-password:
+    post:
+      tags:
+        - Password Recovery
+      summary: Resetear contraseña con token
+      description: |
+        Resetea la contraseña del usuario usando el token de recuperación recibido por email.
+        El token debe ser válido y no expirado.
+        La nueva contraseña debe cumplir con los requisitos de seguridad.
+        **Endpoint PÚBLICO** - No requiere autenticación.
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+            examples:
+              example1:
+                summary: Reset de contraseña
+                value:
+                  token: "eyJhbGciOiJIUzI1NiJ9..."
+                  newPassword: "NewPassword123!"
+      responses:
+        '200':
+          description: Contraseña actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Contraseña actualizada exitosamente"
+                  status:
+                    type: string
+                    example: "success"
+                  username:
+                    type: string
+                    example: "usuario"
+                  email:
+                    type: string
+                    example: "usuario@example.com"
+        '400':
+          description: Token inválido o datos incorrectos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidToken:
+                  summary: Token inválido
+                  value:
+                    error: "Datos inválidos"
+                    message: "Token inválido para recuperación de contraseña"
+                expiredToken:
+                  summary: Token expirado
+                  value:
+                    error: "Datos inválidos"
+                    message: "Token expirado o inválido"
+                samePassword:
+                  summary: Contraseña igual
+                  value:
+                    error: "Datos inválidos"
+                    message: "La nueva contraseña debe ser diferente a la actual"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/validate-recovery-token:
+    get:
+      tags:
+        - Password Recovery
+      summary: Validar token de recuperación
+      description: |
+        Valida si un token de recuperación es válido y no expirado.
+        Útil para verificar el estado del token antes de mostrar el formulario de reset.
+        **Endpoint PÚBLICO** - No requiere autenticación.
+      operationId: validateRecoveryToken
+      parameters:
+        - name: token
+          in: query
+          description: Token de recuperación a validar
+          required: true
+          schema:
+            type: string
+            example: "eyJhbGciOiJIUzI1NiJ9..."
+      responses:
+        '200':
+          description: Token válido
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Token válido"
+                  email:
+                    type: string
+                    example: "usuario@example.com"
+                  username:
+                    type: string
+                    example: "usuario"
+        '400':
+          description: Token inválido o expirado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Token expirado o inválido"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Error interno del servidor"
+
+  /auth/forgot-username:
+    post:
+      tags:
+        - Password Recovery
+      summary: Recuperar información de usuario
+      description: |
+        Envía un email con la información del usuario (username) asociado al email.
+        Por seguridad, siempre devuelve éxito independientemente de si el email existe.
+        **Endpoint PÚBLICO** - No requiere autenticación.
+      operationId: forgotUsername
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordRecoveryRequest'
+            examples:
+              example1:
+                summary: Solicitud de información de usuario
+                value:
+                  email: "usuario@example.com"
+      responses:
+        '200':
+          description: Solicitud procesada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Si el email está registrado, recibirás un email con tu información de usuario"
+                  status:
+                    type: string
+                    example: "success"
+        '400':
+          description: Email inválido
           content:
             application/json:
               schema:
@@ -1285,6 +1531,35 @@ components:
               description: Fecha de última actualización
               example: "2025-10-25T19:49:40.123456"
 
+    PasswordRecoveryRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email del usuario para recuperar contraseña o información
+          example: "usuario@example.com"
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - newPassword
+      properties:
+        token:
+          type: string
+          description: Token de recuperación de contraseña
+          example: "eyJhbGciOiJIUzI1NiJ9..."
+        newPassword:
+          type: string
+          description: Nueva contraseña del usuario
+          minLength: 6
+          maxLength: 100
+          pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{6,}$"
+          example: "NewPassword123!"
+
   securitySchemes:
     BearerAuth:
       type: http
@@ -1345,3 +1620,31 @@ tags:
       
       Requiere header Authorization: Bearer TOKEN para todos los endpoints.
       Integración con JWT para identificación segura del usuario.
+  - name: Password Recovery
+    description: |
+      Endpoints para recuperación de contraseñas y información de usuario.
+      Permite a los usuarios recuperar sus contraseñas olvidadas y obtener información de su cuenta.
+      Incluye validaciones de seguridad y envío de emails con tokens seguros.
+      
+      **Endpoints Públicos (sin autenticación):**
+      - `/auth/forgot-password` - Solicitar recuperación de contraseña
+      - `/auth/reset-password` - Resetear contraseña con token
+      - `/auth/validate-recovery-token` - Validar token de recuperación
+      - `/auth/forgot-username` - Recuperar información de usuario
+      
+      **Características:**
+      - Tokens de recuperación con expiración configurable (24 horas por defecto)
+      - Validaciones de seguridad para prevenir ataques
+      - Envío de emails con plantillas HTML profesionales
+      - Respuestas de seguridad que no revelan si el email existe
+      - Validación de contraseñas con requisitos de seguridad
+      
+      **Flujo de Recuperación:**
+      1. Usuario solicita recuperación con su email
+      2. Sistema envía email con enlace de recuperación
+      3. Usuario hace clic en el enlace (valida token)
+      4. Usuario ingresa nueva contraseña
+      5. Sistema actualiza contraseña y confirma éxito
+      
+      No requiere autenticación para ningún endpoint.
+      Integración con sistema de emails para notificaciones seguras.
