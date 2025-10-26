@@ -4,28 +4,26 @@ import com.flowlite.identifyservice.application.ports.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.MailSender;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
 
 import jakarta.mail.internet.MimeMessage;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * Implementación del servicio de email para MailerSend (producción).
+ * Utiliza MailerSend como proveedor de email transaccional para producción.
+ */
 @Slf4j
-@Service
+@Service("emailServiceMailerSend")
 @RequiredArgsConstructor
-public class EmailServiceImpl implements EmailService {
+public class EmailServiceMailerSend implements EmailService {
     
-    private final MailSender mailSender;
     private final JavaMailSender javaMailSender;
-    private final TemplateEngine templateEngine;
     
-    @Value("${app.email.from:noreply@flowlite.com}")
+    @Value("${app.email.from:MS_p2qoC5@test-y7zpl98wwzp45vx6.mlsender.net}")
     private String fromEmail;
     
     @Value("${app.email.verification-url:http://localhost:8080/auth/verify}")
@@ -36,35 +34,26 @@ public class EmailServiceImpl implements EmailService {
         try {
             String verificationUrl = verificationBaseUrl + "?token=" + verificationToken;
             
-            // Para desarrollo: loguear en consola y también enviar a MailHog
-            log.info("=== EMAIL DE VERIFICACIÓN (MODO DESARROLLO) ===");
+            log.info("=== ENVIANDO EMAIL DE VERIFICACIÓN (MAILERSEND) ===");
             log.info("Para: {}", email);
             log.info("Token: {}", verificationToken);
             log.info("URL de verificación: {}", verificationUrl);
             log.info("=============================================");
             
-            // También intentar enviar a MailHog en desarrollo usando plantilla HTML
-            try {
-                // Leer plantilla HTML y reemplazar variables
-                String htmlContent = getVerificationEmailTemplate(verificationUrl);
-                
-                // Crear mensaje HTML
-                MimeMessage message = javaMailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-                
-                helper.setFrom(fromEmail);
-                helper.setTo(email);
-                helper.setSubject("Verifica tu cuenta en Flowlite");
-                helper.setText(htmlContent, true); // true = HTML
-                
-                javaMailSender.send(message);
-                log.info("Email HTML enviado a MailHog para: {}", email);
-                
-            } catch (Exception e) {
-                log.warn("No se pudo enviar email HTML a MailHog: {}", e.getMessage());
-            }
+            // Leer plantilla HTML y reemplazar variables
+            String htmlContent = getVerificationEmailTemplate(verificationUrl);
             
-            return;
+            // Crear mensaje HTML
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setFrom(fromEmail);
+            helper.setTo(email);
+            helper.setSubject("Verifica tu cuenta en Flowlite");
+            helper.setText(htmlContent, true); // true = HTML
+            
+            javaMailSender.send(message);
+            log.info("Email HTML enviado exitosamente a MailerSend para: {}", email);
             
         } catch (Exception e) {
             log.error("Error enviando email de verificación a {}: {}", email, e.getMessage());
@@ -75,11 +64,6 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendWelcomeEmail(String email, String username) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(email);
-            message.setSubject("¡Bienvenido a Flowlite!");
-            
             String emailBody = String.format("""
                 ¡Hola %s!
                 
@@ -92,22 +76,22 @@ public class EmailServiceImpl implements EmailService {
                 El equipo de Flowlite
                 """, username);
             
-            message.setText(emailBody);
+            // Crear mensaje simple
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             
-            mailSender.send(message);
-            log.info("Email de bienvenida enviado a: {}", email);
+            helper.setFrom(fromEmail);
+            helper.setTo(email);
+            helper.setSubject("¡Bienvenido a Flowlite!");
+            helper.setText(emailBody, false); // false = texto plano
+            
+            javaMailSender.send(message);
+            log.info("Email de bienvenida enviado a MailerSend para: {}", email);
             
         } catch (Exception e) {
             log.error("Error enviando email de bienvenida a {}: {}", email, e.getMessage());
             // No lanzamos excepción aquí porque el usuario ya está registrado
         }
-    }
-    
-    private String extractUsernameFromEmail(String email) {
-        if (email != null && email.contains("@")) {
-            return email.substring(0, email.indexOf("@"));
-        }
-        return "Usuario";
     }
     
     private String getVerificationEmailTemplate(String verificationUrl) {

@@ -51,6 +51,10 @@ services:
       SPRING_DATA_REDIS_TIMEOUT: 2000ms
       
       # Configuración de MailHog para desarrollo
+      MAIL_HOST: flowlite-mailhog
+      MAIL_PORT: 1025
+      MAIL_USERNAME: ""
+      MAIL_PASSWORD: ""
       SPRING_MAIL_HOST: flowlite-mailhog
       SPRING_MAIL_PORT: 1025
       SPRING_MAIL_USERNAME: ""
