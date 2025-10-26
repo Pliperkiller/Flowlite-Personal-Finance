@@ -13,6 +13,8 @@ info:
     - Validación de tokens
     - Gestión de información de usuarios
     - Envío de emails con plantillas HTML
+    - Gestión de información personal de usuarios
+    - Actualización de datos personales con validaciones
     
     **Endpoints Públicos (sin autenticación):**
     - `/auth/register` - Registrar nuevo usuario
@@ -30,6 +32,8 @@ info:
     **Endpoints Protegidos (requieren autenticación):**
     - `/auth/me` - Obtener información del usuario autenticado
     - `/auth/logout` - Cerrar sesión y revocar token
+    - `/user-info/update` - Actualizar información personal del usuario
+    - `/user-info/me` - Obtener información personal del usuario
   version: 1.0.0
   contact:
     name: Identity Service Team
@@ -648,6 +652,266 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /user-info/update:
+    put:
+      tags:
+        - User Information
+      summary: Actualizar información personal del usuario
+      description: |
+        Permite al usuario autenticado actualizar su información personal.
+        Incluye validaciones de unicidad para número de identificación y teléfono.
+        Requiere header Authorization: Bearer TOKEN.
+        
+        **Campos obligatorios:**
+        - primerNombre: Primer nombre del usuario
+        - primerApellido: Primer apellido del usuario  
+        - telefono: Número de teléfono (10-15 dígitos)
+        - numeroIdentificacion: Número de identificación (6-20 dígitos)
+        - tipoIdentificacion: Tipo de identificación (CC, CE, PA, TI, RC, NIT)
+        
+        **Campos opcionales:**
+        - segundoNombre: Segundo nombre del usuario
+        - segundoApellido: Segundo apellido del usuario
+        - direccion: Dirección del usuario
+        - ciudad: Ciudad del usuario
+        - departamento: Departamento del usuario
+        - pais: País del usuario
+        - fechaNacimiento: Fecha de nacimiento
+        - genero: Género del usuario
+        - estadoCivil: Estado civil del usuario
+        - ocupacion: Ocupación del usuario
+        
+        **Validaciones:**
+        - Número de identificación único en el sistema
+        - Teléfono único en el sistema
+        - Tipos de identificación válidos para Colombia
+      operationId: updateUserInfo
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserInfoRequest'
+            examples:
+              example1:
+                summary: Actualización completa
+                value:
+                  primerNombre: "Juan"
+                  segundoNombre: "Carlos"
+                  primerApellido: "García"
+                  segundoApellido: "López"
+                  telefono: "3001234567"
+                  direccion: "Calle 123 #45-67"
+                  ciudad: "Bogotá"
+                  departamento: "Cundinamarca"
+                  pais: "Colombia"
+                  fechaNacimiento: "1990-05-15"
+                  numeroIdentificacion: "12345678"
+                  tipoIdentificacion: "CC"
+                  genero: "Masculino"
+                  estadoCivil: "Soltero"
+                  ocupacion: "Ingeniero"
+              example2:
+                summary: Actualización mínima
+                value:
+                  primerNombre: "María"
+                  primerApellido: "Rodríguez"
+                  telefono: "3109876543"
+                  numeroIdentificacion: "87654321"
+                  tipoIdentificacion: "CE"
+      responses:
+        '200':
+          description: Información personal actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfoUpdateResponse'
+              examples:
+                success:
+                  summary: Actualización exitosa
+                  value:
+                    message: "Información personal actualizada exitosamente"
+                    userInfo:
+                      id: "1a3ec2da-5cfa-45df-b9a0-764db8fde346"
+                      userId: "7160fc51-692d-4760-9fbe-6a69591bd8d2"
+                      nombreCompleto: "Juan Carlos García López"
+                      telefono: "3001234567"
+                      ciudad: "Bogotá"
+                      departamento: "Cundinamarca"
+                      numeroIdentificacion: "12345678"
+                      tipoIdentificacion: "Cédula de Ciudadanía"
+                      isComplete: true
+        '400':
+          description: Datos inválidos o errores de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validationError:
+                  summary: Error de validación
+                  value:
+                    error: "Datos inválidos"
+                    message: "El primer nombre es obligatorio"
+                invalidPhone:
+                  summary: Teléfono inválido
+                  value:
+                    error: "Datos inválidos"
+                    message: "El teléfono debe contener solo números y tener entre 10 y 15 dígitos"
+                invalidIdentification:
+                  summary: Identificación inválida
+                  value:
+                    error: "Datos inválidos"
+                    message: "El número de identificación debe contener solo números y tener entre 6 y 20 dígitos"
+        '401':
+          description: No autorizado: token inválido o no proporcionado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidToken:
+                  summary: Token inválido
+                  value:
+                    error: "Token inválido"
+                    message: "El token proporcionado no es válido"
+                missingToken:
+                  summary: Token no proporcionado
+                  value:
+                    error: "Token requerido"
+                    message: "Se requiere un token de autorización"
+        '404':
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                userNotFound:
+                  summary: Usuario no encontrado
+                  value:
+                    error: "Usuario no encontrado"
+                    message: "No se encontró el usuario especificado"
+        '409':
+          description: Conflicto: número de identificación o teléfono ya en uso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                identificationConflict:
+                  summary: Identificación en uso
+                  value:
+                    error: "Conflicto de datos"
+                    message: "El número de identificación ya está en uso por otro usuario"
+                phoneConflict:
+                  summary: Teléfono en uso
+                  value:
+                    error: "Conflicto de datos"
+                    message: "El número de teléfono ya está en uso por otro usuario"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /user-info/me:
+    get:
+      tags:
+        - User Information
+      summary: Obtener información personal del usuario
+      description: |
+        Devuelve la información personal completa del usuario autenticado.
+        Incluye datos personales, identificación, ubicación y metadatos.
+        Requiere header Authorization: Bearer TOKEN.
+        
+        **Respuesta incluye:**
+        - Información personal básica (nombres, apellidos)
+        - Datos de contacto (teléfono, dirección)
+        - Información de identificación
+        - Datos adicionales (género, estado civil, ocupación)
+        - Metadatos (fechas de creación/actualización, estado)
+        - Indicador de completitud de información
+        
+        **Casos de respuesta:**
+        - 200: Usuario con información personal registrada
+        - 404: Usuario sin información personal (primera consulta)
+      operationId: getUserInfo
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Información personal obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfoResponse'
+              examples:
+                completeInfo:
+                  summary: Usuario con información completa
+                  value:
+                    userInfo:
+                      id: "1a3ec2da-5cfa-45df-b9a0-764db8fde346"
+                      userId: "7160fc51-692d-4760-9fbe-6a69591bd8d2"
+                      primerNombre: "Juan"
+                      segundoNombre: "Carlos"
+                      primerApellido: "García"
+                      segundoApellido: "López"
+                      telefono: "3001234567"
+                      direccion: "Calle 123 #45-67"
+                      ciudad: "Bogotá"
+                      departamento: "Cundinamarca"
+                      pais: "Colombia"
+                      fechaNacimiento: "1990-05-15"
+                      numeroIdentificacion: "12345678"
+                      tipoIdentificacion: "Cédula de Ciudadanía"
+                      genero: "Masculino"
+                      estadoCivil: "Soltero"
+                      ocupacion: "Ingeniero"
+                      nombreCompleto: "Juan Carlos García López"
+                      isComplete: true
+                      activo: true
+                      createdAt: "2025-10-25T19:44:48.558755"
+                      updatedAt: "2025-10-25T19:49:40.123456"
+        '401':
+          description: No autorizado: token inválido o no proporcionado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidToken:
+                  summary: Token inválido
+                  value:
+                    error: "Token inválido"
+                    message: "El token proporcionado no es válido"
+                missingToken:
+                  summary: Token no proporcionado
+                  value:
+                    error: "Token requerido"
+                    message: "Se requiere un token de autorización"
+        '404':
+          description: Información personal no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                noInfo:
+                  summary: Usuario sin información personal
+                  value:
+                    error: "Información no encontrada"
+                    message: "El usuario no tiene información personal registrada"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 
 components:
   schemas:
@@ -778,6 +1042,249 @@ components:
           description: Timestamp del error
           example: "2025-09-28T22:30:00Z"
 
+    UpdateUserInfoRequest:
+      type: object
+      required:
+        - primerNombre
+        - primerApellido
+        - telefono
+        - numeroIdentificacion
+        - tipoIdentificacion
+      properties:
+        primerNombre:
+          type: string
+          description: Primer nombre del usuario
+          minLength: 2
+          maxLength: 50
+          example: "Juan"
+        segundoNombre:
+          type: string
+          description: Segundo nombre del usuario (opcional)
+          maxLength: 50
+          example: "Carlos"
+        primerApellido:
+          type: string
+          description: Primer apellido del usuario
+          minLength: 2
+          maxLength: 50
+          example: "García"
+        segundoApellido:
+          type: string
+          description: Segundo apellido del usuario (opcional)
+          maxLength: 50
+          example: "López"
+        telefono:
+          type: string
+          description: Número de teléfono del usuario
+          pattern: "^[0-9]{10,15}$"
+          example: "3001234567"
+        direccion:
+          type: string
+          description: Dirección del usuario
+          maxLength: 200
+          example: "Calle 123 #45-67"
+        ciudad:
+          type: string
+          description: Ciudad del usuario
+          maxLength: 100
+          example: "Bogotá"
+        departamento:
+          type: string
+          description: Departamento del usuario
+          maxLength: 100
+          example: "Cundinamarca"
+        pais:
+          type: string
+          description: País del usuario
+          maxLength: 100
+          example: "Colombia"
+        fechaNacimiento:
+          type: string
+          format: date
+          description: Fecha de nacimiento del usuario
+          example: "1990-05-15"
+        numeroIdentificacion:
+          type: string
+          description: Número de identificación del usuario
+          pattern: "^[0-9]{6,20}$"
+          example: "12345678"
+        tipoIdentificacion:
+          type: string
+          description: Tipo de identificación del usuario
+          enum: ["CC", "CE", "PA", "TI", "RC", "NIT"]
+          example: "CC"
+        genero:
+          type: string
+          description: Género del usuario
+          maxLength: 20
+          example: "Masculino"
+        estadoCivil:
+          type: string
+          description: Estado civil del usuario
+          maxLength: 30
+          example: "Soltero"
+        ocupacion:
+          type: string
+          description: Ocupación del usuario
+          maxLength: 100
+          example: "Ingeniero"
+
+    UserInfoUpdateResponse:
+      type: object
+      required:
+        - message
+        - userInfo
+      properties:
+        message:
+          type: string
+          description: Mensaje de confirmación
+          example: "Información personal actualizada exitosamente"
+        userInfo:
+          type: object
+          description: Información personal actualizada
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: ID único de la información personal
+              example: "1a3ec2da-5cfa-45df-b9a0-764db8fde346"
+            userId:
+              type: string
+              format: uuid
+              description: ID del usuario asociado
+              example: "7160fc51-692d-4760-9fbe-6a69591bd8d2"
+            nombreCompleto:
+              type: string
+              description: Nombre completo del usuario
+              example: "Juan Carlos García López"
+            telefono:
+              type: string
+              description: Número de teléfono
+              example: "3001234567"
+            ciudad:
+              type: string
+              description: Ciudad del usuario
+              example: "Bogotá"
+            departamento:
+              type: string
+              description: Departamento del usuario
+              example: "Cundinamarca"
+            numeroIdentificacion:
+              type: string
+              description: Número de identificación
+              example: "12345678"
+            tipoIdentificacion:
+              type: string
+              description: Descripción del tipo de identificación
+              example: "Cédula de Ciudadanía"
+            isComplete:
+              type: boolean
+              description: Indica si la información está completa
+              example: true
+
+    UserInfoResponse:
+      type: object
+      required:
+        - userInfo
+      properties:
+        userInfo:
+          type: object
+          description: Información personal completa del usuario
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: ID único de la información personal
+              example: "1a3ec2da-5cfa-45df-b9a0-764db8fde346"
+            userId:
+              type: string
+              format: uuid
+              description: ID del usuario asociado
+              example: "7160fc51-692d-4760-9fbe-6a69591bd8d2"
+            primerNombre:
+              type: string
+              description: Primer nombre del usuario
+              example: "Juan"
+            segundoNombre:
+              type: string
+              description: Segundo nombre del usuario
+              example: "Carlos"
+            primerApellido:
+              type: string
+              description: Primer apellido del usuario
+              example: "García"
+            segundoApellido:
+              type: string
+              description: Segundo apellido del usuario
+              example: "López"
+            telefono:
+              type: string
+              description: Número de teléfono
+              example: "3001234567"
+            direccion:
+              type: string
+              description: Dirección del usuario
+              example: "Calle 123 #45-67"
+            ciudad:
+              type: string
+              description: Ciudad del usuario
+              example: "Bogotá"
+            departamento:
+              type: string
+              description: Departamento del usuario
+              example: "Cundinamarca"
+            pais:
+              type: string
+              description: País del usuario
+              example: "Colombia"
+            fechaNacimiento:
+              type: string
+              format: date
+              description: Fecha de nacimiento
+              example: "1990-05-15"
+            numeroIdentificacion:
+              type: string
+              description: Número de identificación
+              example: "12345678"
+            tipoIdentificacion:
+              type: string
+              description: Descripción del tipo de identificación
+              example: "Cédula de Ciudadanía"
+            genero:
+              type: string
+              description: Género del usuario
+              example: "Masculino"
+            estadoCivil:
+              type: string
+              description: Estado civil del usuario
+              example: "Soltero"
+            ocupacion:
+              type: string
+              description: Ocupación del usuario
+              example: "Ingeniero"
+            nombreCompleto:
+              type: string
+              description: Nombre completo del usuario
+              example: "Juan Carlos García López"
+            isComplete:
+              type: boolean
+              description: Indica si la información está completa
+              example: true
+            activo:
+              type: boolean
+              description: Indica si el registro está activo
+              example: true
+            createdAt:
+              type: string
+              format: date-time
+              description: Fecha de creación del registro
+              example: "2025-10-25T19:44:48.558755"
+            updatedAt:
+              type: string
+              format: date-time
+              description: Fecha de última actualización
+              example: "2025-10-25T19:49:40.123456"
+
   securitySchemes:
     BearerAuth:
       type: http
@@ -819,3 +1326,22 @@ tags:
       **Endpoints Públicos (sin autenticación):**
       - `/oauth2/authorization/google` - Iniciar autenticación OAuth2 con Google
       - `/login/oauth2/code/google` - Callback de OAuth2 Google
+  - name: User Information
+    description: |
+      Endpoints para gestión de información personal de usuarios.
+      Permite a los usuarios autenticados actualizar y consultar su información personal.
+      Incluye validaciones de unicidad y tipos de identificación colombianos.
+      
+      **Endpoints Protegidos (requieren autenticación):**
+      - `/user-info/update` - Actualizar información personal del usuario
+      - `/user-info/me` - Obtener información personal del usuario
+      
+      **Características:**
+      - Validación de tipos de identificación colombianos (CC, CE, PA, TI, RC, NIT)
+      - Verificación de unicidad de número de identificación y teléfono
+      - Soporte para nombres y apellidos separados
+      - Campos opcionales y obligatorios claramente definidos
+      - Respuestas diferenciadas para usuarios con/sin información personal
+      
+      Requiere header Authorization: Bearer TOKEN para todos los endpoints.
+      Integración con JWT para identificación segura del usuario.
