@@ -1,0 +1,80 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment variables
+.env
+.env.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.cover
+.hypothesis/
+
+# Logs
+*.log
+
+# Database
+*.db
+*.sqlite3
+
+# Docker
+docker-compose.override.yml
+
+# Alembic
+alembic/versions/*.pyc
+
+# Sensitive configuration files
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+*.cert
+
+# SSH configuration
+ssh_config
+known_hosts
+id_rsa*
+*.ppk
+
+# Database dumps
+*.sql
+*.dump
+*.backup
+
+# Documentation with sensitive info (keep examples only)
+QUICK_START.md
+OLLAMA_SSH.md
+DOCKER.md
+docs/deployment.md
