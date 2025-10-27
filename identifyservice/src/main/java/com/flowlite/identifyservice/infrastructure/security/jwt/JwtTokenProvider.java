@@ -37,6 +37,24 @@ public class JwtTokenProvider implements TokenProvider {
                 .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
+    
+    /**
+     * Genera un token JWT específico para verificación de email.
+     * 
+     * @param username Nombre de usuario
+     * @param email Email del usuario
+     * @return Token JWT firmado para verificación
+     */
+    public String generateVerificationToken(String username, String email) {
+        return Jwts.builder()
+                .setSubject(username)
+                .claim("email", email)
+                .claim("type", "verification")
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getExpiration()))
+                .signWith(getKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
 
     @Override
     public boolean validateToken(String token) {
@@ -61,6 +79,31 @@ public class JwtTokenProvider implements TokenProvider {
     @Override
     public String getUserIdFromToken(String token) {
         return getClaims(token).get("userId", String.class);
+    }
+    
+    /**
+     * Extrae el email del token (para tokens de verificación).
+     * 
+     * @param token Token JWT
+     * @return Email extraído del token
+     */
+    public String getEmailFromToken(String token) {
+        return getClaims(token).get("email", String.class);
+    }
+    
+    /**
+     * Verifica si el token es de tipo verificación.
+     * 
+     * @param token Token JWT
+     * @return true si es token de verificación
+     */
+    public boolean isVerificationToken(String token) {
+        try {
+            String type = getClaims(token).get("type", String.class);
+            return "verification".equals(type);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private Claims getClaims(String token) {

@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Pattern;
 
 @Data
-public class RegisterRequest {
+public class PreregisterRequest {
     @NotBlank(message = "El nombre de usuario es obligatorio")
     @Size(min = 3, max = 50, message = "El nombre de usuario debe tener entre 3 y 50 caracteres")
     @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "El nombre de usuario solo puede contener letras, números y guiones bajos")
