@@ -35,9 +35,9 @@ info:
     - `/auth/success` - Página de éxito OAuth2
     - `/auth/error` - Página de error OAuth2
     - `/oauth2/**` - Endpoints OAuth2
-    - `/swagger-ui/**` - Documentación Swagger
-    - `/v3/api-docs/**` - API Docs
-    - `/actuator/**` - Endpoints de monitoreo
+    - `/swagger-ui/**` - Documentación Swagger UI
+    - `/api-docs` - API Docs (OpenAPI JSON)
+    - `/actuator/**` - Endpoints de monitoreo y salud
     
     **Endpoints Protegidos (requieren autenticación):**
     - `/auth/me` - Obtener información del usuario autenticado
@@ -1873,3 +1873,29 @@ tags:
       No requiere autenticación para ningún endpoint.
       Integración con Redis para almacenamiento temporal de códigos.
       Integración con sistema de emails para notificaciones seguras.
+  - name: Monitoring
+    description: |
+      Endpoints de monitoreo y salud de la aplicación.
+      Proporciona información sobre el estado de la aplicación, métricas de rendimiento y salud de los componentes.
+      
+      **Endpoints Públicos (sin autenticación):**
+      - `/actuator` - Lista de endpoints disponibles
+      - `/actuator/health` - Estado de salud de la aplicación
+      - `/actuator/info` - Información de la aplicación
+      - `/actuator/metrics` - Métricas de rendimiento
+      
+      **Características:**
+      - Monitoreo de salud de base de datos MySQL
+      - Monitoreo de salud de Redis
+      - Métricas de uso de memoria y CPU
+      - Métricas de rendimiento de la aplicación
+      - Información de tiempo de inicio y estado
+      
+      **Componentes monitoreados:**
+      - Base de datos (MySQL)
+      - Redis (para blacklist de tokens y códigos)
+      - Espacio en disco
+      - Ping de conectividad
+      
+      No requiere autenticación para ningún endpoint.
+      Útil para monitoreo de producción y debugging.

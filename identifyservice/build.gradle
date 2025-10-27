@@ -72,6 +72,9 @@ dependencies {
 	
 	// Jackson JSR310 support for LocalDateTime serialization
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+	
+	// Spring Boot Actuator para endpoints de monitoreo
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 }
 
 dependencyManagement {
