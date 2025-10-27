@@ -35,5 +35,12 @@ public interface EmailService {
      * @param data Datos del usuario (username, email)
      */
     void sendUserInfoEmail(String email, Map<String, Object> data);
+    
+    /**
+     * Envía un email con código de verificación para recuperación de contraseña
+     * @param email Email del usuario
+     * @param data Datos para el email (username, token)
+     */
+    void sendPasswordRecoveryCodeEmail(String email, Map<String, Object> data);
 }
 

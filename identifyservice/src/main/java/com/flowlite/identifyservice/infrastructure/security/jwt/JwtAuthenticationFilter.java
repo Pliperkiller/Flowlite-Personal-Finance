@@ -33,17 +33,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // Skip JWT processing for public endpoints only
         String requestURI = request.getRequestURI();
-        if (requestURI.startsWith("/auth/register") ||
-            requestURI.startsWith("/auth/login") ||
-            requestURI.startsWith("/auth/preregister") ||
-            requestURI.startsWith("/auth/verify") ||
-            requestURI.startsWith("/auth/success") ||
-            requestURI.startsWith("/auth/error") ||
-            requestURI.startsWith("/auth/validate") ||
-            requestURI.startsWith("/auth/forgot-password") ||
-            requestURI.startsWith("/auth/reset-password") ||
-            requestURI.startsWith("/auth/validate-recovery-token") ||
-            requestURI.startsWith("/auth/forgot-username") ||
+            if (requestURI.startsWith("/auth/register") ||
+                requestURI.startsWith("/auth/login") ||
+                requestURI.startsWith("/auth/preregister") ||
+                requestURI.startsWith("/auth/verify") ||
+                requestURI.startsWith("/auth/success") ||
+                requestURI.startsWith("/auth/error") ||
+                requestURI.startsWith("/auth/validate") ||
+                requestURI.startsWith("/auth/forgot-password") ||
+                requestURI.startsWith("/auth/reset-password") ||
+                requestURI.startsWith("/auth/validate-recovery-token") ||
+                requestURI.startsWith("/auth/forgot-username") ||
+                requestURI.startsWith("/auth/forgot-password-code") ||
+                requestURI.startsWith("/auth/verify-code") ||
+                requestURI.startsWith("/auth/reset-password-code") ||
             requestURI.startsWith("/oauth2/") ||
             requestURI.startsWith("/swagger-ui/") ||
             requestURI.startsWith("/v3/api-docs/") ||

@@ -34,8 +34,8 @@ public class OAuth2ClientConfig {
 
         http
             .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/register", "/auth/login", "/auth/preregister", "/auth/verify", "/auth/success", "/auth/error", "/auth/validate", "/auth/forgot-password", "/auth/reset-password", "/auth/validate-recovery-token", "/auth/forgot-username").permitAll()
+                .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/auth/register", "/auth/login", "/auth/preregister", "/auth/verify", "/auth/success", "/auth/error", "/auth/validate", "/auth/forgot-password", "/auth/reset-password", "/auth/validate-recovery-token", "/auth/forgot-username", "/auth/forgot-password-code", "/auth/verify-code", "/auth/reset-password-code").permitAll()
                 .requestMatchers("/oauth2/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/api-docs/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()

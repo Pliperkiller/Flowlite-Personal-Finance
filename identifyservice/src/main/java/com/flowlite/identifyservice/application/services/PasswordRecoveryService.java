@@ -98,6 +98,11 @@ public class PasswordRecoveryService {
         log.info("Intento de reset de contraseña con token");
 
         try {
+            // Verificar si el token está revocado primero
+            if (tokenRevocationService.isTokenRevoked(token)) {
+                throw new IllegalArgumentException("Token revocado - no puede ser usado");
+            }
+            
             // Validar token de recuperación
             if (!tokenProvider.isPasswordRecoveryToken(token)) {
                 throw new IllegalArgumentException("Token inválido para recuperación de contraseña");

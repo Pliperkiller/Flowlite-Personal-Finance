@@ -15,7 +15,8 @@ info:
     - Envío de emails con plantillas HTML
     - Gestión de información personal de usuarios
     - Actualización de datos personales con validaciones
-    - Recuperación de contraseñas por email
+    - Recuperación de contraseñas por email (flujo tradicional)
+    - Recuperación de contraseñas con códigos de verificación (flujo moderno)
     - Recuperación de información de usuario
     
     **Endpoints Públicos (sin autenticación):**
@@ -24,9 +25,12 @@ info:
     - `/auth/verify` - Verificar email desde enlace
     - `/auth/login` - Iniciar sesión
     - `/auth/validate` - Validar token JWT
-    - `/auth/forgot-password` - Solicitar recuperación de contraseña
-    - `/auth/reset-password` - Resetear contraseña con token
-    - `/auth/validate-recovery-token` - Validar token de recuperación
+    - `/auth/forgot-password` - Solicitar recuperación de contraseña (DESHABILITADO)
+    - `/auth/reset-password` - Resetear contraseña con token (DESHABILITADO)
+    - `/auth/validate-recovery-token` - Validar token de recuperación (DESHABILITADO)
+    - `/auth/forgot-password-code` - Solicitar código de verificación para recuperación
+    - `/auth/verify-code` - Verificar código de 6 dígitos
+    - `/auth/reset-password-code` - Resetear contraseña con token de código
     - `/auth/forgot-username` - Recuperar información de usuario
     - `/auth/success` - Página de éxito OAuth2
     - `/auth/error` - Página de error OAuth2
@@ -662,11 +666,14 @@ paths:
     post:
       tags:
         - Password Recovery
-      summary: Solicitar recuperación de contraseña
+      summary: Solicitar recuperación de contraseña (DESHABILITADO)
       description: |
-        Envía un email con enlace para recuperar la contraseña del usuario.
-        Por seguridad, siempre devuelve éxito independientemente de si el email existe.
-        El enlace de recuperación expira en 24 horas por defecto.
+        **ENDPOINT DESHABILITADO** - Este flujo tradicional de recuperación de contraseña está deshabilitado.
+        Use `/auth/forgot-password-code` para el nuevo flujo de recuperación con códigos de verificación.
+        
+        El flujo tradicional enviaba un email con enlace para recuperar la contraseña del usuario.
+        Por seguridad, siempre devolvía éxito independientemente de si el email existía.
+        El enlace de recuperación expiraba en 24 horas por defecto.
         **Endpoint PÚBLICO** - No requiere autenticación.
       operationId: forgotPassword
       requestBody:
@@ -681,47 +688,31 @@ paths:
                 value:
                   email: "usuario@example.com"
       responses:
-        '200':
-          description: Solicitud procesada exitosamente
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Si el email está registrado, recibirás un enlace de recuperación"
-                  status:
-                    type: string
-                    example: "success"
-                  email:
-                    type: string
-                    example: "usuario@example.com"
-                  expirationHours:
-                    type: integer
-                    example: 24
         '400':
-          description: Email inválido
+          description: Endpoint deshabilitado
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Error interno del servidor
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                disabled:
+                  summary: Endpoint deshabilitado
+                  value:
+                    error: "Endpoint deshabilitado"
+                    message: "El flujo tradicional de recuperación de contraseña está deshabilitado. Use /auth/forgot-password-code para recuperación con códigos de verificación."
 
   /auth/reset-password:
     post:
       tags:
         - Password Recovery
-      summary: Resetear contraseña con token
+      summary: Resetear contraseña con token (DESHABILITADO)
       description: |
-        Resetea la contraseña del usuario usando el token de recuperación recibido por email.
-        El token debe ser válido y no expirado.
-        La nueva contraseña debe cumplir con los requisitos de seguridad.
+        **ENDPOINT DESHABILITADO** - Este flujo tradicional de recuperación de contraseña está deshabilitado.
+        Use `/auth/reset-password-code` para el nuevo flujo de recuperación con códigos de verificación.
+        
+        El flujo tradicional reseteaba la contraseña del usuario usando el token de recuperación recibido por email.
+        El token debía ser válido y no expirado.
+        La nueva contraseña debía cumplir con los requisitos de seguridad.
         **Endpoint PÚBLICO** - No requiere autenticación.
       operationId: resetPassword
       requestBody:
@@ -737,62 +728,30 @@ paths:
                   token: "eyJhbGciOiJIUzI1NiJ9..."
                   newPassword: "NewPassword123!"
       responses:
-        '200':
-          description: Contraseña actualizada exitosamente
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Contraseña actualizada exitosamente"
-                  status:
-                    type: string
-                    example: "success"
-                  username:
-                    type: string
-                    example: "usuario"
-                  email:
-                    type: string
-                    example: "usuario@example.com"
         '400':
-          description: Token inválido o datos incorrectos
+          description: Endpoint deshabilitado
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
               examples:
-                invalidToken:
-                  summary: Token inválido
+                disabled:
+                  summary: Endpoint deshabilitado
                   value:
-                    error: "Datos inválidos"
-                    message: "Token inválido para recuperación de contraseña"
-                expiredToken:
-                  summary: Token expirado
-                  value:
-                    error: "Datos inválidos"
-                    message: "Token expirado o inválido"
-                samePassword:
-                  summary: Contraseña igual
-                  value:
-                    error: "Datos inválidos"
-                    message: "La nueva contraseña debe ser diferente a la actual"
-        '500':
-          description: Error interno del servidor
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                    error: "Endpoint deshabilitado"
+                    message: "El flujo tradicional de recuperación de contraseña está deshabilitado. Use /auth/reset-password-code para recuperación con códigos de verificación."
 
   /auth/validate-recovery-token:
     get:
       tags:
         - Password Recovery
-      summary: Validar token de recuperación
+      summary: Validar token de recuperación (DESHABILITADO)
       description: |
-        Valida si un token de recuperación es válido y no expirado.
-        Útil para verificar el estado del token antes de mostrar el formulario de reset.
+        **ENDPOINT DESHABILITADO** - Este flujo tradicional de recuperación de contraseña está deshabilitado.
+        Use `/auth/verify-code` para el nuevo flujo de recuperación con códigos de verificación.
+        
+        El flujo tradicional validaba si un token de recuperación era válido y no expirado.
+        Era útil para verificar el estado del token antes de mostrar el formulario de reset.
         **Endpoint PÚBLICO** - No requiere autenticación.
       operationId: validateRecoveryToken
       parameters:
@@ -804,51 +763,18 @@ paths:
             type: string
             example: "eyJhbGciOiJIUzI1NiJ9..."
       responses:
-        '200':
-          description: Token válido
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  valid:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: "Token válido"
-                  email:
-                    type: string
-                    example: "usuario@example.com"
-                  username:
-                    type: string
-                    example: "usuario"
         '400':
-          description: Token inválido o expirado
+          description: Endpoint deshabilitado
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  valid:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: "Token expirado o inválido"
-        '500':
-          description: Error interno del servidor
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  valid:
-                    type: boolean
-                    example: false
-                  message:
-                    type: string
-                    example: "Error interno del servidor"
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                disabled:
+                  summary: Endpoint deshabilitado
+                  value:
+                    error: "Endpoint deshabilitado"
+                    message: "El flujo tradicional de recuperación de contraseña está deshabilitado. Use /auth/verify-code para recuperación con códigos de verificación."
 
   /auth/forgot-username:
     post:
@@ -891,6 +817,248 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/forgot-password-code:
+    post:
+      tags:
+        - Password Recovery Code
+      summary: Solicitar código de verificación para recuperación de contraseña
+      description: |
+        Envía un email con código de verificación de 6 dígitos para recuperar la contraseña del usuario.
+        Por seguridad, siempre devuelve éxito independientemente de si el email existe.
+        El código expira en 5 minutos por defecto y solo puede ser usado una vez.
+        Si ya existe un código activo para el email, se revoca automáticamente y se genera uno nuevo.
+        **Endpoint PÚBLICO** - No requiere autenticación.
+        
+        **Flujo de recuperación con códigos:**
+        1. Usuario solicita código de verificación con su email
+        2. Sistema genera código de 6 dígitos y lo almacena en Redis
+        3. Sistema envía email con el código de verificación
+        4. Usuario ingresa el código en el endpoint de verificación
+        5. Sistema valida el código y devuelve token de restablecimiento
+        6. Usuario usa el token para restablecer su contraseña
+      operationId: requestPasswordRecoveryCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordRecoveryCodeRequest'
+            examples:
+              example1:
+                summary: Solicitud de código de verificación
+                value:
+                  email: "usuario@example.com"
+      responses:
+        '200':
+          description: Solicitud procesada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Si el email está registrado, recibirás un código de verificación"
+                  status:
+                    type: string
+                    example: "success"
+                  email:
+                    type: string
+                    example: "usuario@example.com"
+        '400':
+          description: Email inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/verify-code:
+    post:
+      tags:
+        - Password Recovery Code
+      summary: Verificar código de 6 dígitos
+      description: |
+        Verifica el código de 6 dígitos junto con el email asociado y devuelve el token de restablecimiento de contraseña si es válido.
+        Requiere tanto el código como el email para mayor seguridad contra ataques de fuerza bruta.
+        El código debe estar activo y no expirado.
+        **Endpoint PÚBLICO** - No requiere autenticación.
+        
+        **Validaciones de seguridad:**
+        - Código debe ser de exactamente 6 dígitos
+        - Email debe ser válido y estar asociado al código
+        - Código debe estar activo y no expirado
+        - Máximo 3 intentos de verificación por código
+      operationId: verifyCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyCodeRequest'
+            examples:
+              example1:
+                summary: Verificación de código
+                value:
+                  code: "123456"
+                  email: "usuario@example.com"
+      responses:
+        '200':
+          description: Código verificado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Código verificado exitosamente"
+                  resetToken:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiJ9..."
+                  email:
+                    type: string
+                    example: "usuario@example.com"
+                  username:
+                    type: string
+                    example: "usuario"
+        '400':
+          description: Código inválido o expirado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Código inválido o expirado"
+              examples:
+                invalidCode:
+                  summary: Código inválido
+                  value:
+                    valid: false
+                    message: "Código inválido o expirado"
+                expiredCode:
+                  summary: Código expirado
+                  value:
+                    valid: false
+                    message: "El código ha expirado. Solicita uno nuevo."
+                maxAttempts:
+                  summary: Máximo de intentos alcanzado
+                  value:
+                    valid: false
+                    message: "Se ha alcanzado el máximo de intentos. Solicita un nuevo código."
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Error interno del servidor"
+
+  /auth/reset-password-code:
+    post:
+      tags:
+        - Password Recovery Code
+      summary: Restablecer contraseña con token de código
+      description: |
+        Restablece la contraseña del usuario usando el token obtenido tras verificar el código de 6 dígitos.
+        El token debe ser válido y no expirado.
+        La nueva contraseña debe cumplir con los requisitos de seguridad.
+        Después del restablecimiento exitoso, el token se revoca automáticamente.
+        **Endpoint PÚBLICO** - No requiere autenticación.
+        
+        **Requisitos de contraseña:**
+        - Mínimo 8 caracteres, máximo 100 caracteres
+        - Al menos una letra minúscula
+        - Al menos una letra mayúscula
+        - Al menos un número
+        - Al menos un carácter especial (@$!%*?&)
+        - Debe ser diferente a la contraseña actual
+      operationId: resetPasswordWithCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+            examples:
+              example1:
+                summary: Restablecimiento de contraseña
+                value:
+                  token: "eyJhbGciOiJIUzI1NiJ9..."
+                  newPassword: "NewPassword123!"
+      responses:
+        '200':
+          description: Contraseña restablecida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Contraseña actualizada exitosamente"
+                  status:
+                    type: string
+                    example: "success"
+                  username:
+                    type: string
+                    example: "usuario"
+                  email:
+                    type: string
+                    example: "usuario@example.com"
+        '400':
+          description: Token inválido o contraseña inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidToken:
+                  summary: Token inválido
+                  value:
+                    error: "Datos inválidos"
+                    message: "Token inválido para recuperación de contraseña"
+                expiredToken:
+                  summary: Token expirado
+                  value:
+                    error: "Datos inválidos"
+                    message: "Token expirado o inválido"
+                samePassword:
+                  summary: Contraseña igual
+                  value:
+                    error: "Datos inválidos"
+                    message: "La nueva contraseña debe ser diferente a la actual"
+                weakPassword:
+                  summary: Contraseña débil
+                  value:
+                    error: "Datos inválidos"
+                    message: "La contraseña debe contener al menos una letra minúscula, una mayúscula, un número y un carácter especial"
         '500':
           description: Error interno del servidor
           content:
@@ -1555,10 +1723,38 @@ components:
         newPassword:
           type: string
           description: Nueva contraseña del usuario
-          minLength: 6
+          minLength: 8
           maxLength: 100
-          pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{6,}$"
+          pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&].*$"
           example: "NewPassword123!"
+
+    PasswordRecoveryCodeRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email del usuario para solicitar código de verificación
+          example: "usuario@example.com"
+
+    VerifyCodeRequest:
+      type: object
+      required:
+        - code
+        - email
+      properties:
+        code:
+          type: string
+          description: Código de verificación de 6 dígitos
+          pattern: "^\\d{6}$"
+          example: "123456"
+        email:
+          type: string
+          format: email
+          description: Email asociado al código de verificación
+          example: "usuario@example.com"
 
   securitySchemes:
     BearerAuth:
@@ -1622,29 +1818,58 @@ tags:
       Integración con JWT para identificación segura del usuario.
   - name: Password Recovery
     description: |
-      Endpoints para recuperación de contraseñas y información de usuario.
-      Permite a los usuarios recuperar sus contraseñas olvidadas y obtener información de su cuenta.
-      Incluye validaciones de seguridad y envío de emails con tokens seguros.
+      Endpoints para recuperación de contraseñas tradicional (DESHABILITADO) e información de usuario.
+      El flujo tradicional de recuperación de contraseñas está deshabilitado.
+      Use los endpoints de "Password Recovery Code" para el nuevo flujo de recuperación.
       
       **Endpoints Públicos (sin autenticación):**
-      - `/auth/forgot-password` - Solicitar recuperación de contraseña
-      - `/auth/reset-password` - Resetear contraseña con token
-      - `/auth/validate-recovery-token` - Validar token de recuperación
+      - `/auth/forgot-password` - Solicitar recuperación de contraseña (DESHABILITADO)
+      - `/auth/reset-password` - Resetear contraseña con token (DESHABILITADO)
+      - `/auth/validate-recovery-token` - Validar token de recuperación (DESHABILITADO)
       - `/auth/forgot-username` - Recuperar información de usuario
       
-      **Características:**
-      - Tokens de recuperación con expiración configurable (24 horas por defecto)
-      - Validaciones de seguridad para prevenir ataques
-      - Envío de emails con plantillas HTML profesionales
-      - Respuestas de seguridad que no revelan si el email existe
-      - Validación de contraseñas con requisitos de seguridad
-      
-      **Flujo de Recuperación:**
-      1. Usuario solicita recuperación con su email
-      2. Sistema envía email con enlace de recuperación
-      3. Usuario hace clic en el enlace (valida token)
-      4. Usuario ingresa nueva contraseña
-      5. Sistema actualiza contraseña y confirma éxito
+      **Nota:** Los endpoints de recuperación tradicional están deshabilitados.
+      Use los endpoints de "Password Recovery Code" para el nuevo flujo de recuperación con códigos de verificación.
       
       No requiere autenticación para ningún endpoint.
+      Integración con sistema de emails para notificaciones seguras.
+  - name: Password Recovery Code
+    description: |
+      Endpoints para recuperación de contraseñas con códigos de verificación de 6 dígitos.
+      Flujo moderno y seguro que utiliza códigos temporales en lugar de enlaces.
+      Incluye validaciones de seguridad avanzadas y protección contra ataques de fuerza bruta.
+      
+      **Endpoints Públicos (sin autenticación):**
+      - `/auth/forgot-password-code` - Solicitar código de verificación para recuperación
+      - `/auth/verify-code` - Verificar código de 6 dígitos
+      - `/auth/reset-password-code` - Resetear contraseña con token de código
+      
+      **Características:**
+      - Códigos de verificación de 6 dígitos con expiración configurable (5 minutos por defecto)
+      - Validación de email + código para prevenir ataques de fuerza bruta
+      - Revocación automática de códigos anteriores al generar uno nuevo
+      - Máximo 3 intentos de verificación por código
+      - Tokens de restablecimiento con expiración de 24 horas
+      - Envío de emails con plantillas HTML profesionales
+      - Respuestas de seguridad que no revelan si el email existe
+      - Validación de contraseñas con requisitos de seguridad estrictos
+      
+      **Flujo de Recuperación con Códigos:**
+      1. Usuario solicita código de verificación con su email
+      2. Sistema genera código de 6 dígitos y lo almacena en Redis
+      3. Sistema envía email con el código de verificación
+      4. Usuario ingresa el código en el endpoint de verificación
+      5. Sistema valida el código y devuelve token de restablecimiento
+      6. Usuario usa el token para restablecer su contraseña
+      7. Sistema revoca automáticamente el token después del uso
+      
+      **Ventajas sobre el flujo tradicional:**
+      - Mayor seguridad con códigos temporales
+      - Protección contra ataques de fuerza bruta
+      - Mejor experiencia de usuario en dispositivos móviles
+      - Códigos de un solo uso que no pueden ser reutilizados
+      - Expiración más corta reduce la ventana de ataque
+      
+      No requiere autenticación para ningún endpoint.
+      Integración con Redis para almacenamiento temporal de códigos.
       Integración con sistema de emails para notificaciones seguras.

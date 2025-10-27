@@ -106,3 +106,4 @@ Todos los demás endpoints requieren autenticación con JWT:
 
 ¡Todos los endpoints de verificación están configurados como públicos! 🎉
 
+
