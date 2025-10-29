@@ -191,3 +191,4 @@ if (!emailValidator.isValidDomain(request.getEmail())) {
 
 **Nota**: El endpoint `/auth/register` se mantiene por compatibilidad y para desarrollo, pero debe estar deshabilitado en producción para evitar vulnerabilidades de seguridad.
 
+

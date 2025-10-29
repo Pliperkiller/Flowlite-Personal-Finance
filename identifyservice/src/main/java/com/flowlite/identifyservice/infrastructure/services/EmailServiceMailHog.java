@@ -94,6 +94,111 @@ public class EmailServiceMailHog implements EmailService {
         }
     }
     
+    @Override
+    public void sendPasswordRecoveryEmail(String email, java.util.Map<String, Object> data) {
+        try {
+            String username = (String) data.get("username");
+            String recoveryUrl = (String) data.get("recoveryUrl");
+            Integer expirationHours = (Integer) data.get("expirationHours");
+            
+            log.info("=== ENVIANDO EMAIL DE RECUPERACIÓN DE CONTRASEÑA (MAILHOG) ===");
+            log.info("Para: {}", email);
+            log.info("Usuario: {}", username);
+            log.info("URL de recuperación: {}", recoveryUrl);
+            log.info("Expira en: {} horas", expirationHours);
+            log.info("=============================================================");
+            
+            // Leer plantilla HTML y reemplazar variables
+            String htmlContent = getPasswordRecoveryEmailTemplate(username, recoveryUrl, expirationHours);
+            
+            // Crear mensaje HTML
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setFrom(fromEmail);
+            helper.setTo(email);
+            helper.setSubject("Recupera tu contraseña en Flowlite");
+            helper.setText(htmlContent, true); // true = HTML
+            
+            javaMailSender.send(message);
+            log.info("Email de recuperación de contraseña enviado exitosamente a MailHog para: {}", email);
+            
+        } catch (Exception e) {
+            log.error("Error enviando email de recuperación de contraseña a {}: {}", email, e.getMessage());
+            throw new RuntimeException("Error enviando email de recuperación de contraseña", e);
+        }
+    }
+    
+    @Override
+    public void sendUserInfoEmail(String email, java.util.Map<String, Object> data) {
+        try {
+            String username = (String) data.get("username");
+            String userEmail = (String) data.get("email");
+            
+            log.info("=== ENVIANDO EMAIL CON INFORMACIÓN DE USUARIO (MAILHOG) ===");
+            log.info("Para: {}", email);
+            log.info("Usuario: {}", username);
+            log.info("Email del usuario: {}", userEmail);
+            log.info("=========================================================");
+            
+            // Leer plantilla HTML y reemplazar variables
+            String htmlContent = getUserInfoEmailTemplate(username, userEmail);
+            
+            // Crear mensaje HTML
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setFrom(fromEmail);
+            helper.setTo(email);
+            helper.setSubject("Información de tu cuenta en Flowlite");
+            helper.setText(htmlContent, true); // true = HTML
+            
+            javaMailSender.send(message);
+            log.info("Email con información de usuario enviado exitosamente a MailHog para: {}", email);
+            
+        } catch (Exception e) {
+            log.error("Error enviando email con información de usuario a {}: {}", email, e.getMessage());
+            throw new RuntimeException("Error enviando email con información de usuario", e);
+        }
+    }
+    
+    @Override
+    public void sendPasswordRecoveryCodeEmail(String email, java.util.Map<String, Object> data) {
+        try {
+            String username = (String) data.get("username");
+            String token = (String) data.get("token");
+            String verificationCode = (String) data.get("verificationCode");
+            Integer expirationMinutes = (Integer) data.get("expirationMinutes");
+            
+            log.info("=== ENVIANDO EMAIL CON CÓDIGO DE VERIFICACIÓN (MAILHOG) ===");
+            log.info("Para: {}", email);
+            log.info("Usuario: {}", username);
+            log.info("Token: {}", token);
+            log.info("Código: {}", verificationCode);
+            log.info("Expira en: {} minutos", expirationMinutes);
+            log.info("=========================================================");
+            
+            // Leer plantilla HTML y reemplazar variables
+            String htmlContent = getPasswordRecoveryCodeEmailTemplate(username, verificationCode, expirationMinutes);
+            
+            // Crear mensaje HTML
+            MimeMessage message = javaMailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            
+            helper.setFrom(fromEmail);
+            helper.setTo(email);
+            helper.setSubject("Código de verificación - Recuperación de contraseña");
+            helper.setText(htmlContent, true); // true = HTML
+            
+            javaMailSender.send(message);
+            log.info("Email con código de verificación enviado exitosamente a MailHog para: {}", email);
+            
+        } catch (Exception e) {
+            log.error("Error enviando email con código de verificación a {}: {}", email, e.getMessage());
+            throw new RuntimeException("Error enviando email con código de verificación", e);
+        }
+    }
+    
     private String getVerificationEmailTemplate(String verificationUrl) {
         try {
             // Leer el archivo HTML de la plantilla
@@ -111,6 +216,74 @@ public class EmailServiceMailHog implements EmailService {
         } catch (Exception e) {
             log.error("Error leyendo plantilla HTML: {}", e.getMessage());
             throw new RuntimeException("Error procesando plantilla de email", e);
+        }
+    }
+    
+    private String getPasswordRecoveryEmailTemplate(String username, String recoveryUrl, Integer expirationHours) {
+        try {
+            // Leer el archivo HTML de la plantilla
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("templates/email/password-recovery.html");
+            if (inputStream == null) {
+                throw new RuntimeException("No se pudo encontrar la plantilla password-recovery.html");
+            }
+            
+            String htmlTemplate = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            inputStream.close();
+            
+            // Reemplazar variables
+            return htmlTemplate
+                .replace("{username}", username != null ? username : "Usuario")
+                .replace("{recoveryUrl}", recoveryUrl)
+                .replace("{expirationHours}", expirationHours != null ? expirationHours.toString() : "24");
+            
+        } catch (Exception e) {
+            log.error("Error leyendo plantilla HTML de recuperación: {}", e.getMessage());
+            throw new RuntimeException("Error procesando plantilla de email de recuperación", e);
+        }
+    }
+    
+    private String getUserInfoEmailTemplate(String username, String userEmail) {
+        try {
+            // Leer el archivo HTML de la plantilla
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("templates/email/user-info.html");
+            if (inputStream == null) {
+                throw new RuntimeException("No se pudo encontrar la plantilla user-info.html");
+            }
+            
+            String htmlTemplate = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            inputStream.close();
+            
+            // Reemplazar variables
+            return htmlTemplate
+                .replace("{username}", username != null ? username : "Usuario")
+                .replace("{email}", userEmail != null ? userEmail : "usuario@example.com");
+            
+        } catch (Exception e) {
+            log.error("Error leyendo plantilla HTML de información de usuario: {}", e.getMessage());
+            throw new RuntimeException("Error procesando plantilla de email de información de usuario", e);
+        }
+    }
+    
+    private String getPasswordRecoveryCodeEmailTemplate(String username, String verificationCode, Integer expirationMinutes) {
+        try {
+            // Leer el archivo HTML de la plantilla
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("templates/email/password-recovery-code.html");
+            if (inputStream == null) {
+                throw new RuntimeException("No se pudo encontrar la plantilla password-recovery-code.html");
+            }
+            
+            String htmlTemplate = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            inputStream.close();
+            
+            // Reemplazar variables
+            return htmlTemplate
+                .replace("{username}", username != null ? username : "Usuario")
+                .replace("{verificationCode}", verificationCode != null ? verificationCode : "123456")
+                .replace("{expirationMinutes}", expirationMinutes != null ? expirationMinutes.toString() : "5");
+            
+        } catch (Exception e) {
+            log.error("Error leyendo plantilla HTML de código de verificación: {}", e.getMessage());
+            throw new RuntimeException("Error procesando plantilla de email de código de verificación", e);
         }
     }
 }

@@ -13,6 +13,11 @@ info:
     - Validación de tokens
     - Gestión de información de usuarios
     - Envío de emails con plantillas HTML
+    - Gestión de información personal de usuarios
+    - Actualización de datos personales con validaciones
+    - Recuperación de contraseñas por email (flujo tradicional)
+    - Recuperación de contraseñas con códigos de verificación (flujo moderno)
+    - Recuperación de información de usuario
     
     **Endpoints Públicos (sin autenticación):**
     - `/auth/register` - Registrar nuevo usuario
@@ -20,16 +25,25 @@ info:
     - `/auth/verify` - Verificar email desde enlace
     - `/auth/login` - Iniciar sesión
     - `/auth/validate` - Validar token JWT
+    - `/auth/forgot-password` - Solicitar recuperación de contraseña (DESHABILITADO)
+    - `/auth/reset-password` - Resetear contraseña con token (DESHABILITADO)
+    - `/auth/validate-recovery-token` - Validar token de recuperación (DESHABILITADO)
+    - `/auth/forgot-password-code` - Solicitar código de verificación para recuperación
+    - `/auth/verify-code` - Verificar código de 6 dígitos
+    - `/auth/reset-password-code` - Resetear contraseña con token de código
+    - `/auth/forgot-username` - Recuperar información de usuario
     - `/auth/success` - Página de éxito OAuth2
     - `/auth/error` - Página de error OAuth2
     - `/oauth2/**` - Endpoints OAuth2
-    - `/swagger-ui/**` - Documentación Swagger
-    - `/v3/api-docs/**` - API Docs
-    - `/actuator/**` - Endpoints de monitoreo
+    - `/swagger-ui/**` - Documentación Swagger UI
+    - `/api-docs` - API Docs (OpenAPI JSON)
+    - `/actuator/**` - Endpoints de monitoreo y salud
     
     **Endpoints Protegidos (requieren autenticación):**
     - `/auth/me` - Obtener información del usuario autenticado
     - `/auth/logout` - Cerrar sesión y revocar token
+    - `/user-info/update` - Actualizar información personal del usuario
+    - `/user-info/me` - Obtener información personal del usuario
   version: 1.0.0
   contact:
     name: Identity Service Team
@@ -648,6 +662,670 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /auth/forgot-password:
+    post:
+      tags:
+        - Password Recovery
+      summary: Solicitar recuperación de contraseña (DESHABILITADO)
+      description: |
+        **ENDPOINT DESHABILITADO** - Este flujo tradicional de recuperación de contraseña está deshabilitado.
+        Use `/auth/forgot-password-code` para el nuevo flujo de recuperación con códigos de verificación.
+        
+        El flujo tradicional enviaba un email con enlace para recuperar la contraseña del usuario.
+        Por seguridad, siempre devolvía éxito independientemente de si el email existía.
+        El enlace de recuperación expiraba en 24 horas por defecto.
+        **Endpoint PÚBLICO** - No requiere autenticación.
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordRecoveryRequest'
+            examples:
+              example1:
+                summary: Solicitud de recuperación
+                value:
+                  email: "usuario@example.com"
+      responses:
+        '400':
+          description: Endpoint deshabilitado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                disabled:
+                  summary: Endpoint deshabilitado
+                  value:
+                    error: "Endpoint deshabilitado"
+                    message: "El flujo tradicional de recuperación de contraseña está deshabilitado. Use /auth/forgot-password-code para recuperación con códigos de verificación."
+
+  /auth/reset-password:
+    post:
+      tags:
+        - Password Recovery
+      summary: Resetear contraseña con token (DESHABILITADO)
+      description: |
+        **ENDPOINT DESHABILITADO** - Este flujo tradicional de recuperación de contraseña está deshabilitado.
+        Use `/auth/reset-password-code` para el nuevo flujo de recuperación con códigos de verificación.
+        
+        El flujo tradicional reseteaba la contraseña del usuario usando el token de recuperación recibido por email.
+        El token debía ser válido y no expirado.
+        La nueva contraseña debía cumplir con los requisitos de seguridad.
+        **Endpoint PÚBLICO** - No requiere autenticación.
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+            examples:
+              example1:
+                summary: Reset de contraseña
+                value:
+                  token: "eyJhbGciOiJIUzI1NiJ9..."
+                  newPassword: "NewPassword123!"
+      responses:
+        '400':
+          description: Endpoint deshabilitado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                disabled:
+                  summary: Endpoint deshabilitado
+                  value:
+                    error: "Endpoint deshabilitado"
+                    message: "El flujo tradicional de recuperación de contraseña está deshabilitado. Use /auth/reset-password-code para recuperación con códigos de verificación."
+
+  /auth/validate-recovery-token:
+    get:
+      tags:
+        - Password Recovery
+      summary: Validar token de recuperación (DESHABILITADO)
+      description: |
+        **ENDPOINT DESHABILITADO** - Este flujo tradicional de recuperación de contraseña está deshabilitado.
+        Use `/auth/verify-code` para el nuevo flujo de recuperación con códigos de verificación.
+        
+        El flujo tradicional validaba si un token de recuperación era válido y no expirado.
+        Era útil para verificar el estado del token antes de mostrar el formulario de reset.
+        **Endpoint PÚBLICO** - No requiere autenticación.
+      operationId: validateRecoveryToken
+      parameters:
+        - name: token
+          in: query
+          description: Token de recuperación a validar
+          required: true
+          schema:
+            type: string
+            example: "eyJhbGciOiJIUzI1NiJ9..."
+      responses:
+        '400':
+          description: Endpoint deshabilitado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                disabled:
+                  summary: Endpoint deshabilitado
+                  value:
+                    error: "Endpoint deshabilitado"
+                    message: "El flujo tradicional de recuperación de contraseña está deshabilitado. Use /auth/verify-code para recuperación con códigos de verificación."
+
+  /auth/forgot-username:
+    post:
+      tags:
+        - Password Recovery
+      summary: Recuperar información de usuario
+      description: |
+        Envía un email con la información del usuario (username) asociado al email.
+        Por seguridad, siempre devuelve éxito independientemente de si el email existe.
+        **Endpoint PÚBLICO** - No requiere autenticación.
+      operationId: forgotUsername
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordRecoveryRequest'
+            examples:
+              example1:
+                summary: Solicitud de información de usuario
+                value:
+                  email: "usuario@example.com"
+      responses:
+        '200':
+          description: Solicitud procesada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Si el email está registrado, recibirás un email con tu información de usuario"
+                  status:
+                    type: string
+                    example: "success"
+        '400':
+          description: Email inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/forgot-password-code:
+    post:
+      tags:
+        - Password Recovery Code
+      summary: Solicitar código de verificación para recuperación de contraseña
+      description: |
+        Envía un email con código de verificación de 6 dígitos para recuperar la contraseña del usuario.
+        Por seguridad, siempre devuelve éxito independientemente de si el email existe.
+        El código expira en 5 minutos por defecto y solo puede ser usado una vez.
+        Si ya existe un código activo para el email, se revoca automáticamente y se genera uno nuevo.
+        **Endpoint PÚBLICO** - No requiere autenticación.
+        
+        **Flujo de recuperación con códigos:**
+        1. Usuario solicita código de verificación con su email
+        2. Sistema genera código de 6 dígitos y lo almacena en Redis
+        3. Sistema envía email con el código de verificación
+        4. Usuario ingresa el código en el endpoint de verificación
+        5. Sistema valida el código y devuelve token de restablecimiento
+        6. Usuario usa el token para restablecer su contraseña
+      operationId: requestPasswordRecoveryCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordRecoveryCodeRequest'
+            examples:
+              example1:
+                summary: Solicitud de código de verificación
+                value:
+                  email: "usuario@example.com"
+      responses:
+        '200':
+          description: Solicitud procesada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Si el email está registrado, recibirás un código de verificación"
+                  status:
+                    type: string
+                    example: "success"
+                  email:
+                    type: string
+                    example: "usuario@example.com"
+        '400':
+          description: Email inválido
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/verify-code:
+    post:
+      tags:
+        - Password Recovery Code
+      summary: Verificar código de 6 dígitos
+      description: |
+        Verifica el código de 6 dígitos junto con el email asociado y devuelve el token de restablecimiento de contraseña si es válido.
+        Requiere tanto el código como el email para mayor seguridad contra ataques de fuerza bruta.
+        El código debe estar activo y no expirado.
+        **Endpoint PÚBLICO** - No requiere autenticación.
+        
+        **Validaciones de seguridad:**
+        - Código debe ser de exactamente 6 dígitos
+        - Email debe ser válido y estar asociado al código
+        - Código debe estar activo y no expirado
+        - Máximo 3 intentos de verificación por código
+      operationId: verifyCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyCodeRequest'
+            examples:
+              example1:
+                summary: Verificación de código
+                value:
+                  code: "123456"
+                  email: "usuario@example.com"
+      responses:
+        '200':
+          description: Código verificado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Código verificado exitosamente"
+                  resetToken:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiJ9..."
+                  email:
+                    type: string
+                    example: "usuario@example.com"
+                  username:
+                    type: string
+                    example: "usuario"
+        '400':
+          description: Código inválido o expirado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Código inválido o expirado"
+              examples:
+                invalidCode:
+                  summary: Código inválido
+                  value:
+                    valid: false
+                    message: "Código inválido o expirado"
+                expiredCode:
+                  summary: Código expirado
+                  value:
+                    valid: false
+                    message: "El código ha expirado. Solicita uno nuevo."
+                maxAttempts:
+                  summary: Máximo de intentos alcanzado
+                  value:
+                    valid: false
+                    message: "Se ha alcanzado el máximo de intentos. Solicita un nuevo código."
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Error interno del servidor"
+
+  /auth/reset-password-code:
+    post:
+      tags:
+        - Password Recovery Code
+      summary: Restablecer contraseña con token de código
+      description: |
+        Restablece la contraseña del usuario usando el token obtenido tras verificar el código de 6 dígitos.
+        El token debe ser válido y no expirado.
+        La nueva contraseña debe cumplir con los requisitos de seguridad.
+        Después del restablecimiento exitoso, el token se revoca automáticamente.
+        **Endpoint PÚBLICO** - No requiere autenticación.
+        
+        **Requisitos de contraseña:**
+        - Mínimo 8 caracteres, máximo 100 caracteres
+        - Al menos una letra minúscula
+        - Al menos una letra mayúscula
+        - Al menos un número
+        - Al menos un carácter especial (@$!%*?&)
+        - Debe ser diferente a la contraseña actual
+      operationId: resetPasswordWithCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+            examples:
+              example1:
+                summary: Restablecimiento de contraseña
+                value:
+                  token: "eyJhbGciOiJIUzI1NiJ9..."
+                  newPassword: "NewPassword123!"
+      responses:
+        '200':
+          description: Contraseña restablecida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Contraseña actualizada exitosamente"
+                  status:
+                    type: string
+                    example: "success"
+                  username:
+                    type: string
+                    example: "usuario"
+                  email:
+                    type: string
+                    example: "usuario@example.com"
+        '400':
+          description: Token inválido o contraseña inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidToken:
+                  summary: Token inválido
+                  value:
+                    error: "Datos inválidos"
+                    message: "Token inválido para recuperación de contraseña"
+                expiredToken:
+                  summary: Token expirado
+                  value:
+                    error: "Datos inválidos"
+                    message: "Token expirado o inválido"
+                samePassword:
+                  summary: Contraseña igual
+                  value:
+                    error: "Datos inválidos"
+                    message: "La nueva contraseña debe ser diferente a la actual"
+                weakPassword:
+                  summary: Contraseña débil
+                  value:
+                    error: "Datos inválidos"
+                    message: "La contraseña debe contener al menos una letra minúscula, una mayúscula, un número y un carácter especial"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /user-info/update:
+    put:
+      tags:
+        - User Information
+      summary: Actualizar información personal del usuario
+      description: |
+        Permite al usuario autenticado actualizar su información personal.
+        Incluye validaciones de unicidad para número de identificación y teléfono.
+        Requiere header Authorization: Bearer TOKEN.
+        
+        **Campos obligatorios:**
+        - primerNombre: Primer nombre del usuario
+        - primerApellido: Primer apellido del usuario  
+        - telefono: Número de teléfono (10-15 dígitos)
+        - numeroIdentificacion: Número de identificación (6-20 dígitos)
+        - tipoIdentificacion: Tipo de identificación (CC, CE, PA, TI, RC, NIT)
+        
+        **Campos opcionales:**
+        - segundoNombre: Segundo nombre del usuario
+        - segundoApellido: Segundo apellido del usuario
+        - direccion: Dirección del usuario
+        - ciudad: Ciudad del usuario
+        - departamento: Departamento del usuario
+        - pais: País del usuario
+        - fechaNacimiento: Fecha de nacimiento
+        - genero: Género del usuario
+        - estadoCivil: Estado civil del usuario
+        - ocupacion: Ocupación del usuario
+        
+        **Validaciones:**
+        - Número de identificación único en el sistema
+        - Teléfono único en el sistema
+        - Tipos de identificación válidos para Colombia
+      operationId: updateUserInfo
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserInfoRequest'
+            examples:
+              example1:
+                summary: Actualización completa
+                value:
+                  primerNombre: "Juan"
+                  segundoNombre: "Carlos"
+                  primerApellido: "García"
+                  segundoApellido: "López"
+                  telefono: "3001234567"
+                  direccion: "Calle 123 #45-67"
+                  ciudad: "Bogotá"
+                  departamento: "Cundinamarca"
+                  pais: "Colombia"
+                  fechaNacimiento: "1990-05-15"
+                  numeroIdentificacion: "12345678"
+                  tipoIdentificacion: "CC"
+                  genero: "Masculino"
+                  estadoCivil: "Soltero"
+                  ocupacion: "Ingeniero"
+              example2:
+                summary: Actualización mínima
+                value:
+                  primerNombre: "María"
+                  primerApellido: "Rodríguez"
+                  telefono: "3109876543"
+                  numeroIdentificacion: "87654321"
+                  tipoIdentificacion: "CE"
+      responses:
+        '200':
+          description: Información personal actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfoUpdateResponse'
+              examples:
+                success:
+                  summary: Actualización exitosa
+                  value:
+                    message: "Información personal actualizada exitosamente"
+                    userInfo:
+                      id: "1a3ec2da-5cfa-45df-b9a0-764db8fde346"
+                      userId: "7160fc51-692d-4760-9fbe-6a69591bd8d2"
+                      nombreCompleto: "Juan Carlos García López"
+                      telefono: "3001234567"
+                      ciudad: "Bogotá"
+                      departamento: "Cundinamarca"
+                      numeroIdentificacion: "12345678"
+                      tipoIdentificacion: "Cédula de Ciudadanía"
+                      isComplete: true
+        '400':
+          description: Datos inválidos o errores de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validationError:
+                  summary: Error de validación
+                  value:
+                    error: "Datos inválidos"
+                    message: "El primer nombre es obligatorio"
+                invalidPhone:
+                  summary: Teléfono inválido
+                  value:
+                    error: "Datos inválidos"
+                    message: "El teléfono debe contener solo números y tener entre 10 y 15 dígitos"
+                invalidIdentification:
+                  summary: Identificación inválida
+                  value:
+                    error: "Datos inválidos"
+                    message: "El número de identificación debe contener solo números y tener entre 6 y 20 dígitos"
+        '401':
+          description: No autorizado: token inválido o no proporcionado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidToken:
+                  summary: Token inválido
+                  value:
+                    error: "Token inválido"
+                    message: "El token proporcionado no es válido"
+                missingToken:
+                  summary: Token no proporcionado
+                  value:
+                    error: "Token requerido"
+                    message: "Se requiere un token de autorización"
+        '404':
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                userNotFound:
+                  summary: Usuario no encontrado
+                  value:
+                    error: "Usuario no encontrado"
+                    message: "No se encontró el usuario especificado"
+        '409':
+          description: Conflicto: número de identificación o teléfono ya en uso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                identificationConflict:
+                  summary: Identificación en uso
+                  value:
+                    error: "Conflicto de datos"
+                    message: "El número de identificación ya está en uso por otro usuario"
+                phoneConflict:
+                  summary: Teléfono en uso
+                  value:
+                    error: "Conflicto de datos"
+                    message: "El número de teléfono ya está en uso por otro usuario"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /user-info/me:
+    get:
+      tags:
+        - User Information
+      summary: Obtener información personal del usuario
+      description: |
+        Devuelve la información personal completa del usuario autenticado.
+        Incluye datos personales, identificación, ubicación y metadatos.
+        Requiere header Authorization: Bearer TOKEN.
+        
+        **Respuesta incluye:**
+        - Información personal básica (nombres, apellidos)
+        - Datos de contacto (teléfono, dirección)
+        - Información de identificación
+        - Datos adicionales (género, estado civil, ocupación)
+        - Metadatos (fechas de creación/actualización, estado)
+        - Indicador de completitud de información
+        
+        **Casos de respuesta:**
+        - 200: Usuario con información personal registrada
+        - 404: Usuario sin información personal (primera consulta)
+      operationId: getUserInfo
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Información personal obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfoResponse'
+              examples:
+                completeInfo:
+                  summary: Usuario con información completa
+                  value:
+                    userInfo:
+                      id: "1a3ec2da-5cfa-45df-b9a0-764db8fde346"
+                      userId: "7160fc51-692d-4760-9fbe-6a69591bd8d2"
+                      primerNombre: "Juan"
+                      segundoNombre: "Carlos"
+                      primerApellido: "García"
+                      segundoApellido: "López"
+                      telefono: "3001234567"
+                      direccion: "Calle 123 #45-67"
+                      ciudad: "Bogotá"
+                      departamento: "Cundinamarca"
+                      pais: "Colombia"
+                      fechaNacimiento: "1990-05-15"
+                      numeroIdentificacion: "12345678"
+                      tipoIdentificacion: "Cédula de Ciudadanía"
+                      genero: "Masculino"
+                      estadoCivil: "Soltero"
+                      ocupacion: "Ingeniero"
+                      nombreCompleto: "Juan Carlos García López"
+                      isComplete: true
+                      activo: true
+                      createdAt: "2025-10-25T19:44:48.558755"
+                      updatedAt: "2025-10-25T19:49:40.123456"
+        '401':
+          description: No autorizado: token inválido o no proporcionado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidToken:
+                  summary: Token inválido
+                  value:
+                    error: "Token inválido"
+                    message: "El token proporcionado no es válido"
+                missingToken:
+                  summary: Token no proporcionado
+                  value:
+                    error: "Token requerido"
+                    message: "Se requiere un token de autorización"
+        '404':
+          description: Información personal no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                noInfo:
+                  summary: Usuario sin información personal
+                  value:
+                    error: "Información no encontrada"
+                    message: "El usuario no tiene información personal registrada"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 
 components:
   schemas:
@@ -778,6 +1456,306 @@ components:
           description: Timestamp del error
           example: "2025-09-28T22:30:00Z"
 
+    UpdateUserInfoRequest:
+      type: object
+      required:
+        - primerNombre
+        - primerApellido
+        - telefono
+        - numeroIdentificacion
+        - tipoIdentificacion
+      properties:
+        primerNombre:
+          type: string
+          description: Primer nombre del usuario
+          minLength: 2
+          maxLength: 50
+          example: "Juan"
+        segundoNombre:
+          type: string
+          description: Segundo nombre del usuario (opcional)
+          maxLength: 50
+          example: "Carlos"
+        primerApellido:
+          type: string
+          description: Primer apellido del usuario
+          minLength: 2
+          maxLength: 50
+          example: "García"
+        segundoApellido:
+          type: string
+          description: Segundo apellido del usuario (opcional)
+          maxLength: 50
+          example: "López"
+        telefono:
+          type: string
+          description: Número de teléfono del usuario
+          pattern: "^[0-9]{10,15}$"
+          example: "3001234567"
+        direccion:
+          type: string
+          description: Dirección del usuario
+          maxLength: 200
+          example: "Calle 123 #45-67"
+        ciudad:
+          type: string
+          description: Ciudad del usuario
+          maxLength: 100
+          example: "Bogotá"
+        departamento:
+          type: string
+          description: Departamento del usuario
+          maxLength: 100
+          example: "Cundinamarca"
+        pais:
+          type: string
+          description: País del usuario
+          maxLength: 100
+          example: "Colombia"
+        fechaNacimiento:
+          type: string
+          format: date
+          description: Fecha de nacimiento del usuario
+          example: "1990-05-15"
+        numeroIdentificacion:
+          type: string
+          description: Número de identificación del usuario
+          pattern: "^[0-9]{6,20}$"
+          example: "12345678"
+        tipoIdentificacion:
+          type: string
+          description: Tipo de identificación del usuario
+          enum: ["CC", "CE", "PA", "TI", "RC", "NIT"]
+          example: "CC"
+        genero:
+          type: string
+          description: Género del usuario
+          maxLength: 20
+          example: "Masculino"
+        estadoCivil:
+          type: string
+          description: Estado civil del usuario
+          maxLength: 30
+          example: "Soltero"
+        ocupacion:
+          type: string
+          description: Ocupación del usuario
+          maxLength: 100
+          example: "Ingeniero"
+
+    UserInfoUpdateResponse:
+      type: object
+      required:
+        - message
+        - userInfo
+      properties:
+        message:
+          type: string
+          description: Mensaje de confirmación
+          example: "Información personal actualizada exitosamente"
+        userInfo:
+          type: object
+          description: Información personal actualizada
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: ID único de la información personal
+              example: "1a3ec2da-5cfa-45df-b9a0-764db8fde346"
+            userId:
+              type: string
+              format: uuid
+              description: ID del usuario asociado
+              example: "7160fc51-692d-4760-9fbe-6a69591bd8d2"
+            nombreCompleto:
+              type: string
+              description: Nombre completo del usuario
+              example: "Juan Carlos García López"
+            telefono:
+              type: string
+              description: Número de teléfono
+              example: "3001234567"
+            ciudad:
+              type: string
+              description: Ciudad del usuario
+              example: "Bogotá"
+            departamento:
+              type: string
+              description: Departamento del usuario
+              example: "Cundinamarca"
+            numeroIdentificacion:
+              type: string
+              description: Número de identificación
+              example: "12345678"
+            tipoIdentificacion:
+              type: string
+              description: Descripción del tipo de identificación
+              example: "Cédula de Ciudadanía"
+            isComplete:
+              type: boolean
+              description: Indica si la información está completa
+              example: true
+
+    UserInfoResponse:
+      type: object
+      required:
+        - userInfo
+      properties:
+        userInfo:
+          type: object
+          description: Información personal completa del usuario
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: ID único de la información personal
+              example: "1a3ec2da-5cfa-45df-b9a0-764db8fde346"
+            userId:
+              type: string
+              format: uuid
+              description: ID del usuario asociado
+              example: "7160fc51-692d-4760-9fbe-6a69591bd8d2"
+            primerNombre:
+              type: string
+              description: Primer nombre del usuario
+              example: "Juan"
+            segundoNombre:
+              type: string
+              description: Segundo nombre del usuario
+              example: "Carlos"
+            primerApellido:
+              type: string
+              description: Primer apellido del usuario
+              example: "García"
+            segundoApellido:
+              type: string
+              description: Segundo apellido del usuario
+              example: "López"
+            telefono:
+              type: string
+              description: Número de teléfono
+              example: "3001234567"
+            direccion:
+              type: string
+              description: Dirección del usuario
+              example: "Calle 123 #45-67"
+            ciudad:
+              type: string
+              description: Ciudad del usuario
+              example: "Bogotá"
+            departamento:
+              type: string
+              description: Departamento del usuario
+              example: "Cundinamarca"
+            pais:
+              type: string
+              description: País del usuario
+              example: "Colombia"
+            fechaNacimiento:
+              type: string
+              format: date
+              description: Fecha de nacimiento
+              example: "1990-05-15"
+            numeroIdentificacion:
+              type: string
+              description: Número de identificación
+              example: "12345678"
+            tipoIdentificacion:
+              type: string
+              description: Descripción del tipo de identificación
+              example: "Cédula de Ciudadanía"
+            genero:
+              type: string
+              description: Género del usuario
+              example: "Masculino"
+            estadoCivil:
+              type: string
+              description: Estado civil del usuario
+              example: "Soltero"
+            ocupacion:
+              type: string
+              description: Ocupación del usuario
+              example: "Ingeniero"
+            nombreCompleto:
+              type: string
+              description: Nombre completo del usuario
+              example: "Juan Carlos García López"
+            isComplete:
+              type: boolean
+              description: Indica si la información está completa
+              example: true
+            activo:
+              type: boolean
+              description: Indica si el registro está activo
+              example: true
+            createdAt:
+              type: string
+              format: date-time
+              description: Fecha de creación del registro
+              example: "2025-10-25T19:44:48.558755"
+            updatedAt:
+              type: string
+              format: date-time
+              description: Fecha de última actualización
+              example: "2025-10-25T19:49:40.123456"
+
+    PasswordRecoveryRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email del usuario para recuperar contraseña o información
+          example: "usuario@example.com"
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - newPassword
+      properties:
+        token:
+          type: string
+          description: Token de recuperación de contraseña
+          example: "eyJhbGciOiJIUzI1NiJ9..."
+        newPassword:
+          type: string
+          description: Nueva contraseña del usuario
+          minLength: 8
+          maxLength: 100
+          pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&].*$"
+          example: "NewPassword123!"
+
+    PasswordRecoveryCodeRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email del usuario para solicitar código de verificación
+          example: "usuario@example.com"
+
+    VerifyCodeRequest:
+      type: object
+      required:
+        - code
+        - email
+      properties:
+        code:
+          type: string
+          description: Código de verificación de 6 dígitos
+          pattern: "^\\d{6}$"
+          example: "123456"
+        email:
+          type: string
+          format: email
+          description: Email asociado al código de verificación
+          example: "usuario@example.com"
+
   securitySchemes:
     BearerAuth:
       type: http
@@ -819,3 +1797,105 @@ tags:
       **Endpoints Públicos (sin autenticación):**
       - `/oauth2/authorization/google` - Iniciar autenticación OAuth2 con Google
       - `/login/oauth2/code/google` - Callback de OAuth2 Google
+  - name: User Information
+    description: |
+      Endpoints para gestión de información personal de usuarios.
+      Permite a los usuarios autenticados actualizar y consultar su información personal.
+      Incluye validaciones de unicidad y tipos de identificación colombianos.
+      
+      **Endpoints Protegidos (requieren autenticación):**
+      - `/user-info/update` - Actualizar información personal del usuario
+      - `/user-info/me` - Obtener información personal del usuario
+      
+      **Características:**
+      - Validación de tipos de identificación colombianos (CC, CE, PA, TI, RC, NIT)
+      - Verificación de unicidad de número de identificación y teléfono
+      - Soporte para nombres y apellidos separados
+      - Campos opcionales y obligatorios claramente definidos
+      - Respuestas diferenciadas para usuarios con/sin información personal
+      
+      Requiere header Authorization: Bearer TOKEN para todos los endpoints.
+      Integración con JWT para identificación segura del usuario.
+  - name: Password Recovery
+    description: |
+      Endpoints para recuperación de contraseñas tradicional (DESHABILITADO) e información de usuario.
+      El flujo tradicional de recuperación de contraseñas está deshabilitado.
+      Use los endpoints de "Password Recovery Code" para el nuevo flujo de recuperación.
+      
+      **Endpoints Públicos (sin autenticación):**
+      - `/auth/forgot-password` - Solicitar recuperación de contraseña (DESHABILITADO)
+      - `/auth/reset-password` - Resetear contraseña con token (DESHABILITADO)
+      - `/auth/validate-recovery-token` - Validar token de recuperación (DESHABILITADO)
+      - `/auth/forgot-username` - Recuperar información de usuario
+      
+      **Nota:** Los endpoints de recuperación tradicional están deshabilitados.
+      Use los endpoints de "Password Recovery Code" para el nuevo flujo de recuperación con códigos de verificación.
+      
+      No requiere autenticación para ningún endpoint.
+      Integración con sistema de emails para notificaciones seguras.
+  - name: Password Recovery Code
+    description: |
+      Endpoints para recuperación de contraseñas con códigos de verificación de 6 dígitos.
+      Flujo moderno y seguro que utiliza códigos temporales en lugar de enlaces.
+      Incluye validaciones de seguridad avanzadas y protección contra ataques de fuerza bruta.
+      
+      **Endpoints Públicos (sin autenticación):**
+      - `/auth/forgot-password-code` - Solicitar código de verificación para recuperación
+      - `/auth/verify-code` - Verificar código de 6 dígitos
+      - `/auth/reset-password-code` - Resetear contraseña con token de código
+      
+      **Características:**
+      - Códigos de verificación de 6 dígitos con expiración configurable (5 minutos por defecto)
+      - Validación de email + código para prevenir ataques de fuerza bruta
+      - Revocación automática de códigos anteriores al generar uno nuevo
+      - Máximo 3 intentos de verificación por código
+      - Tokens de restablecimiento con expiración de 24 horas
+      - Envío de emails con plantillas HTML profesionales
+      - Respuestas de seguridad que no revelan si el email existe
+      - Validación de contraseñas con requisitos de seguridad estrictos
+      
+      **Flujo de Recuperación con Códigos:**
+      1. Usuario solicita código de verificación con su email
+      2. Sistema genera código de 6 dígitos y lo almacena en Redis
+      3. Sistema envía email con el código de verificación
+      4. Usuario ingresa el código en el endpoint de verificación
+      5. Sistema valida el código y devuelve token de restablecimiento
+      6. Usuario usa el token para restablecer su contraseña
+      7. Sistema revoca automáticamente el token después del uso
+      
+      **Ventajas sobre el flujo tradicional:**
+      - Mayor seguridad con códigos temporales
+      - Protección contra ataques de fuerza bruta
+      - Mejor experiencia de usuario en dispositivos móviles
+      - Códigos de un solo uso que no pueden ser reutilizados
+      - Expiración más corta reduce la ventana de ataque
+      
+      No requiere autenticación para ningún endpoint.
+      Integración con Redis para almacenamiento temporal de códigos.
+      Integración con sistema de emails para notificaciones seguras.
+  - name: Monitoring
+    description: |
+      Endpoints de monitoreo y salud de la aplicación.
+      Proporciona información sobre el estado de la aplicación, métricas de rendimiento y salud de los componentes.
+      
+      **Endpoints Públicos (sin autenticación):**
+      - `/actuator` - Lista de endpoints disponibles
+      - `/actuator/health` - Estado de salud de la aplicación
+      - `/actuator/info` - Información de la aplicación
+      - `/actuator/metrics` - Métricas de rendimiento
+      
+      **Características:**
+      - Monitoreo de salud de base de datos MySQL
+      - Monitoreo de salud de Redis
+      - Métricas de uso de memoria y CPU
+      - Métricas de rendimiento de la aplicación
+      - Información de tiempo de inicio y estado
+      
+      **Componentes monitoreados:**
+      - Base de datos (MySQL)
+      - Redis (para blacklist de tokens y códigos)
+      - Espacio en disco
+      - Ping de conectividad
+      
+      No requiere autenticación para ningún endpoint.
+      Útil para monitoreo de producción y debugging.
