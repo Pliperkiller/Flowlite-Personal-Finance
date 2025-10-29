@@ -105,6 +105,56 @@ public class JwtTokenProvider implements TokenProvider {
             return false;
         }
     }
+    
+    /**
+     * Genera un token JWT específico para recuperación de contraseña.
+     * 
+     * @param email Email del usuario
+     * @param expirationHours Horas de expiración del token
+     * @return Token JWT firmado para recuperación de contraseña
+     */
+    public String generatePasswordRecoveryToken(String email, int expirationHours) {
+        return Jwts.builder()
+                .setSubject(email)
+                .claim("email", email)
+                .claim("type", "password_recovery")
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + (expirationHours * 60 * 60 * 1000L)))
+                .signWith(getKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+    
+    /**
+     * Verifica si el token es de tipo recuperación de contraseña.
+     * 
+     * @param token Token JWT
+     * @return true si es token de recuperación de contraseña
+     */
+    public boolean isPasswordRecoveryToken(String token) {
+        try {
+            String type = getClaims(token).get("type", String.class);
+            return "password_recovery".equals(type);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Extrae el email del token de recuperación de contraseña.
+     * 
+     * @param token Token JWT de recuperación
+     * @return Email extraído del token
+     */
+    public String getEmailFromPasswordRecoveryToken(String token) {
+        try {
+            if (!isPasswordRecoveryToken(token)) {
+                return null;
+            }
+            return getClaims(token).get("email", String.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     private Claims getClaims(String token) {
         return Jwts.parserBuilder()
