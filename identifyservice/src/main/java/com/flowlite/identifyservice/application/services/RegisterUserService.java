@@ -37,7 +37,7 @@ public class RegisterUserService {
         String hashedPassword = passwordEncoder.encode(rawPassword); // esto es un String
 
         User newUser = User.builder()
-        .id(UUID.randomUUID())
+        .id(UUID.randomUUID().toString())
         .username(new Username(username))
         .email(new Email(email))
         .password(new Password(hashedPassword))

@@ -10,7 +10,7 @@ public class UserMapper {
 
     public static UserEntity toEntity(User user) {
         return UserEntity.builder()
-                .id(user.getId())
+                .idUser(user.getId())
                 .username(user.getUsername().getValue())
                 .email(user.getEmail().getValue())
                 .password(
@@ -25,7 +25,7 @@ public class UserMapper {
 
     public static User toDomain(UserEntity entity) {
         return User.builder()
-                .id(entity.getId())
+                .id(entity.getIdUser())
                 .username(new Username(entity.getUsername()))
                 .email(new Email(entity.getEmail()))
                 .password(

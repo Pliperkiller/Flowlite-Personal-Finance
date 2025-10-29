@@ -6,13 +6,13 @@ from typing import List
 @dataclass
 class BatchProcessedMessage:
     """DTO for incoming RabbitMQ message"""
-    batch_id: UUID
+    batch_id: str
     status: str
-    user_id: UUID
-    
+    user_id: str
+
     def is_processed(self) -> bool:
-        """Check if the batch status is 'Processed'"""
-        return self.status == "Processed"
+        """Check if the batch status is 'completed'"""
+        return self.status == "completed"
 
 
 @dataclass
@@ -43,7 +43,7 @@ class InsightDTO:
 @dataclass
 class GenerateInsightsResponse:
     """Response DTO for insight generation use case"""
-    user_id: UUID
-    batch_id: UUID
+    user_id: str
+    batch_id: str
     insights_generated: int
     insights: List[InsightDTO]

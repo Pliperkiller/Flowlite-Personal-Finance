@@ -121,6 +121,7 @@ class Container:
                 batch_repository=batch_repo,
                 llm_service=self.llm_service,
                 transaction_aggregator=self.transaction_aggregator,
-                category_mapper=category_mapper
+                category_mapper=category_mapper,
+                max_insights=self.settings.max_insights
             )
             yield use_case

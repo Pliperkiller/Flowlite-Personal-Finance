@@ -101,7 +101,7 @@ public class PreregisterUserService {
         
         // Crear usuario final
         User user = User.builder()
-                .id(UUID.randomUUID())
+                .id(UUID.randomUUID().toString())
                 .username(new Username(pendingUser.getUsername()))
                 .email(new Email(pendingUser.getEmail()))
                 .password(new Password(pendingUser.getPassword()))

@@ -25,7 +25,7 @@ public class RegisterOAuth2UserService {
         }
 
         User newUser = User.builder()
-                .id(UUID.randomUUID())
+                .id(UUID.randomUUID().toString())
                 .username(new Username(email)) // usamos email como username
                 .email(new Email(email))
                 .password(null) // 👈 explícito: sin contraseña (OAuth2)
