@@ -6,19 +6,19 @@ from decimal import Decimal
 @dataclass(frozen=True)
 class UserId:
     """Value Object for user identifier"""
-    value: UUID
-    
+    value: str
+
     def __str__(self) -> str:
-        return str(self.value)
+        return self.value
 
 
 @dataclass(frozen=True)
 class BatchId:
     """Value Object for batch identifier"""
-    value: UUID
-    
+    value: str
+
     def __str__(self) -> str:
-        return str(self.value)
+        return self.value
 
 
 @dataclass(frozen=True)

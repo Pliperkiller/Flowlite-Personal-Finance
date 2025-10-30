@@ -1,0 +1,19 @@
+# Alembic for database migrations
+alembic==1.13.1
+
+# SQLAlchemy
+sqlalchemy==2.0.25
+
+# MySQL driver (async)
+aiomysql==0.2.0
+pymysql>=1.1.0
+
+# For environment variables
+python-dotenv==1.0.0
+
+# Optional dependencies for check_infrastructure.py
+pika
+requests
+redis
+cryptography
+greenlet

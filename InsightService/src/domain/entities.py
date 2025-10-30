@@ -72,4 +72,4 @@ class TransactionBatch:
     
     def is_processed(self) -> bool:
         """Checks if the batch was successfully processed"""
-        return self.process_status == "Processed"
+        return self.process_status == "completed"

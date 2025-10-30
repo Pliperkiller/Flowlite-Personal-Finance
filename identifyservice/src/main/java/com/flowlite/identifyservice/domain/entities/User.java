@@ -5,14 +5,13 @@ import com.flowlite.identifyservice.domain.valueobjects.Username;
 import lombok.Data;
 import lombok.Builder;
 
-import java.util.UUID;
 import java.util.Optional;
 
 @Data
 @Builder
 public class User {
 
-    private UUID id;
+    private String id;
     private Username username;
     private Email email;
     private Password password;   // ahora puede ser null
@@ -26,11 +25,11 @@ public class User {
     public Optional<Password> getPassword() {
         return Optional.ofNullable(password);
     }
-    
+
     // Getters adicionales para compatibilidad
     public Username getUsername() { return username; }
     public Email getEmail() { return email; }
-    public UUID getId() { return id; }
+    public String getId() { return id; }
     public Role getRole() { return role; }
     public boolean isActive() { return active; }
 }

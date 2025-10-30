@@ -1,19 +1,24 @@
 from sqlalchemy import (
-    Column, String, Integer, DateTime, Numeric, 
+    Column, String, Integer, DateTime, Numeric,
     ForeignKey, Boolean, Text, func
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.mysql import CHAR
 from sqlalchemy.orm import relationship
 import uuid
 
 from src.infrastructure.config.database import Base
 
 
+def generate_uuid():
+    """Generate a UUID as string"""
+    return str(uuid.uuid4())
+
+
 class UserModel(Base):
     """SQLAlchemy model for User table"""
     __tablename__ = "User"
-    
-    id_user = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    id_user = Column(CHAR(36), primary_key=True, default=generate_uuid)
     username = Column(String(100), nullable=False)
     email = Column(String(255), nullable=False, unique=True)
     password = Column(String(255), nullable=False)
@@ -28,10 +33,10 @@ class UserModel(Base):
 class TransactionCategoryModel(Base):
     """SQLAlchemy model for TransactionCategory table"""
     __tablename__ = "TransactionCategory"
-    
-    id_category = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    id_category = Column(CHAR(36), primary_key=True, default=generate_uuid)
     description = Column(String(255), nullable=False)
-    
+
     # Relationships
     transactions = relationship("TransactionModel", back_populates="category")
 
@@ -39,10 +44,10 @@ class TransactionCategoryModel(Base):
 class BankModel(Base):
     """SQLAlchemy model for Bank table"""
     __tablename__ = "Bank"
-    
-    id_bank = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    id_bank = Column(CHAR(36), primary_key=True, default=generate_uuid)
     bank_name = Column(String(255), nullable=False)
-    
+
     # Relationships
     transactions = relationship("TransactionModel", back_populates="bank")
 
@@ -50,13 +55,13 @@ class BankModel(Base):
 class TransactionBatchModel(Base):
     """SQLAlchemy model for TransactionBatch table"""
     __tablename__ = "TransactionBatch"
-    
-    id_batch = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    id_batch = Column(CHAR(36), primary_key=True, default=generate_uuid)
     process_status = Column(String(50), nullable=False)
     start_date = Column(DateTime, nullable=False, default=func.now())
     end_date = Column(DateTime)
     batch_size = Column(Integer)
-    
+
     # Relationships
     transactions = relationship("TransactionModel", back_populates="batch")
 
@@ -64,17 +69,17 @@ class TransactionBatchModel(Base):
 class TransactionModel(Base):
     """SQLAlchemy model for Transaction table"""
     __tablename__ = "Transaction"
-    
-    id_transaction = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    id_user = Column(UUID(as_uuid=True), ForeignKey("User.id_user"), nullable=False)
-    id_category = Column(UUID(as_uuid=True), ForeignKey("TransactionCategory.id_category"), nullable=False)
-    id_bank = Column(UUID(as_uuid=True), ForeignKey("Bank.id_bank"))
-    id_batch = Column(UUID(as_uuid=True), ForeignKey("TransactionBatch.id_batch"))
+
+    id_transaction = Column(CHAR(36), primary_key=True, default=generate_uuid)
+    id_user = Column(CHAR(36), ForeignKey("User.id_user"), nullable=False)
+    id_category = Column(CHAR(36), ForeignKey("TransactionCategory.id_category"), nullable=False)
+    id_bank = Column(CHAR(36), ForeignKey("Bank.id_bank"))
+    id_batch = Column(CHAR(36), ForeignKey("TransactionBatch.id_batch"))
     transaction_name = Column(String(255), nullable=False)
     value = Column(Numeric(15, 2), nullable=False)
     transaction_date = Column(DateTime, nullable=False)
     transaction_type = Column(String(50), nullable=False)  # 'income' or 'expense'
-    
+
     # Relationships
     user = relationship("UserModel", back_populates="transactions")
     category = relationship("TransactionCategoryModel", back_populates="transactions")
@@ -85,10 +90,10 @@ class TransactionModel(Base):
 class InsightCategoryModel(Base):
     """SQLAlchemy model for InsightCategory table"""
     __tablename__ = "InsightCategory"
-    
-    id_category = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    id_category = Column(CHAR(36), primary_key=True, default=generate_uuid)
     description = Column(String(255), nullable=False)
-    
+
     # Relationships
     insights = relationship("InsightModel", back_populates="category")
 
@@ -96,15 +101,15 @@ class InsightCategoryModel(Base):
 class InsightModel(Base):
     """SQLAlchemy model for Insights table"""
     __tablename__ = "Insights"
-    
-    id_insight = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    id_user = Column(UUID(as_uuid=True), ForeignKey("User.id_user"), nullable=False)
-    id_category = Column(UUID(as_uuid=True), ForeignKey("InsightCategory.id_category"), nullable=False)
+
+    id_insight = Column(CHAR(36), primary_key=True, default=generate_uuid)
+    id_user = Column(CHAR(36), ForeignKey("User.id_user"), nullable=False)
+    id_category = Column(CHAR(36), ForeignKey("InsightCategory.id_category"), nullable=False)
     title = Column(String(255), nullable=False)
     text = Column(Text, nullable=False)
     relevance = Column(Integer, nullable=False)
-    created_at = Column(DateTime, nullable=False, default=func.now())
-    
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+
     # Relationships
     user = relationship("UserModel", back_populates="insights")
     category = relationship("InsightCategoryModel", back_populates="insights")
@@ -113,6 +118,6 @@ class InsightModel(Base):
 class RoleModel(Base):
     """SQLAlchemy model for Role table"""
     __tablename__ = "Role"
-    
-    id_role = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    id_role = Column(CHAR(36), primary_key=True, default=generate_uuid)
     role_name = Column(String(100), nullable=False)

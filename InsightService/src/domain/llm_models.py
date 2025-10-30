@@ -5,11 +5,13 @@ from decimal import Decimal
 
 @dataclass
 class TransactionSummary:
-    """Transaction summary to send to LLM"""
+    """Transaction summary to send to LLM with temporal information"""
     category: str
+    year_month: str  # Format: "YYYY-MM" for temporal analysis
     total_amount: Decimal
     transaction_count: int
     transaction_type: str  # income - expense
+    average_amount: Decimal  # Average transaction amount
 
 
 @dataclass

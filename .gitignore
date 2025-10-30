@@ -1,2 +1,19 @@
+# OS Files
 .DS_Store
 Thumbs.db
+
+# Logs generados por los servicios
+logs/
+*.log
+
+# Archivo de PIDs de los servicios
+.flowlite_services.pid
+
+# Archivos temporales
+*.tmp
+*.swp
+*~
+
+# otros
+.csv
+.xlsx

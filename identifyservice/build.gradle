@@ -24,7 +24,7 @@ repositories {
 	mavenCentral()
 	maven { url 'https://repo.spring.io/release' }
 	maven { url 'https://repo.spring.io/milestone' }
-	jcenter()
+	// jcenter() - Deprecated and removed in Gradle 9.x
 }
 
 ext {

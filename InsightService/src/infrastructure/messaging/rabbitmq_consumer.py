@@ -102,11 +102,11 @@ class RabbitMQConsumer:
             for field in required_fields:
                 if field not in data:
                     raise ValueError(f"Missing required field: {field}")
-            
-            # Parse UUIDs
-            batch_id = UUID(data['batch_id'])
-            user_id = UUID(data['userid'])
-            
+
+            # Keep both batch_id and user_id as strings (match database CHAR(36))
+            batch_id = data['batch_id']
+            user_id = data['userid']
+
             return BatchProcessedMessage(
                 batch_id=batch_id,
                 status=data['status'],

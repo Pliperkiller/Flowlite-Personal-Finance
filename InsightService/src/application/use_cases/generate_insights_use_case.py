@@ -25,13 +25,13 @@ logger = logging.getLogger(__name__)
 
 class GenerateInsightsUseCase:
     """
-    Use case for generating financial insights based on processed transaction batches
-    
+    Use case for generating financial insights based on user's complete transaction history
+
     Flow:
-    1. Validate that batch exists and is processed
-    2. Retrieve user transactions from the batch
+    1. Validate that batch exists and is processed (trigger validation)
+    2. Retrieve ALL user transactions (complete history)
     3. Aggregate transactions by category
-    4. Generate recommendations using LLM
+    4. Generate recommendations using LLM (analyzing trends and patterns)
     5. Map recommendations to Insight entities
     6. Persist insights to database
     """
@@ -43,7 +43,8 @@ class GenerateInsightsUseCase:
         batch_repository: BatchRepository,
         llm_service: LLMService,
         transaction_aggregator: TransactionAggregator,
-        category_mapper: CategoryMapper
+        category_mapper: CategoryMapper,
+        max_insights: int = 5
     ):
         self._transaction_repo = transaction_repository
         self._insight_repo = insight_repository
@@ -51,39 +52,48 @@ class GenerateInsightsUseCase:
         self._llm_service = llm_service
         self._aggregator = transaction_aggregator
         self._category_mapper = category_mapper
+        self._max_insights = max_insights
     
     def execute(self, user_id: UserId, batch_id: BatchId) -> GenerateInsightsResponse:
         """
-        Executes the insight generation process
-        
+        Executes the insight generation process based on user's complete transaction history
+
+        This use case analyzes ALL transactions of the user (not just the current batch)
+        to generate insights based on historical patterns, trends, and financial behavior
+        over time. This allows for recommendations like:
+        - "Your spending on restaurants has increased 30% compared to last month"
+        - "You've improved your savings rate from 10% to 15%"
+        - "Your entertainment expenses show a concerning upward trend"
+
         Args:
-            user_id: ID of the user
-            batch_id: ID of the processed batch
-            
+            user_id: ID of the user to analyze
+            batch_id: ID of the processed batch (used only for trigger validation)
+
         Returns:
-            Response containing generated insights
-            
+            Response containing generated insights based on complete history
+
         Raises:
             BatchNotFoundError: If batch doesn't exist
-            BatchNotProcessedError: If batch is not in 'Processed' status
+            BatchNotProcessedError: If batch is not in 'completed' status
             TransactionNotFoundError: If no transactions found for user
             InsightGenerationError: If insight generation fails
         """
-        logger.info(f"Starting insight generation for user={user_id}, batch={batch_id}")
-        
-        # Step 1: Validate batch
+        logger.info(f"Starting insight generation for user={user_id}, triggered by batch={batch_id}")
+
+        # Step 1: Validate batch (confirms the trigger is valid)
         self._validate_batch(batch_id)
-        
-        # Step 2: Retrieve transactions
-        transactions = self._transaction_repo.find_by_user_and_batch(user_id, batch_id)
-        
+        logger.info(f"Batch {batch_id} validated - proceeding with full user analysis")
+
+        # Step 2: Retrieve ALL user transactions (complete history for trend analysis)
+        transactions = self._transaction_repo.find_by_user(user_id)
+
         if not transactions:
-            logger.warning(f"No transactions found for user={user_id}, batch={batch_id}")
+            logger.warning(f"No transactions found for user={user_id}")
             raise TransactionNotFoundError(
-                f"No transactions found for user {user_id} in batch {batch_id}"
+                f"No transactions found for user {user_id}"
             )
-        
-        logger.info(f"Retrieved {len(transactions)} transactions")
+
+        logger.info(f"Retrieved {len(transactions)} historical transactions for analysis")
         
         # Step 3: Aggregate transactions
         transaction_summaries = self._aggregator.aggregate_by_category(transactions)
@@ -92,9 +102,10 @@ class GenerateInsightsUseCase:
         # Step 4: Generate recommendations with LLM
         try:
             llm_recommendations = self._llm_service.generate_recommendations(
-                transaction_summaries
+                transaction_summaries,
+                max_insights=self._max_insights
             )
-            logger.info(f"LLM generated {len(llm_recommendations)} recommendations")
+            logger.info(f"LLM generated {len(llm_recommendations)} recommendations (max={self._max_insights})")
         except Exception as e:
             logger.error(f"LLM service error: {str(e)}")
             raise InsightGenerationError(f"Failed to generate recommendations: {str(e)}")
@@ -127,7 +138,7 @@ class GenerateInsightsUseCase:
         
         if not batch.is_processed():
             raise BatchNotProcessedError(
-                f"Batch {batch_id} has status '{batch.process_status}', expected 'Processed'"
+                f"Batch {batch_id} has status '{batch.process_status}', expected 'completed'"
             )
     
     def _map_to_insights(self, user_id: UserId, llm_recommendations) -> List[Insight]:
