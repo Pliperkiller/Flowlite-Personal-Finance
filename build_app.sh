@@ -1,3 +1,24 @@
+# Función para esperar que un puerto esté disponible (para servicios sin health)
+wait_for_port() {
+    local port=$1
+    local service=$2
+    local max_attempts=30
+    local attempt=0
+
+    echo -e "${YELLOW}⏳ Esperando que $service esté disponible en puerto $port...${NC}"
+
+    while [ $attempt -lt $max_attempts ]; do
+        if check_port $port; then
+            echo -e "${GREEN}✓${NC} $service está disponible"
+            return 0
+        fi
+        attempt=$((attempt + 1))
+        sleep 2
+    done
+
+    echo -e "${RED}✗${NC} Timeout esperando $service"
+    return 1
+}
 #!/bin/bash
 
 # Script para iniciar todos los servicios de Flowlite
@@ -41,25 +62,25 @@ check_port() {
     fi
 }
 
-# Función para esperar que un puerto esté disponible
-wait_for_port() {
-    local port=$1
+# Función para esperar que un servicio esté saludable vía HTTP
+wait_for_service() {
+    local url=$1
     local service=$2
     local max_attempts=30
     local attempt=0
 
-    echo -e "${YELLOW}⏳ Esperando que $service esté disponible en puerto $port...${NC}"
+    echo -e "${YELLOW}⏳ Esperando que $service esté saludable en $url...${NC}"
 
     while [ $attempt -lt $max_attempts ]; do
-        if check_port $port; then
-            echo -e "${GREEN}✓${NC} $service está disponible"
+        if curl -fs "$url" >/dev/null 2>&1; then
+            echo -e "${GREEN}✓${NC} $service está saludable"
             return 0
         fi
         attempt=$((attempt + 1))
         sleep 2
     done
 
-    echo -e "${RED}✗${NC} Timeout esperando $service"
+    echo -e "${RED}✗${NC} Timeout esperando $service (no responde en $url)"
     return 1
 }
 
@@ -141,24 +162,22 @@ fi
 
 # Verificar si el puerto está en uso
 if check_port 8000; then
-    echo -e "${YELLOW}⚠️  Puerto 8000 ya está en uso. Deteniendo proceso...${NC}"
-    lsof -ti:8000 | xargs kill -9 2>/dev/null
-    sleep 2
-fi
-
-# Iniciar servicio en background y guardar PID
-nohup ./start.sh > "$PROJECT_ROOT/logs/identifyservice.log" 2>&1 &
-IDENTITY_PID=$!
-echo "identifyservice:$IDENTITY_PID" >> "$PID_FILE"
-
-echo -e "${YELLOW}⏳ Iniciando IdentityService (PID: $IDENTITY_PID)...${NC}"
-
-# Esperar a que el servicio esté disponible
-if wait_for_port 8000 "IdentityService"; then
-    echo -e "${GREEN}✓${NC} IdentityService iniciado correctamente"
+    echo -e "${YELLOW}⚠️  IdentityService ya está corriendo en el puerto 8000. Saltando arranque...${NC}"
+    echo "identifyservice:EXTERNAL" >> "$PID_FILE"
+    echo -e "${GREEN}✓${NC} IdentityService detectado como iniciado correctamente"
 else
-    echo -e "${RED}✗${NC} Error al iniciar IdentityService"
-    exit 1
+    # Iniciar servicio en background y guardar PID
+    nohup ./start.sh > "$PROJECT_ROOT/logs/identifyservice.log" 2>&1 &
+    IDENTITY_PID=$!
+    echo "identifyservice:$IDENTITY_PID" >> "$PID_FILE"
+    echo -e "${YELLOW}⏳ Iniciando IdentityService (PID: $IDENTITY_PID)...${NC}"
+    # Esperar a que el servicio esté saludable
+    if wait_for_service "http://localhost:8000/actuator/health" "IdentityService"; then
+        echo -e "${GREEN}✓${NC} IdentityService iniciado correctamente"
+    else
+        echo -e "${RED}✗${NC} Error al iniciar IdentityService"
+        exit 1
+    fi
 fi
 
 echo ""
@@ -194,8 +213,8 @@ echo "insightservice:$INSIGHT_PID" >> "$PID_FILE"
 
 echo -e "${YELLOW}⏳ Iniciando InsightService (PID: $INSIGHT_PID)...${NC}"
 
-# Esperar a que el servicio esté disponible
-if wait_for_port 8002 "InsightService API"; then
+# Esperar a que el servicio esté saludable (por HTTP)
+if wait_for_service "http://localhost:8002/health" "InsightService API"; then
     echo -e "${GREEN}✓${NC} InsightService iniciado correctamente"
 else
     echo -e "${RED}✗${NC} Error al iniciar InsightService"
@@ -227,14 +246,15 @@ if check_port 8001; then
 fi
 
 # Iniciar servicio en background y guardar PID
-nohup ./start.sh > "$PROJECT_ROOT/logs/uploadservice.log" 2>&1 &
+nohup bash ./start.sh > "$PROJECT_ROOT/logs/uploadservice.log" 2>&1 &
 UPLOAD_PID=$!
 echo "uploadservice:$UPLOAD_PID" >> "$PID_FILE"
 
 echo -e "${YELLOW}⏳ Iniciando UploadService (PID: $UPLOAD_PID)...${NC}"
 
-# Esperar a que el servicio esté disponible
-if wait_for_port 8001 "UploadService"; then
+
+# Esperar a que el servicio esté saludable (por HTTP)
+if wait_for_service "http://localhost:8001/api/v1/health" "UploadService"; then
     echo -e "${GREEN}✓${NC} UploadService iniciado correctamente"
 else
     echo -e "${RED}✗${NC} Error al iniciar UploadService"

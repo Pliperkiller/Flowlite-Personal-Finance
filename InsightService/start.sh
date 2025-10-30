@@ -29,7 +29,7 @@ echo -e "${GREEN}✓${NC} Archivo .env encontrado"
 # Verificar que existe el entorno virtual
 if [ ! -d "venv" ]; then
     echo -e "${YELLOW}⚠️  No se encontró el entorno virtual. Creándolo...${NC}"
-    python3 -m venv venv
+    python -m venv venv
     if [ $? -ne 0 ]; then
         echo -e "${RED}❌ Error al crear el entorno virtual${NC}"
         exit 1

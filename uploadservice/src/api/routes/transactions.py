@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status, Header
 from typing import List
 from pydantic import BaseModel
 from uuid import UUID
@@ -24,10 +24,16 @@ class UploadResponse(BaseModel):
     message: str
 
 
+from fastapi import Security
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+security = HTTPBearer()
+
 @router.post("/upload", response_model=UploadResponse, status_code=status.HTTP_202_ACCEPTED)
 async def upload_files(
     bank_code: str,
     files: List[UploadFile] = File(...),
+    authorization: HTTPAuthorizationCredentials = Security(security),
     user_id: UUID = Depends(get_current_user_id),
     transaction_repo=Depends(get_transaction_repository),
     bank_repo=Depends(get_bank_repository),

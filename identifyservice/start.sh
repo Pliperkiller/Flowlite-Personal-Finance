@@ -12,9 +12,20 @@ else
     echo "⚠ Archivo .env no encontrado, usando valores por defecto"
 fi
 
-# Configurar Java
-export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"
-export JAVA_HOME="/opt/homebrew/opt/openjdk@17"
+
+# Configurar Java según sistema operativo
+UNAME_OUT="$(uname -s)"
+if [[ "$UNAME_OUT" == "Darwin" ]]; then
+    # macOS (Homebrew)
+    export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"
+    export JAVA_HOME="/opt/homebrew/opt/openjdk@17"
+elif [[ "$UNAME_OUT" == "Linux" ]]; then
+    # Linux/WSL: buscar OpenJDK 17
+    if [ -d "/usr/lib/jvm/java-17-openjdk-amd64" ]; then
+        export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+        export PATH="$JAVA_HOME/bin:$PATH"
+    fi
+fi
 
 # Verificar que Java esté instalado
 if ! command -v java &> /dev/null; then
