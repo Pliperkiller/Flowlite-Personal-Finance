@@ -85,6 +85,7 @@ def verify_tables(engine):
         'TransactionCategory',
         'TransactionBatch',
         'Transaction',
+        'FileUploadHistory',
         'InsightCategory',
         'Insights',
         'alembic_version'
