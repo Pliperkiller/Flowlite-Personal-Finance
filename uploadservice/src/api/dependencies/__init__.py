@@ -8,6 +8,7 @@ from .repositories import (
     get_db_session_factory,
 )
 from .services import get_classifier, get_message_broker
+from .file_upload_history_dependency import get_file_upload_history_repository
 
 __all__ = [
     "get_current_user_id",
@@ -19,4 +20,5 @@ __all__ = [
     "get_db_session_factory",
     "get_classifier",
     "get_message_broker",
+    "get_file_upload_history_repository",
 ]

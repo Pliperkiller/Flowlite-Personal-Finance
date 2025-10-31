@@ -1,10 +1,9 @@
-"""
-ProcessFilesUseCase with file hash validation and duplicate file detection.
-"""
-from typing import List, Tuple
+from typing import List, Callable
 import asyncio
 import logging
+from decimal import Decimal
 from datetime import datetime
+from uuid import UUID
 from sqlalchemy.orm import sessionmaker
 
 logger = logging.getLogger(__name__)
@@ -17,30 +16,10 @@ from ...domain.ports import (
     ClassifierPort,
     MessageBrokerPort,
 )
-from ...domain.ports.file_upload_history_repository_port import FileUploadHistoryRepositoryPort
-from ...domain.entities import Transaction, TransactionBatch, FileUploadHistory
-
-
-class DuplicateFileError(Exception):
-    """Exception raised when a duplicate file is detected."""
-    def __init__(self, filename: str, batch_id: str, upload_date: datetime):
-        self.filename = filename
-        self.batch_id = batch_id
-        self.upload_date = upload_date
-        super().__init__(f"File {filename} was already uploaded on {upload_date}")
+from ...domain.entities import Transaction, TransactionBatch
 
 
 class ProcessFilesUseCase:
-    """
-    Use case for processing uploaded files with duplicate detection.
-
-    Features:
-    - Calculates SHA256 hash of uploaded files
-    - Detects and prevents duplicate file processing
-    - Saves file upload history to database
-    - Processes transactions asynchronously
-    """
-
     def __init__(
         self,
         transaction_repo: TransactionRepositoryPort,
@@ -49,7 +28,6 @@ class ProcessFilesUseCase:
         batch_repo: TransactionBatchRepositoryPort,
         classifier: ClassifierPort,
         message_broker: MessageBrokerPort,
-        file_upload_history_repo: FileUploadHistoryRepositoryPort,  # NEW PARAMETER
         session_factory: sessionmaker = None,
     ):
         self.transaction_repo = transaction_repo
@@ -58,64 +36,30 @@ class ProcessFilesUseCase:
         self.batch_repo = batch_repo
         self.classifier = classifier
         self.message_broker = message_broker
-        self.file_upload_history_repo = file_upload_history_repo  # NEW
         self.session_factory = session_factory
 
     async def execute(
         self,
-        files_data: List[Tuple[bytes, str, str, int]],  # (content, hash, filename, size)
+        files_content: List[bytes],
         parser: ExcelParserPort,
-        user_id: str,  # UUID as string
-    ) -> str:  # Returns batch_id as string
+        user_id: UUID,
+    ) -> UUID:
         """
-        Process Excel files with duplicate detection.
-
-        Args:
-            files_data: List of tuples containing (file_content, file_hash, filename, file_size)
-            parser: Excel parser for the bank
-            user_id: ID of the user uploading files (UUID as string)
-
-        Returns:
-            UUID string of the created batch
-
-        Raises:
-            ValueError: If bank not found
-            DuplicateFileError: If file was already uploaded (contains batch_id and upload_date)
+        Process Excel files and return the batch ID
         """
-        # 1. Get the bank by name
-        bank_name = parser.get_bank_code()
+        # 1. Get the bank by name (bank_code is now bank_name)
+        bank_name = parser.get_bank_code()  # This should return bank name
         bank = await self.bank_repo.get_by_name(bank_name)
         if not bank:
             raise ValueError(f"Bank with name {bank_name} not found")
 
-        # 2. VALIDATE FILE HASHES - Check for duplicates
-        for file_content, file_hash, filename, file_size in files_data:
-            existing_upload = await self.file_upload_history_repo.get_by_hash(
-                user_id=user_id,
-                file_hash=file_hash
-            )
-
-            if existing_upload:
-                # FILE IS DUPLICATE - Raise exception to return 409
-                logger.warning(
-                    f"Duplicate file detected: {filename} (hash: {file_hash[:16]}...) "
-                    f"Original upload: {existing_upload.upload_date}, "
-                    f"Batch ID: {existing_upload.id_batch}"
-                )
-                # Raise exception with details about the duplicate
-                raise DuplicateFileError(
-                    filename=filename,
-                    batch_id=existing_upload.id_batch,
-                    upload_date=existing_upload.upload_date
-                )
-
-        # 3. Parse all files
+        # 2. Parse all files
         all_raw_transactions = []
-        for file_content, file_hash, filename, file_size in files_data:
+        for file_content in files_content:
             raw_transactions = parser.parse(file_content)
             all_raw_transactions.extend(raw_transactions)
 
-        # 4. Create the batch
+        # 3. Create the batch
         batch = TransactionBatch(
             id_batch=None,
             process_status="pending",
@@ -125,25 +69,7 @@ class ProcessFilesUseCase:
         )
         batch = await self.batch_repo.save(batch)
 
-        # 5. SAVE FILE UPLOAD HISTORY - Record this upload
-        for file_content, file_hash, filename, file_size in files_data:
-            file_upload = FileUploadHistory(
-                id_file=None,
-                id_user=user_id,
-                file_hash=file_hash,
-                file_name=filename,
-                bank_code=bank_name,
-                upload_date=datetime.now(),
-                id_batch=batch.id_batch,
-                file_size=file_size,
-            )
-            await self.file_upload_history_repo.save(file_upload)
-            logger.info(
-                f"Saved file upload history: {filename} (hash: {file_hash[:16]}...) "
-                f"Batch ID: {batch.id_batch}"
-            )
-
-        # 6. Process in background
+        # 4. Process in background (in a real application you would use Celery or similar)
         asyncio.create_task(
             self._process_transactions_async(
                 all_raw_transactions, batch, user_id, bank.id_bank
@@ -153,7 +79,7 @@ class ProcessFilesUseCase:
         return batch.id_batch
 
     async def _process_transactions_async(
-        self, raw_transactions, batch: TransactionBatch, user_id: str, bank_id: str  # Both are UUID strings
+        self, raw_transactions, batch: TransactionBatch, user_id: UUID, bank_id: str
     ):
         """Process transactions in batches of 500"""
         # Create a new session for this background task
@@ -231,9 +157,11 @@ class ProcessFilesUseCase:
                     await self.message_broker.publish_batch_processed(
                         batch_id=batch.id_batch,
                         user_id=user_id,
-                        status="completed",
+                        status="completed",  # Status expected by InsightService
                     )
                 except Exception as mq_error:
+                    # Log error but don't fail the batch processing
+                    # The batch is already completed and saved
                     logger.error(
                         f"Failed to publish batch processed event to RabbitMQ: {mq_error}",
                         exc_info=True,

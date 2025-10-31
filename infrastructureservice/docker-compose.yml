@@ -13,7 +13,6 @@ services:
     ports:
       - "${MYSQL_PORT:-3306}:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
       - ./mysql/init:/docker-entrypoint-initdb.d
     networks:
       - flowlite-network
@@ -35,7 +34,6 @@ services:
       - "${RABBITMQ_PORT:-5672}:5672"      # AMQP port
       - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"  # Management UI
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
       - ./rabbitmq/config:/etc/rabbitmq
     networks:
       - flowlite-network
@@ -52,9 +50,7 @@ services:
     restart: unless-stopped
     ports:
       - "${REDIS_PORT:-6379}:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-flowlite_redis_pass_2024} --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: redis-server --requirepass ${REDIS_PASSWORD:-flowlite_redis_pass_2024} --maxmemory 256mb --maxmemory-policy allkeys-lru
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-flowlite_redis_pass_2024}
     networks:
@@ -66,13 +62,24 @@ services:
       retries: 3
       start_period: 30s
 
-volumes:
-  mysql_data:
-    driver: local
-  rabbitmq_data:
-    driver: local
-  redis_data:
-    driver: local
+  db-init:
+    build:
+      context: .
+      dockerfile: Dockerfile.init
+    container_name: flowlite-db-init
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-flowlite_db}
+      MYSQL_USER: ${MYSQL_USER:-flowlite_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-flowlite_password}
+      DATABASE_URL: mysql+pymysql://${MYSQL_USER:-flowlite_user}:${MYSQL_PASSWORD:-flowlite_password}@mysql:3306/${MYSQL_DATABASE:-flowlite_db}
+    networks:
+      - flowlite-network
+    restart: "no"
 
 networks:
   flowlite-network:

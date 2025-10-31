@@ -35,7 +35,7 @@ class User(Base):
     id_user = Column(CHAR(36), primary_key=True, default=generate_uuid)
     username = Column(String(100), nullable=False)
     email = Column(String(255), nullable=False, unique=True)
-    password = Column(String(255), nullable=False)
+    password = Column(String(255), nullable=True)  # Puede ser NULL para autenticación externa (OAuth, SSO)
     role = Column(String(50), nullable=True)
     active = Column(Boolean, default=True)
 
@@ -115,11 +115,14 @@ class Transaction(Base):
     """
     Transacciones bancarias
     Usado por: UploadService, InsightService
+
+    NOTA: id_user NO tiene foreign key constraint para permitir independencia
+    entre microservicios. La validación de usuario se hace via IdentityService API.
     """
     __tablename__ = "Transaction"
 
     id_transaction = Column(CHAR(36), primary_key=True, default=generate_uuid)
-    id_user = Column(CHAR(36), ForeignKey("User.id_user"), nullable=False)
+    id_user = Column(CHAR(36), nullable=False)  # No FK - validación via API
     id_category = Column(CHAR(36), ForeignKey("TransactionCategory.id_category"), nullable=False)
     id_bank = Column(CHAR(36), ForeignKey("Bank.id_bank"), nullable=True)
     id_batch = Column(CHAR(36), ForeignKey("TransactionBatch.id_batch"), nullable=True)
@@ -127,6 +130,25 @@ class Transaction(Base):
     value = Column(Numeric(15, 2), nullable=False)
     transaction_date = Column(DateTime, nullable=False)
     transaction_type = Column(String(50), nullable=False)  # income, expense
+
+
+class FileUploadHistory(Base):
+    """
+    Historial de archivos cargados
+    Usado por: UploadService para prevenir procesamiento duplicado de archivos
+
+    Almacena el hash SHA256 del contenido del archivo para detectar duplicados
+    """
+    __tablename__ = "FileUploadHistory"
+
+    id_file = Column(CHAR(36), primary_key=True, default=generate_uuid)
+    id_user = Column(CHAR(36), nullable=False)  # No FK - validación via API
+    file_hash = Column(CHAR(64), nullable=False)  # SHA256 hash
+    file_name = Column(String(255), nullable=False)
+    bank_code = Column(String(50), nullable=False)
+    upload_date = Column(DateTime, nullable=False, server_default=func.now())
+    id_batch = Column(CHAR(36), ForeignKey("TransactionBatch.id_batch"), nullable=False)
+    file_size = Column(Integer, nullable=False)
 
 
 # ============================================================================

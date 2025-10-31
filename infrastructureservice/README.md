@@ -10,8 +10,10 @@ Este servicio centraliza toda la infraestructura compartida del proyecto Flowlit
 
 ```
 InfrastructureService/
-├── docker-compose.yml          # Servicios de infraestructura (MySQL, RabbitMQ)
+├── docker-compose.yml          # Servicios de infraestructura (MySQL, RabbitMQ, Redis, DB-Init)
+├── Dockerfile.init             # Dockerfile para el servicio de inicialización automática
 ├── .env.example                # Variables de entorno de ejemplo
+├── .dockerignore               # Archivos a ignorar en la construcción de Docker
 ├── alembic.ini                 # Configuración de Alembic
 ├── models.py                   # Modelos compartidos de SQLAlchemy
 ├── requirements.txt            # Dependencias Python
@@ -20,6 +22,10 @@ InfrastructureService/
 │   ├── script.py.mako          # Template para nuevas migraciones
 │   └── versions/
 │       └── 001_initial_schema.py  # Migración inicial
+├── scripts/
+│   ├── init_database.py        # Script de inicialización de base de datos
+│   ├── seed_database.py        # Script de población de datos de prueba
+│   └── init_and_seed.sh        # Script que ejecuta init y seed automáticamente
 └── README.md                   # Este archivo
 ```
 
@@ -42,6 +48,12 @@ InfrastructureService/
 - **Password**: flowlite_redis_pass_2024 (configurable)
 - **Uso**: Cache de sesiones, rate limiting, datos temporales
 - **Volumen persistente**: redis_data
+
+### DB-Init (Inicialización Automática)
+- **Descripción**: Servicio que inicializa automáticamente la base de datos
+- **Funcionalidad**: Ejecuta migraciones y seed de datos al iniciar
+- **Dependencia**: Espera a que MySQL esté saludable antes de ejecutarse
+- **Ejecución**: Se ejecuta una sola vez automáticamente
 
 ## Instalación y Configuración
 
@@ -89,6 +101,14 @@ cd InfrastructureService
 docker-compose up -d
 ```
 
+Este comando iniciará todos los servicios de infraestructura:
+1. **MySQL** - Se iniciará y esperará a estar "healthy"
+2. **RabbitMQ** - Se iniciará en paralelo
+3. **Redis** - Se iniciará en paralelo
+4. **DB-Init** - Esperará a que MySQL esté healthy y luego ejecutará automáticamente:
+   - Las migraciones de Alembic (`init_database.py`)
+   - El seed de datos de prueba (`seed_database.py`)
+
 Verificar que los servicios estén corriendo:
 
 ```bash
@@ -99,6 +119,15 @@ Deberías ver:
 - flowlite-mysql (healthy)
 - flowlite-rabbitmq (running)
 - flowlite-redis (running)
+- flowlite-db-init (exited with code 0) - Este servicio se ejecuta una sola vez y luego termina
+
+Para ver los logs de la inicialización de la base de datos:
+
+```bash
+docker-compose logs db-init
+```
+
+**Nota**: Con esta configuración, **NO necesitas ejecutar manualmente** los scripts `init_database.py` y `seed_database.py`. El servicio `db-init` los ejecuta automáticamente.
 
 ### 4. Verificar Infraestructura (Recomendado)
 
@@ -126,11 +155,13 @@ Si todo está bien, verás:
 pip install -r requirements.txt
 ```
 
-### 6. Inicializar Base de Datos
+### 6. Inicializar Base de Datos (Opcional - Ya se hace automáticamente)
 
-Una vez que MySQL esté corriendo, usa el script de inicialización para crear la estructura completa:
+⚠️ **NOTA IMPORTANTE**: Con la configuración actual del docker-compose, el servicio `db-init` ya ejecuta automáticamente los scripts de inicialización y seed cuando ejecutas `docker-compose up -d`. Esta sección es solo para referencia o si necesitas re-inicializar manualmente.
 
-**Opción A: Usando el script automático (Recomendado)**
+Si por alguna razón necesitas ejecutar los scripts manualmente (por ejemplo, si el servicio db-init falló o si quieres re-poblar la base de datos):
+
+**Opción A: Usando el script automático de inicialización**
 
 ```bash
 python scripts/init_database.py
@@ -158,12 +189,15 @@ Deberías ver la salida:
 INFO  [alembic.runtime.migration] Running upgrade  -> 001, Initial schema for Flowlite database
 ```
 
-### 7. Poblar Base de Datos con Datos de Prueba (Opcional)
+### 7. Poblar Base de Datos con Datos de Prueba (Opcional - Ya se hace automáticamente)
 
-Para facilitar el testing de los servicios, puedes poblar la base de datos con datos de ejemplo:
+⚠️ **NOTA IMPORTANTE**: El servicio `db-init` ya ejecuta automáticamente este script cuando ejecutas `docker-compose up -d`. Esta sección es solo para referencia.
+
+Si necesitas re-poblar la base de datos manualmente:
 
 ```bash
-python scripts/seed_database.py
+# Limpiar y repoblar
+python scripts/seed_database.py --clean
 ```
 
 Este script crea:
@@ -174,7 +208,7 @@ Este script crea:
 
 Ver más detalles en: `scripts/README.md`
 
-**Usuarios de prueba creados:**
+**Usuarios de prueba creados automáticamente:**
 - Email: `juan.perez@example.com` / Password: `password123`
 - Email: `maria.lopez@example.com` / Password: `password123`
 - Email: `admin@flowlite.com` / Password: `admin123`
