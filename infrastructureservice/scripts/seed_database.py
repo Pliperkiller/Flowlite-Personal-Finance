@@ -36,7 +36,7 @@ import logging
 # Importar modelos
 from models import (
     Base, User, Role, UserInfo, Bank, TransactionCategory,
-    TransactionBatch, Transaction, InsightCategory, Insights
+    TransactionBatch, Transaction, FileUploadHistory, InsightCategory, Insights
 )
 
 # Configurar logging
@@ -83,6 +83,7 @@ def clean_database(session, engine):
         # Eliminar datos en orden inverso de dependencias
         session.query(Insights).delete()
         session.query(Transaction).delete()
+        session.query(FileUploadHistory).delete()
         session.query(TransactionBatch).delete()
         session.query(UserInfo).delete()
         session.query(User).delete()
@@ -560,6 +561,7 @@ def print_summary(session):
         "Categorías de Transacciones": session.query(TransactionCategory).count(),
         "Lotes de Transacciones": session.query(TransactionBatch).count(),
         "Transacciones": session.query(Transaction).count(),
+        "Historial de Archivos": session.query(FileUploadHistory).count(),
         "Categorías de Insights": session.query(InsightCategory).count(),
         "Insights": session.query(Insights).count(),
     }

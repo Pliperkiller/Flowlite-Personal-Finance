@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(java -version:*)",
+      "Bash(docker-compose ps:*)",
+      "Bash(bash:*)",
+      "Bash(gradlew.bat bootRun:*)",
+      "Bash(./gradlew bootRun)",
+      "Bash(choco install:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill //F //PID 24860)",
+      "Bash(netstat:*)",
+      "Bash(tasklist:*)",
+      "Bash(taskkill //F //PID 26416)",
+      "Bash(alembic upgrade:*)",
+      "Bash(python scripts/init_database.py:*)",
+      "Bash(pip install:*)",
+      "Bash(python -m alembic:*)",
+      "Bash(python:*)",
+      "Bash(mysql:*)",
+      "Bash(docker exec:*)",
+      "Bash(taskkill //F //PID 23728)",
+      "Bash(taskkill //F //PID 24028)",
+      "Bash(findstr:*)",
+      "Bash(nul)",
+      "Bash(set)",
+      "Bash(copy:*)",
+      "Bash(cp:*)",
+      "Bash(powershell -Command \"[System.Environment]::GetEnvironmentVariable(''OLLAMA_HOST'', ''User'')\")",
+      "Bash(powershell -Command \"[System.Environment]::GetEnvironmentVariable(''OLLAMA_HOST'', ''Machine'')\")",
+      "Bash(powershell -Command \"Start-Process powershell -Verb RunAs -ArgumentList ''-Command'', ''[System.Environment]::SetEnvironmentVariable(\"\"OLLAMA_HOST\"\", $null, \"\"Machine\"\")'' -Wait\")",
+      "Bash(reg delete \"HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment\" /v OLLAMA_HOST /f)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -78,17 +78,17 @@ def verify_connection(engine):
 def verify_tables(engine):
     """Verificar que todas las tablas esperadas existan"""
     expected_tables = [
-        'User',
-        'Role',
-        'UserInfo',
+        'alembic_version',
         'Bank',
-        'TransactionCategory',
-        'TransactionBatch',
-        'Transaction',
         'FileUploadHistory',
         'InsightCategory',
         'Insights',
-        'alembic_version'
+        'Role',
+        'Transaction',
+        'TransactionBatch',
+        'TransactionCategory',
+        'User',
+        'UserInfo'
     ]
 
     inspector = inspect(engine)
@@ -96,8 +96,11 @@ def verify_tables(engine):
 
     logger.info(f"\nTablas encontradas: {len(existing_tables)}")
 
+    # Ordenar la lista para mejor visualización
+    expected_tables_sorted = sorted(expected_tables)
+
     all_present = True
-    for table in expected_tables:
+    for table in expected_tables_sorted:
         if table in existing_tables:
             logger.info(f"  ✓ {table}")
         else:

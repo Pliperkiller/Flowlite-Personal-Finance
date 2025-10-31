@@ -37,7 +37,7 @@ class Money:
 @dataclass(frozen=True)
 class CategoryId:
     """Value Object for category identifier"""
-    value: UUID
-    
+    value: str
+
     def __str__(self) -> str:
-        return str(self.value)
+        return self.value
