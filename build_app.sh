@@ -113,7 +113,7 @@ mkdir -p "$PROJECT_ROOT/logs"
 # ============================================
 # 1. INFRASTRUCTURE SERVICE
 # ============================================
-echo -e "${BLUE}[1/4]${NC} Iniciando InfrastructureService..."
+echo -e "${BLUE}[1/5]${NC} Iniciando InfrastructureService..."
 echo "      (MySQL, Redis, RabbitMQ)"
 echo ""
 
@@ -161,12 +161,48 @@ else
 fi
 
 echo ""
-sleep 3
+sleep 2
+
+# ============================================
+# 1.5. MAILHOG SERVICE
+# ============================================
+echo -e "${BLUE}[1.5/5]${NC} Iniciando MailHog..."
+echo "      (SMTP Mock Server para desarrollo)"
+echo ""
+
+cd "$PROJECT_ROOT/mailhog"
+
+if [ ! -f "docker-compose.yml" ]; then
+    echo -e "${YELLOW}⚠️  No se encontró docker-compose.yml en mailhog. Saltando...${NC}"
+else
+    # Iniciar MailHog
+    docker-compose up -d
+
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}✗${NC} Error al iniciar MailHog"
+        # No exit, continuar sin MailHog
+    else
+        echo -e "${GREEN}✓${NC} MailHog iniciado"
+
+        # Verificar MailHog
+        sleep 2
+        if check_docker_service "flowlite-mailhog"; then
+            echo -e "${GREEN}✓${NC} MailHog está corriendo"
+            echo -e "${CYAN}   📧 Web UI: http://localhost:8025${NC}"
+            echo -e "${CYAN}   📨 SMTP: localhost:1025${NC}"
+        else
+            echo -e "${YELLOW}⚠️${NC} MailHog no está corriendo"
+        fi
+    fi
+fi
+
+echo ""
+sleep 2
 
 # ============================================
 # 2. IDENTITY SERVICE
 # ============================================
-echo -e "${BLUE}[2/4]${NC} Iniciando IdentityService (puerto 8000)..."
+echo -e "${BLUE}[2/5]${NC} Iniciando IdentityService (puerto 8000)..."
 echo ""
 
 cd "$PROJECT_ROOT/identifyservice"
@@ -202,7 +238,7 @@ sleep 2
 # ============================================
 # 3. INSIGHT SERVICE
 # ============================================
-echo -e "${BLUE}[3/4]${NC} Iniciando InsightService (puerto 8002 + RabbitMQ consumer)..."
+echo -e "${BLUE}[3/5]${NC} Iniciando InsightService (puerto 8002 + RabbitMQ consumer)..."
 echo ""
 
 cd "$PROJECT_ROOT/InsightService"
@@ -241,7 +277,7 @@ sleep 2
 # ============================================
 # 4. UPLOAD SERVICE
 # ============================================
-echo -e "${BLUE}[4/4]${NC} Iniciando UploadService (puerto 8001)..."
+echo -e "${BLUE}[4/5]${NC} Iniciando UploadService (puerto 8001)..."
 echo ""
 
 cd "$PROJECT_ROOT/uploadservice"
@@ -291,6 +327,10 @@ echo -e "  ${GREEN}✓${NC} InfrastructureService"
 echo "      • MySQL:    localhost:3306"
 echo "      • Redis:    localhost:6379"
 echo "      • RabbitMQ: localhost:5672 (UI: http://localhost:15672)"
+echo ""
+echo -e "  ${GREEN}✓${NC} MailHog (SMTP Mock Server)"
+echo "      • Web UI:   http://localhost:8025"
+echo "      • SMTP:     localhost:1025"
 echo ""
 echo -e "  ${GREEN}✓${NC} IdentityService (PID: $IDENTITY_PID)"
 echo "      • API:      http://localhost:8000"
