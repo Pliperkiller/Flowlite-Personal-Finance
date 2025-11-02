@@ -54,7 +54,8 @@ echo ""
 
 # Iniciar el servicio
 echo "Iniciando servicio en http://localhost:${SERVER_PORT:-8000}"
-echo "Swagger UI: http://localhost:${SERVER_PORT:-8000}/swagger-ui.html"
+echo "Swagger UI: http://localhost:${SERVER_PORT:-8000}/swagger-ui/index.html"
+echo "API Docs:   http://localhost:${SERVER_PORT:-8000}/v3/api-docs"
 echo ""
 echo "Presiona Ctrl+C para detener el servicio"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

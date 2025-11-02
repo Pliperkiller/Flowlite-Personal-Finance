@@ -101,31 +101,6 @@ cd uploadservice
 
 Este script detendrá todos los servicios y contenedores Docker de manera ordenada.
 
-## 🎛️ Dashboard de Monitoreo
-
-Flowlite incluye un **dashboard web interactivo** para monitorear el estado de todos los servicios en tiempo real:
-
-```bash
-# Abrir el dashboard
-open dashboard.html
-
-# O navegar directamente en tu navegador a:
-# file:///Users/remoti/Documents/flowlite/Flowlite-Personal-Finance/dashboard.html
-```
-
-**Características del Dashboard:**
-- ✅ **Monitoreo en tiempo real** de todos los servicios
-- ✅ **Estado de componentes** (Base de datos, RabbitMQ, LLM, Redis)
-- ✅ **Auto-refresh** cada 10 segundos
-- ✅ **Indicadores visuales** con códigos de colores
-- ✅ **Enlaces directos** a documentación de APIs
-- ✅ **Detección de errores** con mensajes descriptivos
-
-El dashboard consulta los endpoints de health check de cada servicio y muestra:
-- **IdentityService**: Estado general + componentes (database, redis, ping)
-- **UploadService**: Estado general del servicio
-- **InsightService**: Estado detallado + componentes (database, rabbitmq, llm)
-
 ## 📊 Verificar que Todo Funciona (Manual)
 
 ### 1. InfrastructureService
@@ -191,7 +166,7 @@ Cada servicio tiene su propia guía de inicio rápido:
 ### 1. Registrar Usuario
 
 ```bash
-curl -X POST "http://localhost:8000/api/auth/register" \
+curl -X POST "http://<server route>:8000/api/auth/register" \
   -H "Content-Type: application/json" \
   -d '{
     "username": "johndoe",
@@ -203,7 +178,7 @@ curl -X POST "http://localhost:8000/api/auth/register" \
 ### 2. Obtener Token
 
 ```bash
-curl -X POST "http://localhost:8000/api/auth/login" \
+curl -X POST "http://<server route>:8000/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{
     "username": "johndoe",
@@ -216,7 +191,7 @@ Guarda el `token` de la respuesta.
 ### 3. Subir Archivo de Transacciones
 
 ```bash
-curl -X POST "http://localhost:8001/api/v1/transactions/upload?bank_code=BANCOLOMBIA" \
+curl -X POST "http://<server route>:8001/api/v1/transactions/upload?bank_code=BANCOLOMBIA" \
   -H "Authorization: Bearer <TU_TOKEN>" \
   -F "files=@/ruta/a/tu/archivo.xlsx"
 ```
@@ -233,7 +208,7 @@ Respuesta:
 ### 4. Consultar Estado del Lote
 
 ```bash
-curl -X GET "http://localhost:8001/api/v1/transactions/batch/abc-123-def-456" \
+curl -X GET "http://<server route>:8001/api/v1/transactions/batch/abc-123-def-456" \
   -H "Authorization: Bearer <TU_TOKEN>"
 ```
 
@@ -389,7 +364,7 @@ GET    /docs                       # Documentación API
 - **Backend Services**:
   - Java 17 + Spring Boot (IdentityService)
   - Python 3.11 + FastAPI (UploadService)
-  - Python 3.11 (InsightService)
+  - Python 3.11 + FastAPI  (InsightService)
 
 - **Base de Datos**: MySQL 8.0
 
@@ -400,30 +375,3 @@ GET    /docs                       # Documentación API
 - **IA**: Ollama (LLM llama3.1:8b)
 
 - **Contenedores**: Docker + Docker Compose
-
-## 🤝 Contribuir
-
-1. Fork el proyecto
-2. Crear una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abrir un Pull Request
-
-## 📄 Licencia
-
-[Especificar licencia]
-
-## 📞 Soporte
-
-Para problemas o preguntas:
-- Ver documentación en cada servicio
-- Revisar logs en `logs/`
-- Verificar estado de servicios con `docker ps`
-
----
-
-**¡Listo para comenzar!**
-
-```bash
-./build_app.sh
-```

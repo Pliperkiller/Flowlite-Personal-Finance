@@ -17,3 +17,5 @@ logs/
 # otros
 .csv
 .xlsx
+
+.claude
