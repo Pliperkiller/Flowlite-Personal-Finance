@@ -16,8 +16,12 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Directorio raíz del proyecto
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Directorio raíz del proyecto (compatible con bash y zsh)
+if [ -n "$BASH_SOURCE" ]; then
+    PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+else
+    PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
+fi
 
 # Archivo de PIDs
 PID_FILE="$PROJECT_ROOT/.flowlite_services.pid"

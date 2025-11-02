@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    gcc \
+    default-libmysqlclient-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar requirements y instalar dependencias
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar todos los archivos necesarios
+COPY . .
+
+# Dar permisos de ejecución al script
+RUN chmod +x /app/scripts/init_and_seed.sh
+
+# Comando por defecto
+CMD ["/app/scripts/init_and_seed.sh"]

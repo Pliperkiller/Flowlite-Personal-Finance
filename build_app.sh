@@ -1,3 +1,45 @@
+#!/bin/bash
+
+# Script para iniciar todos los servicios de Flowlite
+# ====================================================
+# Orden de inicio:
+# 1. InfrastructureService (MySQL, Redis, RabbitMQ)
+# 2. IdentityService (puerto 8000)
+# 3. InsightService (consumidor RabbitMQ)
+# 4. UploadService (puerto 8001)
+
+# Colores para output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Directorio raíz del proyecto (compatible con bash y zsh)
+if [ -n "$BASH_SOURCE" ]; then
+    PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+else
+    PROJECT_ROOT="$(cd "$(dirname "$0")" && pwd)"
+fi
+
+# Archivo para guardar PIDs de los servicios
+PID_FILE="$PROJECT_ROOT/.flowlite_services.pid"
+
+# ============================================
+# FUNCIONES AUXILIARES
+# ============================================
+
+# Función para verificar si un puerto está en uso
+check_port() {
+    local port=$1
+    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+        return 0  # Puerto en uso
+    else
+        return 1  # Puerto libre
+    fi
+}
+
 # Función para esperar que un puerto esté disponible (para servicios sin health)
 wait_for_port() {
     local port=$1
@@ -18,48 +60,6 @@ wait_for_port() {
 
     echo -e "${RED}✗${NC} Timeout esperando $service"
     return 1
-}
-#!/bin/bash
-
-# Script para iniciar todos los servicios de Flowlite
-# ====================================================
-# Orden de inicio:
-# 1. InfrastructureService (MySQL, Redis, RabbitMQ)
-# 2. IdentityService (puerto 8000)
-# 3. InsightService (consumidor RabbitMQ)
-# 4. UploadService (puerto 8001)
-
-# Colores para output
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
-
-# Directorio raíz del proyecto
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Archivo para guardar PIDs de los servicios
-PID_FILE="$PROJECT_ROOT/.flowlite_services.pid"
-
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "${CYAN}      🚀 INICIANDO FLOWLITE - PERSONAL FINANCE      ${NC}"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-
-# Limpiar archivo de PIDs si existe
-> "$PID_FILE"
-
-# Función para verificar si un puerto está en uso
-check_port() {
-    local port=$1
-    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-        return 0  # Puerto en uso
-    else
-        return 1  # Puerto libre
-    fi
 }
 
 # Función para esperar que un servicio esté saludable vía HTTP
@@ -95,9 +95,25 @@ check_docker_service() {
 }
 
 # ============================================
+# INICIO DEL SCRIPT
+# ============================================
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo -e "${CYAN}      🚀 INICIANDO FLOWLITE - PERSONAL FINANCE      ${NC}"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# Limpiar archivo de PIDs si existe
+> "$PID_FILE"
+
+# Crear directorio de logs si no existe
+mkdir -p "$PROJECT_ROOT/logs"
+
+# ============================================
 # 1. INFRASTRUCTURE SERVICE
 # ============================================
-echo -e "${BLUE}[1/4]${NC} Iniciando InfrastructureService..."
+echo -e "${BLUE}[1/5]${NC} Iniciando InfrastructureService..."
 echo "      (MySQL, Redis, RabbitMQ)"
 echo ""
 
@@ -145,12 +161,48 @@ else
 fi
 
 echo ""
-sleep 3
+sleep 2
+
+# ============================================
+# 1.5. MAILHOG SERVICE
+# ============================================
+echo -e "${BLUE}[1.5/5]${NC} Iniciando MailHog..."
+echo "      (SMTP Mock Server para desarrollo)"
+echo ""
+
+cd "$PROJECT_ROOT/mailhog"
+
+if [ ! -f "docker-compose.yml" ]; then
+    echo -e "${YELLOW}⚠️  No se encontró docker-compose.yml en mailhog. Saltando...${NC}"
+else
+    # Iniciar MailHog
+    docker-compose up -d
+
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}✗${NC} Error al iniciar MailHog"
+        # No exit, continuar sin MailHog
+    else
+        echo -e "${GREEN}✓${NC} MailHog iniciado"
+
+        # Verificar MailHog
+        sleep 2
+        if check_docker_service "flowlite-mailhog"; then
+            echo -e "${GREEN}✓${NC} MailHog está corriendo"
+            echo -e "${CYAN}   📧 Web UI: http://localhost:8025${NC}"
+            echo -e "${CYAN}   📨 SMTP: localhost:1025${NC}"
+        else
+            echo -e "${YELLOW}⚠️${NC} MailHog no está corriendo"
+        fi
+    fi
+fi
+
+echo ""
+sleep 2
 
 # ============================================
 # 2. IDENTITY SERVICE
 # ============================================
-echo -e "${BLUE}[2/4]${NC} Iniciando IdentityService (puerto 8000)..."
+echo -e "${BLUE}[2/5]${NC} Iniciando IdentityService (puerto 8000)..."
 echo ""
 
 cd "$PROJECT_ROOT/identifyservice"
@@ -186,7 +238,7 @@ sleep 2
 # ============================================
 # 3. INSIGHT SERVICE
 # ============================================
-echo -e "${BLUE}[3/4]${NC} Iniciando InsightService (puerto 8002 + RabbitMQ consumer)..."
+echo -e "${BLUE}[3/5]${NC} Iniciando InsightService (puerto 8002 + RabbitMQ consumer)..."
 echo ""
 
 cd "$PROJECT_ROOT/InsightService"
@@ -202,9 +254,6 @@ if check_port 8002; then
     lsof -ti:8002 | xargs kill -9 2>/dev/null
     sleep 2
 fi
-
-# Crear directorio de logs si no existe
-mkdir -p "$PROJECT_ROOT/logs"
 
 # Iniciar servicio en background y guardar PID
 nohup ./start.sh > "$PROJECT_ROOT/logs/insightservice.log" 2>&1 &
@@ -228,7 +277,7 @@ sleep 2
 # ============================================
 # 4. UPLOAD SERVICE
 # ============================================
-echo -e "${BLUE}[4/4]${NC} Iniciando UploadService (puerto 8001)..."
+echo -e "${BLUE}[4/5]${NC} Iniciando UploadService (puerto 8001)..."
 echo ""
 
 cd "$PROJECT_ROOT/uploadservice"
@@ -279,9 +328,14 @@ echo "      • MySQL:    localhost:3306"
 echo "      • Redis:    localhost:6379"
 echo "      • RabbitMQ: localhost:5672 (UI: http://localhost:15672)"
 echo ""
+echo -e "  ${GREEN}✓${NC} MailHog (SMTP Mock Server)"
+echo "      • Web UI:   http://localhost:8025"
+echo "      • SMTP:     localhost:1025"
+echo ""
 echo -e "  ${GREEN}✓${NC} IdentityService (PID: $IDENTITY_PID)"
 echo "      • API:      http://localhost:8000"
-echo "      • Swagger:  http://localhost:8000/swagger-ui.html"
+echo "      • Swagger:  http://localhost:8000/swagger-ui/index.html"
+echo "      • API Docs: http://localhost:8000/v3/api-docs"
 echo "      • Health:   http://localhost:8000/actuator/health"
 echo ""
 echo -e "  ${GREEN}✓${NC} InsightService (PID: $INSIGHT_PID)"
@@ -312,23 +366,4 @@ echo "   tail -f logs/uploadservice.log"
 echo "   tail -f logs/insightservice.log"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-echo -e "${CYAN}🎛️  DASHBOARD DE MONITOREO:${NC}"
-echo "   Abre el dashboard en tu navegador para monitorear todos los servicios:"
-echo ""
-echo -e "   ${GREEN}file://$PROJECT_ROOT/dashboard.html${NC}"
-echo ""
-echo "   O desde terminal:"
-echo "   open $PROJECT_ROOT/dashboard.html"
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo ""
-
-# Esperar un momento para que todos los servicios estén completamente listos
-sleep 3
-
-# Abrir dashboard automáticamente
-echo -e "${GREEN}🎛️  Abriendo dashboard...${NC}"
-open "$PROJECT_ROOT/dashboard.html" 2>/dev/null || echo "Para abrir el dashboard manualmente: open $PROJECT_ROOT/dashboard.html"
-
 echo ""

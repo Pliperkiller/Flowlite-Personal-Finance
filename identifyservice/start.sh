@@ -25,12 +25,24 @@ elif [[ "$UNAME_OUT" == "Linux" ]]; then
         export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
         export PATH="$JAVA_HOME/bin:$PATH"
     fi
+elif [[ "$UNAME_OUT" == MINGW* ]] || [[ "$UNAME_OUT" == MSYS* ]] || [[ "$UNAME_OUT" == CYGWIN* ]]; then
+    # Windows (Git Bash/MINGW/MSYS/Cygwin)
+    # JAVA_HOME should already be set by Windows, just ensure it's exported
+    if [ -z "$JAVA_HOME" ]; then
+        echo "⚠ JAVA_HOME no está configurado en Windows"
+    fi
 fi
 
 # Verificar que Java esté instalado
-if ! command -v java &> /dev/null; then
+if ! java -version &> /dev/null; then
     echo "❌ Error: Java 17 no está instalado"
-    echo "Ejecuta: brew install openjdk@17"
+    if [[ "$UNAME_OUT" == "Darwin" ]]; then
+        echo "Ejecuta: brew install openjdk@17"
+    elif [[ "$UNAME_OUT" == "Linux" ]]; then
+        echo "Ejecuta: sudo apt-get install openjdk-17-jdk"
+    else
+        echo "Descarga e instala desde: https://www.oracle.com/java/technologies/downloads/#java17"
+    fi
     exit 1
 fi
 
@@ -42,7 +54,8 @@ echo ""
 
 # Iniciar el servicio
 echo "Iniciando servicio en http://localhost:${SERVER_PORT:-8000}"
-echo "Swagger UI: http://localhost:${SERVER_PORT:-8000}/swagger-ui.html"
+echo "Swagger UI: http://localhost:${SERVER_PORT:-8000}/swagger-ui/index.html"
+echo "API Docs:   http://localhost:${SERVER_PORT:-8000}/v3/api-docs"
 echo ""
 echo "Presiona Ctrl+C para detener el servicio"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

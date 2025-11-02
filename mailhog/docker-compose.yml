@@ -21,4 +21,5 @@ services:
 
 networks:
   flowlite-network:
-    driver: bridge
+    external: true
+    name: infrastructureservice_flowlite-network
