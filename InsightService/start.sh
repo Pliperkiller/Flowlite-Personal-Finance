@@ -130,6 +130,10 @@ echo -e "${GREEN}✓${NC} Dependencias instaladas"
 echo -e "${YELLOW}🔧 Verificando configuración...${NC}"
 source .env
 
+# Establecer valores por defecto si no están definidos
+export API_HOST=${API_HOST:-0.0.0.0}
+export API_PORT=${API_PORT:-8002}
+
 # Verificar servicios externos
 echo -e "${YELLOW}🔌 Verificando servicios externos...${NC}"
 

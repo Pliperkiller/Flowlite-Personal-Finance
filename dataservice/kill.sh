@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Script para detener IdentityService
-# ====================================
+# Script para detener DataService
+# ================================
 
 # Colores para output
 RED='\033[0;31m'
@@ -10,14 +10,14 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo ""
-echo -e "${YELLOW}🛑 Deteniendo IdentityService...${NC}"
+echo -e "${YELLOW}🛑 Deteniendo DataService...${NC}"
 echo ""
 
 # Cargar puerto desde .env global o usar por defecto
 if [ -f "../.env" ]; then
-    export $(cat ../.env | grep "IDENTITY_SERVICE_PORT" | xargs)
+    export $(cat ../.env | grep "DATA_SERVICE_PORT" | xargs)
 fi
-PORT=${IDENTITY_SERVICE_PORT:-8000}
+PORT=${DATA_SERVICE_PORT:-8003}
 
 # Verificar si hay un proceso corriendo en el puerto
 if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then
@@ -37,7 +37,7 @@ if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then
         echo -e "${RED}✗ Error: No se pudo detener el servicio${NC}"
         exit 1
     else
-        echo -e "${GREEN}✓ IdentityService detenido correctamente (PID: $PID)${NC}"
+        echo -e "${GREEN}✓ DataService detenido correctamente (PID: $PID)${NC}"
     fi
 else
     echo -e "${YELLOW}⚠️  No hay ningún proceso corriendo en el puerto $PORT${NC}"

@@ -7,6 +7,7 @@
 # 2. IdentityService (puerto 8000)
 # 3. InsightService (consumidor RabbitMQ)
 # 4. UploadService (puerto 8001)
+# 5. DataService (puerto 8003)
 
 # Colores para output
 GREEN='\033[0;32m'
@@ -104,6 +105,23 @@ echo -e "${CYAN}      🚀 INICIANDO FLOWLITE - PERSONAL FINANCE      ${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 
+# Cargar variables de entorno globales
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    echo -e "${YELLOW}📋 Cargando configuración global de puertos...${NC}"
+    export $(cat "$PROJECT_ROOT/.env" | grep -v '^#' | xargs)
+    echo -e "${GREEN}✓${NC} Configuración cargada"
+    echo ""
+else
+    echo -e "${YELLOW}⚠️  No se encontró .env global. Usando puertos por defecto...${NC}"
+    echo ""
+fi
+
+# Establecer puertos por defecto si no están definidos
+export IDENTITY_SERVICE_PORT=${IDENTITY_SERVICE_PORT:-8000}
+export UPLOAD_SERVICE_PORT=${UPLOAD_SERVICE_PORT:-8001}
+export INSIGHT_SERVICE_PORT=${INSIGHT_SERVICE_PORT:-8002}
+export DATA_SERVICE_PORT=${DATA_SERVICE_PORT:-8003}
+
 # Limpiar archivo de PIDs si existe
 > "$PID_FILE"
 
@@ -113,7 +131,7 @@ mkdir -p "$PROJECT_ROOT/logs"
 # ============================================
 # 1. INFRASTRUCTURE SERVICE
 # ============================================
-echo -e "${BLUE}[1/5]${NC} Iniciando InfrastructureService..."
+echo -e "${BLUE}[1/6]${NC} Iniciando InfrastructureService..."
 echo "      (MySQL, Redis, RabbitMQ)"
 echo ""
 
@@ -166,7 +184,7 @@ sleep 2
 # ============================================
 # 1.5. MAILHOG SERVICE
 # ============================================
-echo -e "${BLUE}[1.5/5]${NC} Iniciando MailHog..."
+echo -e "${BLUE}[1.5/6]${NC} Iniciando MailHog..."
 echo "      (SMTP Mock Server para desarrollo)"
 echo ""
 
@@ -202,7 +220,7 @@ sleep 2
 # ============================================
 # 2. IDENTITY SERVICE
 # ============================================
-echo -e "${BLUE}[2/5]${NC} Iniciando IdentityService (puerto 8000)..."
+echo -e "${BLUE}[2/6]${NC} Iniciando IdentityService (puerto 8000)..."
 echo ""
 
 cd "$PROJECT_ROOT/identifyservice"
@@ -213,18 +231,18 @@ if [ ! -f "start.sh" ]; then
 fi
 
 # Verificar si el puerto está en uso
-if check_port 8000; then
-    echo -e "${YELLOW}⚠️  IdentityService ya está corriendo en el puerto 8000. Saltando arranque...${NC}"
+if check_port $IDENTITY_SERVICE_PORT; then
+    echo -e "${YELLOW}⚠️  IdentityService ya está corriendo en el puerto $IDENTITY_SERVICE_PORT. Saltando arranque...${NC}"
     echo "identifyservice:EXTERNAL" >> "$PID_FILE"
     echo -e "${GREEN}✓${NC} IdentityService detectado como iniciado correctamente"
 else
     # Iniciar servicio en background y guardar PID
-    nohup ./start.sh > "$PROJECT_ROOT/logs/identifyservice.log" 2>&1 &
+    PORT=$IDENTITY_SERVICE_PORT nohup ./start.sh > "$PROJECT_ROOT/logs/identifyservice.log" 2>&1 &
     IDENTITY_PID=$!
     echo "identifyservice:$IDENTITY_PID" >> "$PID_FILE"
     echo -e "${YELLOW}⏳ Iniciando IdentityService (PID: $IDENTITY_PID)...${NC}"
     # Esperar a que el servicio esté saludable
-    if wait_for_service "http://localhost:8000/actuator/health" "IdentityService"; then
+    if wait_for_service "http://localhost:$IDENTITY_SERVICE_PORT/actuator/health" "IdentityService"; then
         echo -e "${GREEN}✓${NC} IdentityService iniciado correctamente"
     else
         echo -e "${RED}✗${NC} Error al iniciar IdentityService"
@@ -238,7 +256,7 @@ sleep 2
 # ============================================
 # 3. INSIGHT SERVICE
 # ============================================
-echo -e "${BLUE}[3/5]${NC} Iniciando InsightService (puerto 8002 + RabbitMQ consumer)..."
+echo -e "${BLUE}[3/6]${NC} Iniciando InsightService (puerto 8002 + RabbitMQ consumer)..."
 echo ""
 
 cd "$PROJECT_ROOT/InsightService"
@@ -249,21 +267,21 @@ if [ ! -f "start.sh" ]; then
 fi
 
 # Verificar si el puerto está en uso
-if check_port 8002; then
-    echo -e "${YELLOW}⚠️  Puerto 8002 ya está en uso. Deteniendo proceso...${NC}"
-    lsof -ti:8002 | xargs kill -9 2>/dev/null
+if check_port $INSIGHT_SERVICE_PORT; then
+    echo -e "${YELLOW}⚠️  Puerto $INSIGHT_SERVICE_PORT ya está en uso. Deteniendo proceso...${NC}"
+    lsof -ti:$INSIGHT_SERVICE_PORT | xargs kill -9 2>/dev/null
     sleep 2
 fi
 
 # Iniciar servicio en background y guardar PID
-nohup ./start.sh > "$PROJECT_ROOT/logs/insightservice.log" 2>&1 &
+API_PORT=$INSIGHT_SERVICE_PORT nohup ./start.sh > "$PROJECT_ROOT/logs/insightservice.log" 2>&1 &
 INSIGHT_PID=$!
 echo "insightservice:$INSIGHT_PID" >> "$PID_FILE"
 
 echo -e "${YELLOW}⏳ Iniciando InsightService (PID: $INSIGHT_PID)...${NC}"
 
 # Esperar a que el servicio esté saludable (por HTTP)
-if wait_for_service "http://localhost:8002/health" "InsightService API"; then
+if wait_for_service "http://localhost:$INSIGHT_SERVICE_PORT/health" "InsightService API"; then
     echo -e "${GREEN}✓${NC} InsightService iniciado correctamente"
 else
     echo -e "${RED}✗${NC} Error al iniciar InsightService"
@@ -277,7 +295,7 @@ sleep 2
 # ============================================
 # 4. UPLOAD SERVICE
 # ============================================
-echo -e "${BLUE}[4/5]${NC} Iniciando UploadService (puerto 8001)..."
+echo -e "${BLUE}[4/6]${NC} Iniciando UploadService (puerto 8001)..."
 echo ""
 
 cd "$PROJECT_ROOT/uploadservice"
@@ -288,14 +306,14 @@ if [ ! -f "start.sh" ]; then
 fi
 
 # Verificar si el puerto está en uso
-if check_port 8001; then
-    echo -e "${YELLOW}⚠️  Puerto 8001 ya está en uso. Deteniendo proceso...${NC}"
-    lsof -ti:8001 | xargs kill -9 2>/dev/null
+if check_port $UPLOAD_SERVICE_PORT; then
+    echo -e "${YELLOW}⚠️  Puerto $UPLOAD_SERVICE_PORT ya está en uso. Deteniendo proceso...${NC}"
+    lsof -ti:$UPLOAD_SERVICE_PORT | xargs kill -9 2>/dev/null
     sleep 2
 fi
 
 # Iniciar servicio en background y guardar PID
-nohup bash ./start.sh > "$PROJECT_ROOT/logs/uploadservice.log" 2>&1 &
+PORT=$UPLOAD_SERVICE_PORT nohup bash ./start.sh > "$PROJECT_ROOT/logs/uploadservice.log" 2>&1 &
 UPLOAD_PID=$!
 echo "uploadservice:$UPLOAD_PID" >> "$PID_FILE"
 
@@ -303,12 +321,50 @@ echo -e "${YELLOW}⏳ Iniciando UploadService (PID: $UPLOAD_PID)...${NC}"
 
 
 # Esperar a que el servicio esté saludable (por HTTP)
-if wait_for_service "http://localhost:8001/api/v1/health" "UploadService"; then
+if wait_for_service "http://localhost:$UPLOAD_SERVICE_PORT/api/v1/health" "UploadService"; then
     echo -e "${GREEN}✓${NC} UploadService iniciado correctamente"
 else
     echo -e "${RED}✗${NC} Error al iniciar UploadService"
     echo "Ver logs en: $PROJECT_ROOT/logs/uploadservice.log"
     exit 1
+fi
+
+echo ""
+
+# ============================================
+# 5. DATA SERVICE
+# ============================================
+echo -e "${BLUE}[5/6]${NC} Iniciando DataService (puerto 8003)..."
+echo ""
+
+cd "$PROJECT_ROOT/dataservice"
+
+if [ ! -f "start.sh" ]; then
+    echo -e "${RED}✗${NC} Error: No se encontró start.sh en dataservice"
+    exit 1
+fi
+
+# Verificar si el puerto está en uso
+if check_port $DATA_SERVICE_PORT; then
+    echo -e "${YELLOW}⚠️  Puerto $DATA_SERVICE_PORT ya está en uso. Deteniendo proceso...${NC}"
+    lsof -ti:$DATA_SERVICE_PORT | xargs kill -9 2>/dev/null
+    sleep 2
+fi
+
+# Iniciar servicio en background y guardar PID
+PORT=$DATA_SERVICE_PORT nohup bash ./start.sh > "$PROJECT_ROOT/logs/dataservice.log" 2>&1 &
+DATA_PID=$!
+echo "dataservice:$DATA_PID" >> "$PID_FILE"
+
+echo -e "${YELLOW}⏳ Iniciando DataService (PID: $DATA_PID)...${NC}"
+
+# Esperar a que el servicio esté saludable (por HTTP)
+if wait_for_service "http://localhost:$DATA_SERVICE_PORT/health" "DataService"; then
+    echo -e "${GREEN}✓${NC} DataService iniciado correctamente"
+else
+    echo -e "${RED}✗${NC} Error al iniciar DataService"
+    echo "Ver logs en: $PROJECT_ROOT/logs/dataservice.log"
+    # No exit, continuar
 fi
 
 echo ""
@@ -333,22 +389,27 @@ echo "      • Web UI:   http://localhost:8025"
 echo "      • SMTP:     localhost:1025"
 echo ""
 echo -e "  ${GREEN}✓${NC} IdentityService (PID: $IDENTITY_PID)"
-echo "      • API:      http://localhost:8000"
-echo "      • Swagger:  http://localhost:8000/swagger-ui/index.html"
-echo "      • API Docs: http://localhost:8000/v3/api-docs"
-echo "      • Health:   http://localhost:8000/actuator/health"
+echo "      • API:      http://localhost:$IDENTITY_SERVICE_PORT"
+echo "      • Swagger:  http://localhost:$IDENTITY_SERVICE_PORT/swagger-ui/index.html"
+echo "      • API Docs: http://localhost:$IDENTITY_SERVICE_PORT/v3/api-docs"
+echo "      • Health:   http://localhost:$IDENTITY_SERVICE_PORT/actuator/health"
 echo ""
 echo -e "  ${GREEN}✓${NC} InsightService (PID: $INSIGHT_PID)"
-echo "      • API:      http://localhost:8002"
-echo "      • Health:   http://localhost:8002/health"
-echo "      • Docs:     http://localhost:8002/docs"
+echo "      • API:      http://localhost:$INSIGHT_SERVICE_PORT"
+echo "      • Health:   http://localhost:$INSIGHT_SERVICE_PORT/health"
+echo "      • Docs:     http://localhost:$INSIGHT_SERVICE_PORT/docs"
 echo "      • Consumer: RabbitMQ queue 'batch_processed'"
 echo "      • LLM:      Conectado a Ollama"
 echo ""
 echo -e "  ${GREEN}✓${NC} UploadService (PID: $UPLOAD_PID)"
-echo "      • API:      http://localhost:8001"
-echo "      • Docs:     http://localhost:8001/docs"
-echo "      • Health:   http://localhost:8001/health"
+echo "      • API:      http://localhost:$UPLOAD_SERVICE_PORT"
+echo "      • Docs:     http://localhost:$UPLOAD_SERVICE_PORT/docs"
+echo "      • Health:   http://localhost:$UPLOAD_SERVICE_PORT/health"
+echo ""
+echo -e "  ${GREEN}✓${NC} DataService (PID: $DATA_PID)"
+echo "      • API:      http://localhost:$DATA_SERVICE_PORT"
+echo "      • Docs:     http://localhost:$DATA_SERVICE_PORT/docs"
+echo "      • Health:   http://localhost:$DATA_SERVICE_PORT/health"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
@@ -356,6 +417,7 @@ echo -e "${YELLOW}📁 Logs disponibles en:${NC}"
 echo "   • IdentityService: $PROJECT_ROOT/logs/identifyservice.log"
 echo "   • InsightService:  $PROJECT_ROOT/logs/insightservice.log"
 echo "   • UploadService:   $PROJECT_ROOT/logs/uploadservice.log"
+echo "   • DataService:     $PROJECT_ROOT/logs/dataservice.log"
 echo ""
 echo -e "${YELLOW}🛑 Para detener todos los servicios:${NC}"
 echo "   ./destroy_app.sh"
@@ -364,6 +426,7 @@ echo -e "${YELLOW}📊 Para ver logs en tiempo real:${NC}"
 echo "   tail -f logs/identifyservice.log"
 echo "   tail -f logs/uploadservice.log"
 echo "   tail -f logs/insightservice.log"
+echo "   tail -f logs/dataservice.log"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""

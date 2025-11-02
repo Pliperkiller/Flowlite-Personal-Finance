@@ -22,20 +22,25 @@ class TransactionRepository(ABC):
 
 class InsightRepository(ABC):
     """Port for insight persistence"""
-    
+
     @abstractmethod
     def save(self, insight: Insight) -> Insight:
         """Persists a new insight"""
         pass
-    
+
     @abstractmethod
     def save_batch(self, insights: List[Insight]) -> List[Insight]:
         """Persists multiple insights efficiently"""
         pass
-    
+
     @abstractmethod
     def find_by_user(self, user_id: UserId) -> List[Insight]:
         """Gets all insights for a user"""
+        pass
+
+    @abstractmethod
+    def delete_by_user(self, user_id: UserId) -> int:
+        """Deletes all insights for a user"""
         pass
 
 

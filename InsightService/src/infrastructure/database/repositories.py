@@ -97,13 +97,27 @@ class SQLAlchemyInsightRepository(InsightRepository):
     def save_batch(self, insights: List[Insight]) -> List[Insight]:
         """Persists multiple insights efficiently"""
         logger.info(f"Saving {len(insights)} insights in batch")
-        
+
         models = [InsightMapper.to_model(insight) for insight in insights]
         self._session.bulk_save_objects(models, return_defaults=True)
         self._session.flush()
-        
+
         # Return the entities (in a real scenario, you might want to query them back)
         return insights
+
+    def delete_by_user(self, user_id: UserId) -> int:
+        """Deletes all insights for a user"""
+        logger.info(f"Deleting all insights for user={user_id}")
+
+        deleted_count = (
+            self._session.query(InsightModel)
+            .filter(InsightModel.id_user == user_id.value)
+            .delete()
+        )
+        self._session.flush()
+
+        logger.info(f"Deleted {deleted_count} insights for user={user_id}")
+        return deleted_count
     
     def find_by_user(self, user_id: UserId) -> List[Insight]:
         """Gets all insights for a user"""

@@ -94,12 +94,20 @@ class GenerateInsightsUseCase:
             )
 
         logger.info(f"Retrieved {len(transactions)} historical transactions for analysis")
-        
-        # Step 3: Aggregate transactions
+
+        # Step 3: Delete old insights for this user
+        try:
+            deleted_count = self._insight_repo.delete_by_user(user_id)
+            logger.info(f"Deleted {deleted_count} old insights for user={user_id}")
+        except Exception as e:
+            logger.error(f"Failed to delete old insights: {str(e)}")
+            raise InsightGenerationError(f"Failed to delete old insights: {str(e)}")
+
+        # Step 4: Aggregate transactions
         transaction_summaries = self._aggregator.aggregate_by_category(transactions)
         logger.info(f"Aggregated into {len(transaction_summaries)} categories")
-        
-        # Step 4: Generate recommendations with LLM
+
+        # Step 5: Generate recommendations with LLM
         try:
             llm_recommendations = self._llm_service.generate_recommendations(
                 transaction_summaries,
@@ -109,19 +117,19 @@ class GenerateInsightsUseCase:
         except Exception as e:
             logger.error(f"LLM service error: {str(e)}")
             raise InsightGenerationError(f"Failed to generate recommendations: {str(e)}")
-        
-        # Step 5: Map to domain entities
+
+        # Step 6: Map to domain entities
         insights = self._map_to_insights(user_id, llm_recommendations)
-        
-        # Step 6: Persist insights
+
+        # Step 7: Persist insights
         try:
             saved_insights = self._insight_repo.save_batch(insights)
             logger.info(f"Successfully saved {len(saved_insights)} insights")
         except Exception as e:
             logger.error(f"Failed to save insights: {str(e)}")
             raise InsightGenerationError(f"Failed to save insights: {str(e)}")
-        
-        # Step 7: Build response
+
+        # Step 8: Build response
         return GenerateInsightsResponse(
             user_id=user_id.value,
             batch_id=batch_id.value,

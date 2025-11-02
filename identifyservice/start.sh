@@ -4,12 +4,23 @@
 
 echo "🚀 Iniciando IdentityService..."
 
-# Cargar variables de entorno desde .env
+# Cargar puerto desde .env global primero (si existe)
+if [ -f ../.env ]; then
+    export $(cat ../.env | grep "IDENTITY_SERVICE_PORT" | xargs)
+    export SERVER_PORT=${IDENTITY_SERVICE_PORT:-${PORT:-8000}}
+fi
+
+# Cargar variables de entorno desde .env local
 if [ -f .env ]; then
     echo "✓ Cargando variables de entorno desde .env"
     export $(grep -v '^#' .env | xargs)
 else
     echo "⚠ Archivo .env no encontrado, usando valores por defecto"
+fi
+
+# Establecer SERVER_PORT desde PORT si está definido (para compatibilidad con build_app.sh)
+if [ ! -z "$PORT" ]; then
+    export SERVER_PORT=$PORT
 fi
 
 
