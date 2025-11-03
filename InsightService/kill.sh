@@ -13,7 +13,11 @@ echo ""
 echo -e "${YELLOW}🛑 Deteniendo InsightService...${NC}"
 echo ""
 
-PORT=8002
+# Cargar puerto desde .env global o usar por defecto
+if [ -f "../.env" ]; then
+    export $(cat ../.env | grep "INSIGHT_SERVICE_PORT" | xargs)
+fi
+PORT=${INSIGHT_SERVICE_PORT:-8002}
 
 # Verificar si hay un proceso corriendo en el puerto
 if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then

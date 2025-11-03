@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Script para iniciar el UploadService
+# Script para iniciar el DataService
 # ====================================
 
-echo "🚀 Iniciando UploadService..."
+echo "🚀 Iniciando DataService..."
 echo ""
 
 # Colores para output
@@ -126,27 +126,30 @@ export $(cat .env | grep -v '^#' | xargs)
 
 # Establecer valores por defecto si no están definidos
 export HOST=${HOST:-0.0.0.0}
-export PORT=${PORT:-8001}
+export PORT=${PORT:-8003}
 
 echo -e "${GREEN}✓${NC} Variables de entorno cargadas"
 
-# Verificar conexión a la base de datos
+# Verificar conexión a servicios externos
 echo -e "${YELLOW}🔌 Verificando servicios externos...${NC}"
 echo "  - Base de datos: MySQL en localhost:3306"
 echo "  - IdentityService: $IDENTITY_SERVICE_URL"
-echo "  - RabbitMQ: $RABBITMQ_HOST:$RABBITMQ_PORT"
 
 echo ""
 echo -e "${GREEN}✓${NC} Configuración completa"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "${GREEN}🎯 UploadService iniciado en http://${HOST}:${PORT}${NC}"
+echo -e "${GREEN}🎯 DataService iniciado en http://${HOST}:${PORT}${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "📋 Endpoints disponibles:"
-echo "  • Health Check:  http://localhost:${PORT}/health"
-echo "  • API Docs:      http://localhost:${PORT}/docs"
-echo "  • Upload:        http://localhost:${PORT}/api/v1/transactions/upload"
+echo "  • Health Check:        http://localhost:${PORT}/health"
+echo "  • API Docs:            http://localhost:${PORT}/docs"
+echo "  • Transactions:        http://localhost:${PORT}/transactions"
+echo "  • Insights:            http://localhost:${PORT}/insights"
+echo "  • Banks:               http://localhost:${PORT}/banks"
+echo "  • Transaction Categories: http://localhost:${PORT}/transaction-categories"
+echo "  • Insight Categories:  http://localhost:${PORT}/insight-categories"
 echo ""
 echo "Para detener el servicio, presiona Ctrl+C"
 echo ""

@@ -3,10 +3,11 @@
 # Script para detener todos los servicios de Flowlite
 # ====================================================
 # Orden de detención (inverso al inicio):
-# 1. UploadService
-# 2. InsightService
-# 3. IdentityService
-# 4. InfrastructureService (MySQL, Redis, RabbitMQ)
+# 1. DataService
+# 2. UploadService
+# 3. InsightService
+# 4. IdentityService
+# 5. InfrastructureService (MySQL, Redis, RabbitMQ)
 
 # Colores para output
 GREEN='\033[0;32m'
@@ -31,6 +32,17 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${CYAN}      🛑 DETENIENDO FLOWLITE - PERSONAL FINANCE      ${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
+
+# Cargar variables de entorno globales para obtener los puertos
+if [ -f "$PROJECT_ROOT/.env" ]; then
+    export $(cat "$PROJECT_ROOT/.env" | grep -v '^#' | xargs)
+fi
+
+# Establecer puertos por defecto si no están definidos
+export IDENTITY_SERVICE_PORT=${IDENTITY_SERVICE_PORT:-8000}
+export UPLOAD_SERVICE_PORT=${UPLOAD_SERVICE_PORT:-8001}
+export INSIGHT_SERVICE_PORT=${INSIGHT_SERVICE_PORT:-8002}
+export DATA_SERVICE_PORT=${DATA_SERVICE_PORT:-8003}
 
 # Función para matar proceso por PID
 kill_process() {
@@ -76,9 +88,28 @@ kill_by_port() {
 }
 
 # ============================================
-# 1. DETENER UPLOAD SERVICE
+# 1. DETENER DATA SERVICE
 # ============================================
-echo -e "${BLUE}[1/4]${NC} Deteniendo UploadService..."
+echo -e "${BLUE}[1/5]${NC} Deteniendo DataService..."
+echo ""
+
+# Intentar desde archivo de PIDs
+if [ -f "$PID_FILE" ]; then
+    DATA_PID=$(grep "dataservice:" "$PID_FILE" | cut -d: -f2)
+    if [ ! -z "$DATA_PID" ]; then
+        kill_process $DATA_PID "DataService"
+    fi
+fi
+
+# Verificar por puerto como fallback
+kill_by_port $DATA_SERVICE_PORT "DataService"
+
+echo ""
+
+# ============================================
+# 2. DETENER UPLOAD SERVICE
+# ============================================
+echo -e "${BLUE}[2/5]${NC} Deteniendo UploadService..."
 echo ""
 
 # Intentar desde archivo de PIDs
@@ -90,14 +121,14 @@ if [ -f "$PID_FILE" ]; then
 fi
 
 # Verificar por puerto como fallback
-kill_by_port 8001 "UploadService"
+kill_by_port $UPLOAD_SERVICE_PORT "UploadService"
 
 echo ""
 
 # ============================================
-# 2. DETENER INSIGHT SERVICE
+# 3. DETENER INSIGHT SERVICE
 # ============================================
-echo -e "${BLUE}[2/4]${NC} Deteniendo InsightService..."
+echo -e "${BLUE}[3/5]${NC} Deteniendo InsightService..."
 echo ""
 
 # Intentar desde archivo de PIDs
@@ -117,14 +148,14 @@ if [ ! -z "$INSIGHT_PIDS" ]; then
 fi
 
 # Verificar por puerto como fallback
-kill_by_port 8002 "InsightService"
+kill_by_port $INSIGHT_SERVICE_PORT "InsightService"
 
 echo ""
 
 # ============================================
-# 3. DETENER IDENTITY SERVICE
+# 4. DETENER IDENTITY SERVICE
 # ============================================
-echo -e "${BLUE}[3/4]${NC} Deteniendo IdentityService..."
+echo -e "${BLUE}[4/5]${NC} Deteniendo IdentityService..."
 echo ""
 
 # Intentar desde archivo de PIDs
@@ -136,7 +167,7 @@ if [ -f "$PID_FILE" ]; then
 fi
 
 # Verificar por puerto como fallback
-kill_by_port 8000 "IdentityService"
+kill_by_port $IDENTITY_SERVICE_PORT "IdentityService"
 
 # Matar procesos Java de Gradle si quedaron activos
 GRADLE_PIDS=$(ps aux | grep "[g]radle.*identifyservice" | awk '{print $2}')
@@ -151,9 +182,9 @@ fi
 echo ""
 
 # ============================================
-# 4. DETENER INFRASTRUCTURE SERVICE
+# 5. DETENER INFRASTRUCTURE SERVICE
 # ============================================
-echo -e "${BLUE}[4/4]${NC} Deteniendo InfrastructureService..."
+echo -e "${BLUE}[5/5]${NC} Deteniendo InfrastructureService..."
 echo ""
 
 cd "$PROJECT_ROOT/InfrastructureService"
@@ -203,25 +234,32 @@ echo ""
 # ============================================
 echo -e "${YELLOW}🔍 Verificando puertos...${NC}"
 
-# Verificar puerto 8000
-if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-    echo -e "${RED}✗${NC} Puerto 8000 aún está en uso"
+# Verificar puerto IdentityService
+if lsof -Pi :$IDENTITY_SERVICE_PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+    echo -e "${RED}✗${NC} Puerto $IDENTITY_SERVICE_PORT (IdentityService) aún está en uso"
 else
-    echo -e "${GREEN}✓${NC} Puerto 8000 libre"
+    echo -e "${GREEN}✓${NC} Puerto $IDENTITY_SERVICE_PORT (IdentityService) libre"
 fi
 
-# Verificar puerto 8001
-if lsof -Pi :8001 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-    echo -e "${RED}✗${NC} Puerto 8001 aún está en uso"
+# Verificar puerto UploadService
+if lsof -Pi :$UPLOAD_SERVICE_PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+    echo -e "${RED}✗${NC} Puerto $UPLOAD_SERVICE_PORT (UploadService) aún está en uso"
 else
-    echo -e "${GREEN}✓${NC} Puerto 8001 libre"
+    echo -e "${GREEN}✓${NC} Puerto $UPLOAD_SERVICE_PORT (UploadService) libre"
 fi
 
-# Verificar puerto 8002
-if lsof -Pi :8002 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-    echo -e "${RED}✗${NC} Puerto 8002 aún está en uso"
+# Verificar puerto InsightService
+if lsof -Pi :$INSIGHT_SERVICE_PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+    echo -e "${RED}✗${NC} Puerto $INSIGHT_SERVICE_PORT (InsightService) aún está en uso"
 else
-    echo -e "${GREEN}✓${NC} Puerto 8002 libre"
+    echo -e "${GREEN}✓${NC} Puerto $INSIGHT_SERVICE_PORT (InsightService) libre"
+fi
+
+# Verificar puerto DataService
+if lsof -Pi :$DATA_SERVICE_PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+    echo -e "${RED}✗${NC} Puerto $DATA_SERVICE_PORT (DataService) aún está en uso"
+else
+    echo -e "${GREEN}✓${NC} Puerto $DATA_SERVICE_PORT (DataService) libre"
 fi
 
 # Verificar contenedores Docker
@@ -243,6 +281,7 @@ echo -e "${GREEN}✓ TODOS LOS SERVICIOS HAN SIDO DETENIDOS${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo -e "${CYAN}📋 Servicios detenidos:${NC}"
+echo -e "  ${GREEN}✓${NC} DataService"
 echo -e "  ${GREEN}✓${NC} UploadService"
 echo -e "  ${GREEN}✓${NC} InsightService"
 echo -e "  ${GREEN}✓${NC} IdentityService"
