@@ -119,12 +119,12 @@ class DashboardRepository(DashboardRepositoryPort):
                 print(f"Warning: Skipping transaction with invalid data: {t.id_transaction} - {e}")
                 continue
 
-        # 4. Get top 2 recommendations by relevance (lower relevance number = higher priority)
+        # 4. Get top 2 recommendations by relevance (higher relevance number = higher priority)
         insights_query = (
             select(Insights)
             .options(joinedload(Insights.category))
             .where(Insights.id_user == str(user_id))
-            .order_by(Insights.relevance.asc())
+            .order_by(Insights.relevance.desc())
             .limit(2)
         )
         insights_result = await self.session.execute(insights_query)

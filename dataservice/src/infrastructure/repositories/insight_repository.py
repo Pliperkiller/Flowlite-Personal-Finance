@@ -19,13 +19,13 @@ class InsightRepository(InsightRepositoryPort):
 
     async def get_insights_by_user(self, user_id: UUID) -> List[InsightEntity]:
         """
-        Get all insights for a user, ordered by relevance.
+        Get all insights for a user, ordered by relevance (higher values = more relevant).
         """
         query = (
             select(Insights)
             .options(joinedload(Insights.category))
             .where(Insights.id_user == str(user_id))
-            .order_by(Insights.relevance.asc())  # Lower relevance number = higher priority
+            .order_by(Insights.relevance.desc())  # Higher relevance number = higher priority
         )
 
         result = await self.session.execute(query)
