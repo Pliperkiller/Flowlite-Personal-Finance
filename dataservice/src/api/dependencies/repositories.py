@@ -7,6 +7,7 @@ from ...infrastructure.repositories import (
     InsightRepository,
     BankRepository,
     CategoryRepository,
+    DashboardRepository,
 )
 
 
@@ -28,3 +29,8 @@ def get_bank_repository(db: AsyncSession = Depends(get_db)) -> BankRepository:
 def get_category_repository(db: AsyncSession = Depends(get_db)) -> CategoryRepository:
     """Dependency to get category repository."""
     return CategoryRepository(db)
+
+
+def get_dashboard_repository(db: AsyncSession = Depends(get_db)) -> DashboardRepository:
+    """Dependency to get dashboard repository."""
+    return DashboardRepository(db)

@@ -12,6 +12,7 @@ from .api.routes import (
     insights_router,
     catalogs_router,
     health_router,
+    dashboard_router,
 )
 
 
@@ -45,6 +46,7 @@ app.include_router(transactions_router)
 app.include_router(insights_router)
 app.include_router(catalogs_router)
 app.include_router(health_router)
+app.include_router(dashboard_router)
 
 
 @app.get("/")
