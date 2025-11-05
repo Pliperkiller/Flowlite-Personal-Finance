@@ -27,32 +27,41 @@ find_python() {
     fi
 
     # 2. Buscar en ubicaciones comunes según el sistema operativo
+    # IMPORTANTE: Python 3.11 tiene prioridad (mejores wheels precompilados)
     local candidates=(
+        # Windows Python 3.11 (prioridad)
+        "/c/Program Files/Python311/python.exe"
         # Homebrew (macOS)
         "/opt/homebrew/opt/python@3.11/bin/python3.11"
         "/usr/local/opt/python@3.11/bin/python3.11"
         # pyenv
         "$HOME/.pyenv/versions/3.11.*/bin/python"
-        # Sistema (Linux/macOS)
+        # Sistema (Linux/macOS) - Python 3.11 primero
         "$(command -v python3.11 2>/dev/null)"
-        "$(command -v python3.12 2>/dev/null)"
-        "$(command -v python3.13 2>/dev/null)"
-        "$(command -v python3 2>/dev/null)"
         # Windows (Git Bash, WSL)
         "/c/Python311/python.exe"
         "/mnt/c/Python311/python.exe"
+        # Otros Python como fallback
+        "$(command -v python3.12 2>/dev/null)"
+        "$(command -v python3 2>/dev/null)"
         "$(command -v python 2>/dev/null)"
     )
 
     # 3. Probar cada candidato
     for candidate in "${candidates[@]}"; do
-        if [ ! -z "$candidate" ] && [ -f "$candidate" ] || command -v "$candidate" &> /dev/null; then
-            # Verificar que sea Python 3.11+
-            local version=$($candidate --version 2>&1 | grep -oE '[0-9]+\.[0-9]+' | head -1)
+        if [ ! -z "$candidate" ] && { [ -f "$candidate" ] || command -v "$candidate" &> /dev/null; }; then
+            # Verificar que sea Python 3.11 específicamente (requerido para wheels precompilados)
+            local version=$("$candidate" --version 2>&1 | grep -oE '[0-9]+\.[0-9]+' | head -1)
+
+            # Verificar que obtuvimos una versión válida
+            if [ -z "$version" ]; then
+                continue
+            fi
+
             local major=$(echo "$version" | cut -d. -f1)
             local minor=$(echo "$version" | cut -d. -f2)
 
-            if [ "$major" -eq 3 ] && [ "$minor" -ge 11 ]; then
+            if [ "$major" = "3" ] && [ "$minor" = "11" ]; then
                 python_cmd="$candidate"
                 echo -e "${GREEN}✓${NC} Python $version encontrado: $python_cmd" >&2
                 echo "$python_cmd"
@@ -61,16 +70,19 @@ find_python() {
         fi
     done
 
-    # 4. No se encontró Python 3.11+
-    echo -e "${RED}❌ Error: No se encontró Python 3.11 o superior${NC}" >&2
+    # 4. No se encontró Python 3.11
+    echo -e "${RED}❌ Error: No se encontró Python 3.11${NC}" >&2
     echo "" >&2
-    echo "Por favor, instala Python 3.11+ o establece la variable PYTHON_CMD:" >&2
+    echo "Este proyecto REQUIERE Python 3.11 específicamente." >&2
+    echo "Python 3.13 no está soportado (falta soporte binario para greenlet y pydantic-core)" >&2
+    echo "" >&2
+    echo "Por favor, instala Python 3.11 o establece la variable PYTHON_CMD:" >&2
     echo "  export PYTHON_CMD=/ruta/a/python3.11" >&2
     echo "" >&2
     echo "Instalación según tu sistema:" >&2
     echo "  • macOS:   brew install python@3.11" >&2
     echo "  • Ubuntu:  sudo apt install python3.11" >&2
-    echo "  • Windows: https://www.python.org/downloads/" >&2
+    echo "  • Windows: winget install Python.Python.3.11" >&2
     return 1
 }
 
