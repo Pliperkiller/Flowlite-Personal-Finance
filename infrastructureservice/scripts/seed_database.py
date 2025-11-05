@@ -263,20 +263,60 @@ def seed_banks(session):
 
 
 def seed_transaction_categories(session):
-    """Poblar categorías de transacciones (UploadService)"""
-    logger.info("\n📂 Poblando Categorías de Transacciones...")
+    """
+    Poblar categorías de transacciones (UploadService)
+
+    IMPORTANTE: Estas categorías deben coincidir EXACTAMENTE con las
+    categorías que predice el modelo ML (Logistic Regression + TF-IDF).
+    Los nombres incluyen underscores y deben mantenerse tal cual.
+    """
+    logger.info("\n📂 Poblando Categorías de Transacciones (ML Model)...")
 
     categories_data = [
-        {"id_category": "cat-001-alimentacion", "description": "Alimentación"},
-        {"id_category": "cat-002-transporte", "description": "Transporte"},
-        {"id_category": "cat-003-vivienda", "description": "Vivienda"},
-        {"id_category": "cat-004-salud", "description": "Salud"},
-        {"id_category": "cat-005-entretenimiento", "description": "Entretenimiento"},
-        {"id_category": "cat-006-educacion", "description": "Educación"},
-        {"id_category": "cat-007-servicios", "description": "Servicios Públicos"},
-        {"id_category": "cat-008-compras", "description": "Compras"},
-        {"id_category": "cat-009-otros", "description": "Otros"},
-        {"id_category": "cat-010-ingresos", "description": "Ingresos"},
+        {
+            "id_category": "cat-001-retiros-efectivo",
+            "description": "Retiros_Efectivo"
+        },
+        {
+            "id_category": "cat-002-alimentacion-restaurantes",
+            "description": "Alimentacion_Restaurantes"
+        },
+        {
+            "id_category": "cat-003-supermercados-hogar",
+            "description": "Supermercados_Hogar"
+        },
+        {
+            "id_category": "cat-004-combustible-transporte",
+            "description": "Combustible_Transporte"
+        },
+        {
+            "id_category": "cat-005-entretenimiento",
+            "description": "Entretenimiento"
+        },
+        {
+            "id_category": "cat-006-servicios-publicos",
+            "description": "Servicios_Publicos"
+        },
+        {
+            "id_category": "cat-007-vivienda-arriendo",
+            "description": "Vivienda_Arriendo"
+        },
+        {
+            "id_category": "cat-008-salud-cuidado-personal",
+            "description": "Salud_Cuidado_Personal"
+        },
+        {
+            "id_category": "cat-009-educacion",
+            "description": "Educacion"
+        },
+        {
+            "id_category": "cat-010-obligaciones-financieras",
+            "description": "Obligaciones_Financieras"
+        },
+        {
+            "id_category": "cat-011-transferencias-ingresos",
+            "description": "Transferencias_Ingresos"
+        },
     ]
 
     categories = []
@@ -287,7 +327,7 @@ def seed_transaction_categories(session):
 
     session.add_all(categories)
     session.commit()
-    logger.info(f"✓ {len(categories)} categorías creadas")
+    logger.info(f"✓ {len(categories)} categorías ML creadas")
     return categories
 
 
@@ -332,7 +372,11 @@ def seed_transaction_batches(session):
 
 
 def seed_transactions(session):
-    """Poblar transacciones (UploadService)"""
+    """
+    Poblar transacciones (UploadService)
+
+    Las categorías ahora coinciden con las predicciones del modelo ML.
+    """
     logger.info("\n💳 Poblando Transacciones...")
 
     # Transacciones de Juan Pérez
@@ -340,7 +384,7 @@ def seed_transactions(session):
         # Mes pasado - Gastos
         {
             "id_user": "user-001-juan-perez",
-            "id_category": "cat-001-alimentacion",
+            "id_category": "cat-003-supermercados-hogar",  # Supermercados_Hogar
             "id_bank": "bank-001-bancolombia",
             "id_batch": "batch-001-completed",
             "transaction_name": "COMPRA EXITO",
@@ -350,7 +394,7 @@ def seed_transactions(session):
         },
         {
             "id_user": "user-001-juan-perez",
-            "id_category": "cat-002-transporte",
+            "id_category": "cat-004-combustible-transporte",  # Combustible_Transporte
             "id_bank": "bank-001-bancolombia",
             "id_batch": "batch-001-completed",
             "transaction_name": "UBER",
@@ -360,7 +404,7 @@ def seed_transactions(session):
         },
         {
             "id_user": "user-001-juan-perez",
-            "id_category": "cat-007-servicios",
+            "id_category": "cat-006-servicios-publicos",  # Servicios_Publicos
             "id_bank": "bank-001-bancolombia",
             "id_batch": "batch-001-completed",
             "transaction_name": "PAGO ENERGIA EPM",
@@ -371,7 +415,7 @@ def seed_transactions(session):
         # Mes pasado - Ingreso
         {
             "id_user": "user-001-juan-perez",
-            "id_category": "cat-010-ingresos",
+            "id_category": "cat-011-transferencias-ingresos",  # Transferencias_Ingresos
             "id_bank": "bank-001-bancolombia",
             "id_batch": "batch-001-completed",
             "transaction_name": "PAGO NOMINA EMPRESA ABC",
@@ -382,7 +426,7 @@ def seed_transactions(session):
         # Esta semana
         {
             "id_user": "user-001-juan-perez",
-            "id_category": "cat-005-entretenimiento",
+            "id_category": "cat-005-entretenimiento",  # Entretenimiento
             "id_bank": "bank-001-bancolombia",
             "id_batch": "batch-002-completed",
             "transaction_name": "NETFLIX",
@@ -392,12 +436,22 @@ def seed_transactions(session):
         },
         {
             "id_user": "user-001-juan-perez",
-            "id_category": "cat-001-alimentacion",
+            "id_category": "cat-002-alimentacion-restaurantes",  # Alimentacion_Restaurantes
             "id_bank": "bank-001-bancolombia",
             "id_batch": "batch-002-completed",
             "transaction_name": "RESTAURANTE LA ESTANCIA",
             "value": Decimal("-120000.00"),
             "transaction_date": datetime.now() - timedelta(days=1),
+            "transaction_type": "expense"
+        },
+        {
+            "id_user": "user-001-juan-perez",
+            "id_category": "cat-001-retiros-efectivo",  # Retiros_Efectivo
+            "id_bank": "bank-001-bancolombia",
+            "id_batch": "batch-002-completed",
+            "transaction_name": "RETIRO CAJERO BANCOLOMBIA",
+            "value": Decimal("-200000.00"),
+            "transaction_date": datetime.now() - timedelta(days=3),
             "transaction_type": "expense"
         }
     ]
@@ -406,7 +460,7 @@ def seed_transactions(session):
     transactions_maria = [
         {
             "id_user": "user-002-maria-lopez",
-            "id_category": "cat-010-ingresos",
+            "id_category": "cat-011-transferencias-ingresos",  # Transferencias_Ingresos
             "id_bank": "bank-002-davivienda",
             "id_batch": "batch-001-completed",
             "transaction_name": "TRANSFERENCIA FREELANCE",
@@ -416,7 +470,7 @@ def seed_transactions(session):
         },
         {
             "id_user": "user-002-maria-lopez",
-            "id_category": "cat-003-vivienda",
+            "id_category": "cat-007-vivienda-arriendo",  # Vivienda_Arriendo
             "id_bank": "bank-002-davivienda",
             "id_batch": "batch-001-completed",
             "transaction_name": "PAGO ARRIENDO",
@@ -426,7 +480,7 @@ def seed_transactions(session):
         },
         {
             "id_user": "user-002-maria-lopez",
-            "id_category": "cat-006-educacion",
+            "id_category": "cat-009-educacion",  # Educacion
             "id_bank": "bank-002-davivienda",
             "id_batch": "batch-002-completed",
             "transaction_name": "CURSO ONLINE UDEMY",
@@ -436,12 +490,32 @@ def seed_transactions(session):
         },
         {
             "id_user": "user-002-maria-lopez",
-            "id_category": "cat-008-compras",
+            "id_category": "cat-003-supermercados-hogar",  # Supermercados_Hogar
             "id_bank": "bank-002-davivienda",
             "id_batch": "batch-002-completed",
-            "transaction_name": "AMAZON COMPRA",
-            "value": Decimal("-250000.00"),
+            "transaction_name": "COMPRA DOLLARCITY",
+            "value": Decimal("-45000.00"),
+            "transaction_date": datetime.now() - timedelta(days=4),
+            "transaction_type": "expense"
+        },
+        {
+            "id_user": "user-002-maria-lopez",
+            "id_category": "cat-008-salud-cuidado-personal",  # Salud_Cuidado_Personal
+            "id_bank": "bank-002-davivienda",
+            "id_batch": "batch-002-completed",
+            "transaction_name": "FARMACIA DROGUERIA COLSUBSIDIO",
+            "value": Decimal("-68000.00"),
             "transaction_date": datetime.now() - timedelta(days=3),
+            "transaction_type": "expense"
+        },
+        {
+            "id_user": "user-002-maria-lopez",
+            "id_category": "cat-010-obligaciones-financieras",  # Obligaciones_Financieras
+            "id_bank": "bank-002-davivienda",
+            "id_batch": "batch-002-completed",
+            "transaction_name": "PAGO TARJETA DE CREDITO",
+            "value": Decimal("-450000.00"),
+            "transaction_date": datetime.now() - timedelta(days=2),
             "transaction_type": "expense"
         }
     ]

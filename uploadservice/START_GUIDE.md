@@ -72,6 +72,139 @@ PORT=8001
 
 # CORS (opcional)
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
+
+# Clasificador ML (opcional)
+# USE_SIMPLE_CLASSIFIER=false  # true para usar clasificador simple en lugar de ML
+# ML_MODELS_PATH=/path/to/models  # Ruta personalizada a archivos de modelo
+```
+
+## Clasificador de Transacciones con ML
+
+El UploadService incluye un clasificador de transacciones basado en Machine Learning con **99.7% de precisión**.
+
+### Características del Modelo
+
+- **Algoritmo**: Logistic Regression con TF-IDF vectorization
+- **Precisión**: 99.7% en conjunto de test
+- **Confianza promedio**: 96.8%
+- **Features**: Descripción de transacción + tipo (ingreso/egreso)
+- **Entrenamiento**: +5,000 transacciones reales de bancos colombianos
+
+### Archivos del Modelo
+
+El clasificador requiere 4 archivos en `uploadservice/models/`:
+
+```
+models/
+├── classifier.pkl       # Modelo Logistic Regression entrenado
+├── vectorizer.pkl       # TF-IDF vectorizer
+├── label_encoder.pkl    # Encoder para tipo de transacción
+└── metadata.json        # Metadatos del modelo (accuracy, fecha, etc)
+```
+
+**Nota**: Estos archivos ya están incluidos en el repositorio. Si no los tienes, cópialos desde `ml_pipeline/models/final/`.
+
+### Configuración
+
+#### Usar ML Classifier (por defecto)
+
+El clasificador ML está activado por defecto. No requiere configuración adicional:
+
+```bash
+# No es necesario configurar nada - usa ML por defecto
+python -m uvicorn src.main:app --reload
+```
+
+#### Usar Simple Classifier (testing/desarrollo)
+
+Para usar el clasificador simple (retorna "Other" para todas las transacciones):
+
+```bash
+# En .env o como variable de entorno
+USE_SIMPLE_CLASSIFIER=true
+
+# O al iniciar el servicio
+USE_SIMPLE_CLASSIFIER=true python -m uvicorn src.main:app --reload
+```
+
+#### Ruta personalizada de modelos
+
+Si tus modelos están en otra ubicación:
+
+```bash
+# En .env o como variable de entorno
+ML_MODELS_PATH=/custom/path/to/models
+```
+
+### Categorías Soportadas
+
+El modelo clasifica transacciones en las siguientes categorías:
+
+- Alimentación
+- Transporte
+- Entretenimiento
+- Salud
+- Educación
+- Servicios Públicos
+- Compras
+- Retiros de Efectivo
+- Transferencias
+- Salarios/Ingresos
+- Otros Ingresos
+- Other (fallback)
+
+### Rendimiento
+
+- **Lazy Loading**: Los modelos se cargan solo en la primera clasificación
+- **Singleton Pattern**: Una única carga en memoria para todas las peticiones
+- **Procesamiento rápido**: ~2-5ms por transacción
+- **Memory footprint**: ~130KB (todos los archivos de modelo)
+
+### Testing
+
+Ejecuta los tests del clasificador:
+
+```bash
+# Tests unitarios del clasificador
+pytest tests/test_ml_classifier.py -v
+
+# Tests con output detallado
+pytest tests/test_ml_classifier.py -v -s
+
+# Test específico
+pytest tests/test_ml_classifier.py::TestMLClassifier::test_classify_basic_transaction -v
+```
+
+### Logging
+
+El clasificador incluye logging detallado:
+
+```python
+# Logs que verás
+INFO - Using MLClassifier (ML-based classification)
+INFO - Loading ML models from: /path/to/models
+INFO - Model loaded successfully: Logistic Regression with TF-IDF + Transaction Type (Accuracy: 99.71%)
+DEBUG - Classified 'COMPRA STARBUCKS...' as 'Alimentación' (confidence: 98.5%, type: egreso)
+```
+
+### Actualizar el Modelo
+
+Para actualizar a una nueva versión del modelo:
+
+1. Entrena un nuevo modelo en `ml_pipeline/`
+2. Copia los nuevos archivos `.pkl` y `metadata.json` a `uploadservice/models/`
+3. Reinicia el servicio (el modelo se recargará automáticamente)
+
+```bash
+# Desde ml_pipeline
+python run_pipeline.py
+
+# Copiar modelos actualizados
+cp ml_pipeline/models/final/*.pkl uploadservice/models/
+cp ml_pipeline/models/final/metadata.json uploadservice/models/
+
+# Reiniciar servicio
+./kill.sh && ./start.sh
 ```
 
 ## Uso

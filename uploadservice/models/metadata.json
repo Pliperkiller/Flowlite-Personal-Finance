@@ -1,0 +1,15 @@
+{
+  "model_type": "Logistic Regression with TF-IDF + Transaction Type",
+  "accuracy": 0.9971014492753624,
+  "confidence_avg": 96.75225267296827,
+  "test_size": 1035,
+  "train_size": 4137,
+  "configuration": {
+    "max_features": "1000",
+    "ngram_range": "(1, 2)",
+    "min_df": "1",
+    "max_df": "0.9",
+    "C": "10.0"
+  },
+  "training_date": "2025-11-04 11:10:55"
+}

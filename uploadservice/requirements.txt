@@ -16,6 +16,10 @@ cryptography>=41.0.0
 pandas==2.2.0
 openpyxl==3.1.2
 
+# Machine Learning
+scikit-learn==1.4.0
+scipy==1.12.0
+
 # Message Broker
 aio-pika==9.3.1
 
