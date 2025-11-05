@@ -21,6 +21,24 @@ class User(Base):
     active = Column(Boolean, default=True)
 
 
+class UserInfo(Base):
+    __tablename__ = "UserInfo"
+
+    id_user = Column(CHAR(36), ForeignKey("User.id_user"), primary_key=True)
+    primerNombre = Column(String(100), nullable=True)
+    segundoNombre = Column(String(100), nullable=True)
+    primerApellido = Column(String(100), nullable=True)
+    segundoApellido = Column(String(100), nullable=True)
+    telefono = Column(String(20), nullable=True)
+    direccion = Column(String(255), nullable=True)
+    ciudad = Column(String(100), nullable=True)
+    departamento = Column(String(100), nullable=True)
+    pais = Column(String(100), nullable=True)
+    numeroIdentificacion = Column(String(50), nullable=True)
+    numeroIdentificacoin = Column(String(50), nullable=True)
+    tipoIdentificacion = Column(String(50), nullable=True)
+
+
 class Bank(Base):
     __tablename__ = "Bank"
 

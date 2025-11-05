@@ -4,6 +4,7 @@ from .repositories import (
     get_insight_repository,
     get_bank_repository,
     get_category_repository,
+    get_dashboard_repository,
 )
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     "get_insight_repository",
     "get_bank_repository",
     "get_category_repository",
+    "get_dashboard_repository",
 ]

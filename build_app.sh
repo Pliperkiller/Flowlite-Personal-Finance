@@ -67,21 +67,30 @@ wait_for_port() {
 wait_for_service() {
     local url=$1
     local service=$2
-    local max_attempts=30
+    local max_attempts=60  # Aumentado de 30 a 60 (2 minutos total)
     local attempt=0
 
     echo -e "${YELLOW}⏳ Esperando que $service esté saludable en $url...${NC}"
 
     while [ $attempt -lt $max_attempts ]; do
-        if curl -fs "$url" >/dev/null 2>&1; then
+        # Verificar si curl responde exitosamente
+        response=$(curl -fs "$url" 2>&1)
+        if [ $? -eq 0 ]; then
             echo -e "${GREEN}✓${NC} $service está saludable"
             return 0
         fi
+
         attempt=$((attempt + 1))
+
+        # Mostrar progreso cada 5 intentos
+        if [ $((attempt % 5)) -eq 0 ]; then
+            echo -e "${YELLOW}   ... intentando ($attempt/$max_attempts)${NC}"
+        fi
+
         sleep 2
     done
 
-    echo -e "${RED}✗${NC} Timeout esperando $service (no responde en $url)"
+    echo -e "${RED}✗${NC} Timeout esperando $service (no responde en $url después de $max_attempts intentos)"
     return 1
 }
 
