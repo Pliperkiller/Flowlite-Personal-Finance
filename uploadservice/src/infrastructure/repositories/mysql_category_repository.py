@@ -1,5 +1,4 @@
 from typing import Optional
-from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from ...domain.ports import CategoryRepositoryPort
@@ -29,10 +28,10 @@ class MySQLCategoryRepository(CategoryRepositoryPort):
         await self.session.refresh(model)
         return self._to_entity(model)
 
-    async def get_by_id(self, id_category: UUID) -> Optional[Category]:
+    async def get_by_id(self, id_category: str) -> Optional[Category]:
         """Get a category by its ID"""
         result = await self.session.execute(
-            select(CategoryModel).where(CategoryModel.id_category == str(id_category))
+            select(CategoryModel).where(CategoryModel.id_category == id_category)
         )
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
@@ -40,13 +39,13 @@ class MySQLCategoryRepository(CategoryRepositoryPort):
     def _to_model(self, entity: Category) -> CategoryModel:
         """Convert domain entity to database model"""
         return CategoryModel(
-            id_category=str(entity.id_category) if entity.id_category else None,
+            id_category=entity.id_category,
             description=entity.description,
         )
 
     def _to_entity(self, model: CategoryModel) -> Category:
         """Convert database model to domain entity"""
         return Category(
-            id_category=UUID(model.id_category) if model.id_category else None,
+            id_category=model.id_category,
             description=model.description,
         )

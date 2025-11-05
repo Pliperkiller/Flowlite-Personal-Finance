@@ -37,7 +37,7 @@ class MySQLTransactionRepository(TransactionRepositoryPort):
             id_transaction=str(entity.id_transaction) if entity.id_transaction else None,
             id_user=str(entity.id_user),
             id_bank=entity.id_bank,  # Bank ID is already a string
-            id_category=str(entity.id_category),
+            id_category=entity.id_category,  # Category ID is already a string
             id_batch=str(entity.id_batch) if entity.id_batch else None,
             transaction_date=entity.transaction_date,
             transaction_name=entity.transaction_name,
@@ -50,7 +50,7 @@ class MySQLTransactionRepository(TransactionRepositoryPort):
         return Transaction(
             id_transaction=UUID(model.id_transaction) if model.id_transaction else None,
             id_user=UUID(model.id_user),
-            id_category=UUID(model.id_category),
+            id_category=model.id_category,  # Category ID is a string, not UUID
             id_bank=model.id_bank,
             id_batch=UUID(model.id_batch) if model.id_batch else None,
             transaction_date=model.transaction_date,

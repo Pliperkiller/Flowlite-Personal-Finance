@@ -667,6 +667,12 @@ def main():
     logger.info("POBLACIÓN DE BASE DE DATOS - FLOWLITE")
     logger.info("="*60)
 
+    # Mostrar versión del seed si está disponible (cuando se ejecuta en Docker)
+    seed_version = os.getenv('SEED_VERSION', 'unknown')
+    if seed_version != 'unknown':
+        logger.info(f"Seed Version: {seed_version}")
+        logger.info("="*60)
+
     # 1. Cargar configuración
     database_url = load_environment()
 
@@ -702,6 +708,31 @@ def main():
 
         # 5. Mostrar resumen
         print_summary(session)
+
+        # 6. Validar que las categorías ML fueron creadas correctamente
+        logger.info("\n" + "="*60)
+        logger.info("VALIDACIÓN DE CATEGORÍAS ML")
+        logger.info("="*60)
+
+        category_count = session.query(TransactionCategory).count()
+        expected_count = 11
+
+        if category_count == expected_count:
+            logger.info(f"✓ Número de categorías correcto: {category_count}/{expected_count}")
+
+            # Verificar que tengan el formato ML (con underscores)
+            ml_categories = session.query(TransactionCategory).filter(
+                TransactionCategory.description.like('%\_%')
+            ).count()
+
+            if ml_categories >= 10:
+                logger.info(f"✓ Categorías con formato ML detectadas: {ml_categories}")
+            else:
+                logger.warning(f"⚠ Solo {ml_categories} categorías tienen formato ML (se esperaban ≥10)")
+                logger.warning("  Las categorías pueden no ser compatibles con el clasificador ML")
+        else:
+            logger.error(f"✗ Número de categorías incorrecto: {category_count}/{expected_count}")
+            logger.error("  Por favor, revisa el archivo seed_database.py")
 
         logger.info("\n" + "="*60)
         logger.info("✅ BASE DE DATOS POBLADA EXITOSAMENTE")

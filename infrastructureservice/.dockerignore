@@ -23,8 +23,11 @@ build/
 .gitignore
 
 # Docker
-Dockerfile
+# Nota: No se necesitan en la imagen, solo para desarrollo local
+# El Dockerfile.init se usa durante build pero no se copia
 docker-compose.yml
+README.md
+setup.sh
 
 # Logs
 *.log

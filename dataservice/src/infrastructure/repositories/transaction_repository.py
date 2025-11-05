@@ -75,7 +75,7 @@ class TransactionRepository(TransactionRepositoryPort):
                     TransactionEntity(
                         id_transaction=UUID(str(t.id_transaction).strip()),
                         id_user=UUID(str(t.id_user).strip()),
-                        id_category=UUID(str(t.id_category).strip()),
+                        id_category=str(t.id_category).strip(),  # Category ID is a string, not UUID
                         id_bank=id_bank_value,
                         id_batch=id_batch_value,
                         transaction_name=t.transaction_name,

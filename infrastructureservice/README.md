@@ -6,11 +6,98 @@ Este servicio centraliza toda la infraestructura compartida del proyecto Flowlit
 - Redis (Cache y almacenamiento en memoria)
 - Migraciones de base de datos (Alembic)
 
+## 🚀 Quick Start (RECOMENDADO)
+
+**Si es tu primera vez configurando el proyecto O si acabas de hacer git pull:**
+
+```bash
+cd infrastructureservice
+./setup.sh
+```
+
+Este script automáticamente:
+- ✓ Detecta y elimina imágenes Docker antiguas
+- ✓ Reconstruye la imagen db-init con el código más reciente
+- ✓ Inicializa la base de datos con las migraciones correctas
+- ✓ Carga los datos de prueba (seed) con categorías ML
+- ✓ Valida que todo esté configurado correctamente
+
+### ⚠️ IMPORTANTE: Problema de Imágenes Antiguas
+
+Docker cachea las imágenes construidas. Si tienes una imagen antigua del servicio `db-init`,
+la base de datos puede cargarse con datos desactualizados (categorías antiguas en lugar de
+categorías ML).
+
+**Síntomas de este problema:**
+- Las categorías tienen nombres como "Alimentación", "Servicios Públicos" (con espacios y tildes)
+- En lugar de "Alimentacion_Restaurantes", "Servicios_Publicos" (con underscores)
+- El clasificador ML no encuentra las categorías correctas
+
+**Solución:** Usa `./setup.sh` que limpia automáticamente las imágenes antiguas.
+
+**Alternativa manual:**
+```bash
+# 1. Detener servicios
+docker-compose down
+
+# 2. Eliminar imagen antigua
+docker rmi $(docker images | grep infrastructureservice-db-init | awk '{print $3}')
+
+# 3. Reconstruir sin caché
+docker-compose build --no-cache db-init
+
+# 4. Levantar servicios
+docker-compose up -d
+```
+
+## 🔄 Control de Versiones del Seed
+
+El proyecto utiliza un sistema de versionado para el seed de la base de datos que garantiza
+que todos los desarrolladores usen la misma versión de datos de prueba.
+
+### Ver la versión actual del seed:
+
+```bash
+# Ver la versión en docker-compose.yml
+grep "SEED_VERSION:" docker-compose.yml
+
+# Ver los logs del último seed ejecutado
+docker logs flowlite-db-init | grep "Seed Version"
+```
+
+### Actualizar la versión del seed:
+
+**Cuándo actualizar:** Cada vez que modifiques `scripts/seed_database.py` con cambios significativos
+(nuevas categorías, cambios en estructura de datos, etc.).
+
+**Cómo actualizar:**
+
+1. Edita `docker-compose.yml` y cambia `SEED_VERSION`:
+   ```yaml
+   args:
+     SEED_VERSION: "20251105-02"  # Incrementa la versión
+   ```
+
+2. Ejecuta el setup:
+   ```bash
+   ./setup.sh
+   ```
+
+El script `setup.sh` automáticamente detectará que cambió la versión y reconstruirá la imagen.
+
+### Para Colaboradores:
+
+Cuando hagas `git pull` y veas cambios en `seed_database.py` o `docker-compose.yml`:
+```bash
+./setup.sh  # Esto garantiza que uses la versión correcta
+```
+
 ## Estructura
 
 ```
 InfrastructureService/
 ├── docker-compose.yml          # Servicios de infraestructura (MySQL, RabbitMQ, Redis, DB-Init)
+├── setup.sh                    # Script automatizado de setup (RECOMENDADO)
 ├── Dockerfile.init             # Dockerfile para el servicio de inicialización automática
 ├── .env.example                # Variables de entorno de ejemplo
 ├── .dockerignore               # Archivos a ignorar en la construcción de Docker
