@@ -182,87 +182,56 @@ chmod +x manage-database.sh
 4. Usar connection pooling
 5. Configurar SSL/TLS
 
-## 🔄 Migraciones de Base de Datos
+## 🔄 Gestión de Schema (Hibernate)
 
-### Scripts de Migración Disponibles
+### Enfoque Simple: Hibernate Auto-Update
 
-#### `reset-migrations.sh` ⭐ (Recomendado)
-Herramienta experta para resetear y aplicar migraciones limpiamente.
+El proyecto usa **Hibernate con `ddl-auto=update`** que gestiona automáticamente el schema de la base de datos basándose en las entidades JPA.
 
-```bash
-cd database
-./reset-migrations.sh
-```
+#### ¿Qué significa esto?
 
-**Qué hace:**
-- ✅ Limpia estados de migraciones fallidas
-- ✅ Aplica migración consolidada
-- ✅ Verifica estructura de base de datos
-- ✅ Muestra próximos pasos
+✅ **NO necesitas scripts de migración SQL**
+✅ **Hibernate crea/actualiza tablas automáticamente**
+✅ **Los nombres de columnas se toman de las anotaciones `@Column`**
+✅ **Todo está sincronizado con el código Java**
 
-#### `run-migrations.sh`
-Ejecutor automático de migraciones para bases de datos frescas.
+### Si tienes una tabla UserInfo vieja
+
+Si ya tienes una tabla `UserInfo` con nombres en español, simplemente elimínala y deja que Hibernate la recree:
 
 ```bash
 cd database
-./run-migrations.sh
+./drop-userinfo.sh
 ```
 
-#### `clean-and-migrate.sh`
-⚠️ **PELIGRO**: Elimina TODOS los datos de UserInfo.
+Luego reinicia el IdentityService:
 
 ```bash
-cd database
-./clean-and-migrate.sh
+cd ../identifyservice
+./kill.sh && ./start.sh
 ```
 
-### Migraciones Disponibles
+Hibernate creará automáticamente la tabla `UserInfo` con:
+- ✅ Nombres de columnas en inglés
+- ✅ UUIDs como BINARY(16)
+- ✅ Estructura correcta según las entidades
 
-#### 001_create_userinfo_table_english.sql
-**Estado**: ✅ Activa
-**Tipo**: Migración Consolidada Maestra
-**Propósito**: Crea tabla UserInfo con nombres de columnas en inglés
-
-**Características:**
-- Idempotente (puede ejecutarse múltiples veces)
-- Crea backup antes de eliminar tabla antigua
-- Almacenamiento correcto de UUIDs (BINARY(16))
-- Nombres de columnas en inglés
-- Índices optimizados
-
-### Solución de Problemas de Migraciones
-
-#### Error: "Data too long for column 'id_user'"
-**Solución**: Usa `reset-migrations.sh`
-
-Este error ocurre cuando datos UUID antiguos están almacenados como VARCHAR.
-
-#### Error: "Unknown column 'fechaNacimiento'"
-**Solución**: Usa `reset-migrations.sh`
-
-Esto pasa cuando migraciones parciales fallaron.
-
-#### Error: "Docker not available"
-**Solución**: Inicia MySQL primero
+### Verificar estructura de tabla
 
 ```bash
-cd ../InfrastructureService
-docker-compose up -d mysql
-cd ../database
-./reset-migrations.sh
-```
-
-### Verificar Migraciones
-
-```bash
-# Ver migraciones aplicadas
-docker exec flowlite-mysql mysql -uroot -prootpassword flowlite_db \
-  -e "SELECT * FROM schema_migrations;"
-
 # Ver estructura de tabla
 docker exec flowlite-mysql mysql -uroot -prootpassword flowlite_db \
   -e "DESCRIBE UserInfo;"
 ```
+
+### Para Producción
+
+⚠️ En producción, cambia la configuración a:
+```properties
+spring.jpa.hibernate.ddl-auto=validate
+```
+
+Y usa herramientas como **Flyway** o **Liquibase** para migraciones controladas.
 
 ---
 
