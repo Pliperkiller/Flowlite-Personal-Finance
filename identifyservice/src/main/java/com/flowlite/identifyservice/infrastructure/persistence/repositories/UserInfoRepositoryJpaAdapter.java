@@ -25,7 +25,7 @@ public class UserInfoRepositoryJpaAdapter implements UserInfoRepository {
 
     @Override
     public Optional<UserInfo> findByUserId(UUID userId) {
-        return jpaUserInfoRepository.findByUserId(userId)
+        return jpaUserInfoRepository.findByIdUser(userId)
                 .map(UserInfoMapper::toDomain);
     }
 
@@ -93,7 +93,8 @@ public class UserInfoRepositoryJpaAdapter implements UserInfoRepository {
 
     @Override
     public List<UserInfo> findActiveUsers() {
-        return jpaUserInfoRepository.findByActivoTrue()
+        // La tabla actual no tiene columna 'activo', retornar todos los usuarios
+        return jpaUserInfoRepository.findAll()
                 .stream()
                 .map(UserInfoMapper::toDomain)
                 .collect(Collectors.toList());
@@ -113,13 +114,13 @@ public class UserInfoRepositoryJpaAdapter implements UserInfoRepository {
 
     @Override
     public void deleteByUserId(UUID userId) {
-        jpaUserInfoRepository.findByUserId(userId)
-                .ifPresent(entity -> jpaUserInfoRepository.deleteById(entity.getId()));
+        jpaUserInfoRepository.findByIdUser(userId)
+                .ifPresent(entity -> jpaUserInfoRepository.deleteById(entity.getIdUser()));
     }
 
     @Override
     public boolean existsByUserId(UUID userId) {
-        return jpaUserInfoRepository.existsByUserId(userId);
+        return jpaUserInfoRepository.existsByIdUser(userId);
     }
 
     @Override
