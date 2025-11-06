@@ -37,6 +37,60 @@ public class UserInfoController {
     private final CompleteInfoUserService completeInfoUserService;
     private final JwtTokenProvider jwtTokenProvider;
 
+    /**
+     * Maps UserInfo entity to response Map with all fields.
+     * Handles optional fields correctly (includes them even if null for frontend consistency).
+     *
+     * @param info UserInfo entity to map
+     * @return Map with all user info fields ready for JSON response
+     */
+    private Map<String, Object> mapUserInfoToResponse(UserInfo info) {
+        Map<String, Object> userInfoMap = new HashMap<>();
+
+        // Required fields (always present)
+        userInfoMap.put("id", info.getId());
+        userInfoMap.put("userId", info.getUserId());
+
+        // Personal information (optional fields - may be null)
+        userInfoMap.put("firstName", info.getFirstName());
+        userInfoMap.put("middleName", info.getMiddleName());  // Optional
+        userInfoMap.put("lastName", info.getLastName());
+        userInfoMap.put("secondLastName", info.getSecondLastName());  // Optional
+
+        // Calculated field
+        userInfoMap.put("fullName", info.getFullName());
+
+        // Contact information
+        userInfoMap.put("phone", info.getPhone());
+        userInfoMap.put("address", info.getAddress());  // Optional
+
+        // Location
+        userInfoMap.put("city", info.getCity());  // Optional
+        userInfoMap.put("state", info.getState());  // Optional
+        userInfoMap.put("country", info.getCountry());  // Optional
+
+        // Birth date (optional)
+        userInfoMap.put("birthDate", info.getBirthDate());
+
+        // Identification
+        userInfoMap.put("identificationNumber", info.getIdentificationNumber());
+        userInfoMap.put("identificationType", info.getIdentificationType() != null ?
+            info.getIdentificationType().getDescription() : null);
+
+        // Additional information (all optional)
+        userInfoMap.put("gender", info.getGender());
+        userInfoMap.put("maritalStatus", info.getMaritalStatus());
+        userInfoMap.put("occupation", info.getOccupation());
+
+        // Status and metadata
+        userInfoMap.put("isComplete", info.hasCompleteInformation());
+        userInfoMap.put("active", info.isActive());
+        userInfoMap.put("createdAt", info.getCreatedAt());
+        userInfoMap.put("updatedAt", info.getUpdatedAt());
+
+        return userInfoMap;
+    }
+
     @PutMapping("/update")
     @Operation(
         summary = "Actualizar información personal del usuario autenticado",
@@ -154,18 +208,9 @@ public class UserInfoController {
 
             log.info("Personal information updated for user: {}", userId);
 
-            Map<String, Object> userInfoMap = new HashMap<>();
-            userInfoMap.put("id", updatedUserInfo.getId());
-            userInfoMap.put("userId", updatedUserInfo.getUserId());
-            userInfoMap.put("fullName", updatedUserInfo.getFullName());
-            userInfoMap.put("phone", updatedUserInfo.getPhone());
-            userInfoMap.put("city", updatedUserInfo.getCity());
-            userInfoMap.put("state", updatedUserInfo.getState());
-            userInfoMap.put("identificationNumber", updatedUserInfo.getIdentificationNumber());
-            userInfoMap.put("identificationType", updatedUserInfo.getIdentificationType() != null ?
-                updatedUserInfo.getIdentificationType().getDescription() : null);
-            userInfoMap.put("isComplete", updatedUserInfo.hasCompleteInformation());
-            
+            // Use helper method to return complete user information
+            Map<String, Object> userInfoMap = mapUserInfoToResponse(updatedUserInfo);
+
             return ResponseEntity.ok(Map.of(
                 "message", "Personal information updated successfully",
                 "userInfo", userInfoMap
@@ -254,31 +299,9 @@ public class UserInfoController {
             
             UserInfo info = userInfo.get();
 
-            Map<String, Object> userInfoMap = new HashMap<>();
-            userInfoMap.put("id", info.getId());
-            userInfoMap.put("userId", info.getUserId());
-            userInfoMap.put("firstName", info.getFirstName());
-            userInfoMap.put("middleName", info.getMiddleName());
-            userInfoMap.put("lastName", info.getLastName());
-            userInfoMap.put("secondLastName", info.getSecondLastName());
-            userInfoMap.put("fullName", info.getFullName());
-            userInfoMap.put("phone", info.getPhone());
-            userInfoMap.put("address", info.getAddress());
-            userInfoMap.put("city", info.getCity());
-            userInfoMap.put("state", info.getState());
-            userInfoMap.put("country", info.getCountry());
-            userInfoMap.put("birthDate", info.getBirthDate());
-            userInfoMap.put("identificationNumber", info.getIdentificationNumber());
-            userInfoMap.put("identificationType", info.getIdentificationType() != null ?
-                info.getIdentificationType().getDescription() : null);
-            userInfoMap.put("gender", info.getGender());
-            userInfoMap.put("maritalStatus", info.getMaritalStatus());
-            userInfoMap.put("occupation", info.getOccupation());
-            userInfoMap.put("isComplete", info.hasCompleteInformation());
-            userInfoMap.put("active", info.isActive());
-            userInfoMap.put("createdAt", info.getCreatedAt());
-            userInfoMap.put("updatedAt", info.getUpdatedAt());
-            
+            // Use helper method to return complete user information
+            Map<String, Object> userInfoMap = mapUserInfoToResponse(info);
+
             return ResponseEntity.ok(Map.of("userInfo", userInfoMap));
             
         } catch (Exception e) {
