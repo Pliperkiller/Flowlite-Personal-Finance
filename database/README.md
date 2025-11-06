@@ -182,6 +182,88 @@ chmod +x manage-database.sh
 4. Usar connection pooling
 5. Configurar SSL/TLS
 
+## 🔄 Migraciones de Base de Datos
+
+### Scripts de Migración Disponibles
+
+#### `reset-migrations.sh` ⭐ (Recomendado)
+Herramienta experta para resetear y aplicar migraciones limpiamente.
+
+```bash
+cd database
+./reset-migrations.sh
+```
+
+**Qué hace:**
+- ✅ Limpia estados de migraciones fallidas
+- ✅ Aplica migración consolidada
+- ✅ Verifica estructura de base de datos
+- ✅ Muestra próximos pasos
+
+#### `run-migrations.sh`
+Ejecutor automático de migraciones para bases de datos frescas.
+
+```bash
+cd database
+./run-migrations.sh
+```
+
+#### `clean-and-migrate.sh`
+⚠️ **PELIGRO**: Elimina TODOS los datos de UserInfo.
+
+```bash
+cd database
+./clean-and-migrate.sh
+```
+
+### Migraciones Disponibles
+
+#### 001_create_userinfo_table_english.sql
+**Estado**: ✅ Activa
+**Tipo**: Migración Consolidada Maestra
+**Propósito**: Crea tabla UserInfo con nombres de columnas en inglés
+
+**Características:**
+- Idempotente (puede ejecutarse múltiples veces)
+- Crea backup antes de eliminar tabla antigua
+- Almacenamiento correcto de UUIDs (BINARY(16))
+- Nombres de columnas en inglés
+- Índices optimizados
+
+### Solución de Problemas de Migraciones
+
+#### Error: "Data too long for column 'id_user'"
+**Solución**: Usa `reset-migrations.sh`
+
+Este error ocurre cuando datos UUID antiguos están almacenados como VARCHAR.
+
+#### Error: "Unknown column 'fechaNacimiento'"
+**Solución**: Usa `reset-migrations.sh`
+
+Esto pasa cuando migraciones parciales fallaron.
+
+#### Error: "Docker not available"
+**Solución**: Inicia MySQL primero
+
+```bash
+cd ../InfrastructureService
+docker-compose up -d mysql
+cd ../database
+./reset-migrations.sh
+```
+
+### Verificar Migraciones
+
+```bash
+# Ver migraciones aplicadas
+docker exec flowlite-mysql mysql -uroot -prootpassword flowlite_db \
+  -e "SELECT * FROM schema_migrations;"
+
+# Ver estructura de tabla
+docker exec flowlite-mysql mysql -uroot -prootpassword flowlite_db \
+  -e "DESCRIBE UserInfo;"
+```
+
 ---
 
 **Nota**: Esta configuración es ideal para desarrollo. Para producción, considera servicios gestionados como AWS RDS, Google Cloud SQL, o Azure Database.
