@@ -119,6 +119,44 @@ module "messaging" {
 }
 
 # ================================
+# Email Module (Azure Communication Services / SendGrid / Custom SMTP)
+# ================================
+
+module "email" {
+  source = "./modules/email"
+
+  project_name                     = var.project_name
+  environment                      = var.environment
+  location                         = var.location
+  resource_group_name              = azurerm_resource_group.main.name
+  key_vault_id                     = module.security.key_vault_id
+  subnet_internal_services_id      = module.networking.subnet_internal_services_id
+
+  # Email Service Configuration (choose one)
+  use_azure_communication_services = var.use_azure_communication_services
+  email_domain                     = var.email_domain
+
+  use_sendgrid                     = var.use_sendgrid
+  sendgrid_api_key                 = var.sendgrid_api_key
+  sendgrid_from_email              = var.sendgrid_from_email
+
+  use_custom_smtp                  = var.use_custom_smtp
+  smtp_host                        = var.smtp_host
+  smtp_port                        = var.smtp_port
+  smtp_username                    = var.smtp_username
+  smtp_password                    = var.smtp_password
+  smtp_from_email                  = var.smtp_from_email
+  smtp_use_tls                     = var.smtp_use_tls
+
+  # Development: MailHog
+  deploy_mailhog_dev               = var.deploy_mailhog_dev
+
+  tags = var.tags
+
+  depends_on = [module.networking, module.security]
+}
+
+# ================================
 # Container Registry Module
 # ================================
 

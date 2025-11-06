@@ -111,6 +111,38 @@ terraform apply
 
 ⏱️ **Tiempo estimado de despliegue: 15-30 minutos**
 
+## 📧 Configuración de Email
+
+Flowlite necesita un servicio de email para enviar notificaciones (verificación de cuenta, recuperación de contraseña, etc.).
+
+### Opciones disponibles:
+
+1. **MailHog** (Desarrollo) - Mock SMTP server para testing
+2. **Gmail/SMTP Custom** (Staging) - Usar tu propio servidor SMTP
+3. **SendGrid** (Producción) - Servicio especializado en emails
+4. **Azure Communication Services** (Producción) - Servicio nativo de Azure
+
+### Configuración rápida:
+
+**Para desarrollo:**
+```hcl
+# terraform.tfvars
+deploy_mailhog_dev = true
+```
+
+**Para producción con Gmail:**
+```hcl
+# terraform.tfvars
+use_custom_smtp  = true
+smtp_host        = "smtp.gmail.com"
+smtp_port        = "587"
+smtp_username    = "tu-email@gmail.com"
+smtp_password    = "tu-app-password"  # Generate from Google Account
+smtp_from_email  = "noreply@flowlite.com"
+```
+
+**📖 Ver guía completa:** [EMAIL_CONFIGURATION.md](./EMAIL_CONFIGURATION.md)
+
 ## 📊 Outputs
 
 Después del despliegue, verás outputs importantes:

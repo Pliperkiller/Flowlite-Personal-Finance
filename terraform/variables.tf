@@ -299,6 +299,97 @@ variable "docker_images" {
 }
 
 # ================================
+# Email Service Variables
+# ================================
+
+# Choose ONE email service option:
+
+# Option 1: Azure Communication Services (Recommended for Azure)
+variable "use_azure_communication_services" {
+  description = "Use Azure Communication Services for email"
+  type        = bool
+  default     = false
+}
+
+variable "email_domain" {
+  description = "Email domain for Azure Communication Services (e.g., flowlite.com)"
+  type        = string
+  default     = ""
+}
+
+# Option 2: SendGrid (Popular third-party service)
+variable "use_sendgrid" {
+  description = "Use SendGrid for email"
+  type        = bool
+  default     = false
+}
+
+variable "sendgrid_api_key" {
+  description = "SendGrid API key"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "sendgrid_from_email" {
+  description = "SendGrid from email address"
+  type        = string
+  default     = "noreply@flowlite.com"
+}
+
+# Option 3: Custom SMTP (For existing email infrastructure)
+variable "use_custom_smtp" {
+  description = "Use custom SMTP server"
+  type        = bool
+  default     = true # Default to custom SMTP for flexibility
+}
+
+variable "smtp_host" {
+  description = "SMTP server host (e.g., smtp.gmail.com)"
+  type        = string
+  default     = ""
+}
+
+variable "smtp_port" {
+  description = "SMTP server port"
+  type        = string
+  default     = "587"
+}
+
+variable "smtp_username" {
+  description = "SMTP username"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "smtp_password" {
+  description = "SMTP password"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "smtp_from_email" {
+  description = "SMTP from email address"
+  type        = string
+  default     = "noreply@flowlite.com"
+}
+
+variable "smtp_use_tls" {
+  description = "Use TLS for SMTP"
+  type        = bool
+  default     = true
+}
+
+# Option 4: MailHog for Development Only
+variable "deploy_mailhog_dev" {
+  description = "Deploy MailHog in dev environment (SMTP mock server)"
+  type        = bool
+  default     = false # Set to true for dev environment testing
+}
+
+# ================================
 # Cost Optimization Variables
 # ================================
 

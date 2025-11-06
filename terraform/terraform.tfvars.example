@@ -123,6 +123,47 @@ log_retention_days         = 30
 enable_application_insights = true
 
 # ================================
+# Email Service Configuration
+# ================================
+
+# CHOOSE ONE EMAIL SERVICE OPTION:
+
+# Option 1: Azure Communication Services (Recommended for Azure)
+# Requires domain verification in Azure Portal
+# Cost: ~$0.0012 per email
+use_azure_communication_services = false
+email_domain                     = "" # e.g., "flowlite.com" (leave empty to use *.azurecomm.net)
+
+# Option 2: SendGrid (Popular, easy setup)
+# Sign up at https://sendgrid.com/
+# Cost: Free tier (100 emails/day), Paid plans from $15/month
+use_sendgrid        = false
+sendgrid_api_key    = "" # Get from SendGrid dashboard
+sendgrid_from_email = "noreply@flowlite.com"
+
+# Option 3: Custom SMTP (Default - Use your own email server)
+# Works with Gmail, Office365, or any SMTP server
+# For Gmail: Enable "App Passwords" in Google Account settings
+use_custom_smtp  = true
+smtp_host        = "smtp.gmail.com"              # Change to your SMTP server
+smtp_port        = "587"                         # 587 for TLS, 465 for SSL
+smtp_username    = "your-email@gmail.com"        # Your email address
+smtp_password    = "your-app-password"           # CHANGE THIS! Use app password for Gmail
+smtp_from_email  = "noreply@flowlite.com"       # From address in emails
+smtp_use_tls     = true                          # Use TLS encryption
+
+# Option 4: MailHog for Development (SMTP Mock Server)
+# Only deploys in dev environment, accessible within Azure VNet
+# Web UI: http://[mailhog-ip]:8025
+# SMTP: [mailhog-ip]:1025
+deploy_mailhog_dev = false # Set to true for dev environment testing
+
+# RECOMMENDATION BY ENVIRONMENT:
+# - Development: deploy_mailhog_dev = true (easiest for testing)
+# - Staging: use_sendgrid = true or use_custom_smtp = true
+# - Production: use_azure_communication_services = true (best for Azure)
+
+# ================================
 # Security Configuration
 # ================================
 

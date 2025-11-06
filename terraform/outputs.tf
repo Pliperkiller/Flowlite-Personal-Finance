@@ -142,6 +142,28 @@ output "application_insights_connection_string" {
 }
 
 # ================================
+# Email Service Outputs
+# ================================
+
+output "email_service_type" {
+  description = "Type of email service deployed"
+  value       = module.email.email_service_type
+}
+
+output "mailhog_web_ui" {
+  description = "MailHog Web UI URL (dev only)"
+  value       = module.email.mailhog_web_ui
+}
+
+output "mailhog_smtp_config" {
+  description = "MailHog SMTP configuration (dev only)"
+  value = var.deploy_mailhog_dev && var.environment == "dev" ? {
+    host = module.email.mailhog_smtp_host
+    port = module.email.mailhog_smtp_port
+  } : null
+}
+
+# ================================
 # Compute Outputs
 # ================================
 
