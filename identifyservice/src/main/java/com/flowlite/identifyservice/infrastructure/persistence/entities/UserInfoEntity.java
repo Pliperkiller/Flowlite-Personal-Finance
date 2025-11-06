@@ -15,22 +15,20 @@ import java.util.UUID;
 public class UserInfoEntity {
 
     @Id
-    private UUID id;
-
-    @Column(name = "user_id", nullable = false, unique = true)
-    private UUID userId;
+    @Column(name = "id_user")
+    private UUID idUser;
 
     // Información personal básica
-    @Column(name = "primer_nombre")
+    @Column(name = "primerNombre")
     private String primerNombre;
 
-    @Column(name = "segundo_nombre")
+    @Column(name = "segundoNombre")
     private String segundoNombre;
 
-    @Column(name = "primer_apellido")
+    @Column(name = "primerApellido")
     private String primerApellido;
 
-    @Column(name = "segundo_apellido")
+    @Column(name = "segundoApellido")
     private String segundoApellido;
 
     @Column(name = "telefono")
@@ -48,36 +46,10 @@ public class UserInfoEntity {
     @Column(name = "pais")
     private String pais;
 
-    @Column(name = "fecha_nacimiento")
-    private LocalDate fechaNacimiento;
-
     // Información de identificación
-    @Column(name = "numero_identificacion")
+    @Column(name = "numeroIdentificacion")
     private String numeroIdentificacion;
 
-    @Column(name = "tipo_identificacion_code")
-    private String tipoIdentificacionCode;
-
-    @Column(name = "tipo_identificacion_description")
-    private String tipoIdentificacionDescription;
-
-    // Información adicional
-    @Column(name = "genero")
-    private String genero;
-
-    @Column(name = "estado_civil")
-    private String estadoCivil;
-
-    @Column(name = "ocupacion")
-    private String ocupacion;
-
-    // Metadatos
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "activo")
-    private boolean activo;
+    @Column(name = "tipoIdentificacion")
+    private String tipoIdentificacion;
 }

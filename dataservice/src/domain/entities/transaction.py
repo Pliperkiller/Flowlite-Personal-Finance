@@ -11,7 +11,7 @@ class Transaction:
     """
     id_transaction: UUID
     id_user: UUID
-    id_category: UUID
+    id_category: str  # Category IDs are strings like "cat-001-retiros-efectivo"
     id_bank: UUID | str | None  # Can be UUID or bank code string
     id_batch: UUID | str | None  # Can be UUID or batch code string
     transaction_name: str

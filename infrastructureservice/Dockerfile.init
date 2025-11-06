@@ -1,5 +1,9 @@
 FROM python:3.11-slim
 
+# Aceptar versión del seed como build argument
+ARG SEED_VERSION=unknown
+ENV SEED_VERSION=${SEED_VERSION}
+
 # Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
     gcc \
@@ -19,6 +23,10 @@ COPY . .
 
 # Dar permisos de ejecución al script
 RUN chmod +x /app/scripts/init_and_seed.sh
+
+# Agregar un archivo con la versión para debugging
+RUN echo "SEED_VERSION=${SEED_VERSION}" > /app/build_info.txt && \
+    echo "BUILD_DATE=$(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> /app/build_info.txt
 
 # Comando por defecto
 CMD ["/app/scripts/init_and_seed.sh"]

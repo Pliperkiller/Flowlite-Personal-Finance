@@ -12,8 +12,8 @@ public class UserInfoMapper {
         }
 
         return UserInfo.builder()
-                .id(entity.getId())
-                .userId(entity.getUserId())
+                .id(entity.getIdUser())
+                .userId(entity.getIdUser())
                 .primerNombre(entity.getPrimerNombre())
                 .segundoNombre(entity.getSegundoNombre())
                 .primerApellido(entity.getPrimerApellido())
@@ -23,16 +23,15 @@ public class UserInfoMapper {
                 .ciudad(entity.getCiudad())
                 .departamento(entity.getDepartamento())
                 .pais(entity.getPais())
-                .fechaNacimiento(entity.getFechaNacimiento())
+                .fechaNacimiento(null)  // No existe en el esquema actual
                 .numeroIdentificacion(entity.getNumeroIdentificacion())
-                .tipoIdentificacion(createIdentificationType(entity.getTipoIdentificacionCode(), 
-                                                           entity.getTipoIdentificacionDescription()))
-                .genero(entity.getGenero())
-                .estadoCivil(entity.getEstadoCivil())
-                .ocupacion(entity.getOcupacion())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .activo(entity.isActivo())
+                .tipoIdentificacion(createIdentificationType(entity.getTipoIdentificacion(), entity.getTipoIdentificacion()))
+                .genero(null)  // No existe en el esquema actual
+                .estadoCivil(null)  // No existe en el esquema actual
+                .ocupacion(null)  // No existe en el esquema actual
+                .createdAt(null)  // No existe en el esquema actual
+                .updatedAt(null)  // No existe en el esquema actual
+                .activo(true)  // Por defecto true ya que no existe en el esquema actual
                 .build();
     }
 
@@ -42,8 +41,7 @@ public class UserInfoMapper {
         }
 
         return UserInfoEntity.builder()
-                .id(userInfo.getId())
-                .userId(userInfo.getUserId())
+                .idUser(userInfo.getUserId())
                 .primerNombre(userInfo.getPrimerNombre())
                 .segundoNombre(userInfo.getSegundoNombre())
                 .primerApellido(userInfo.getPrimerApellido())
@@ -53,18 +51,9 @@ public class UserInfoMapper {
                 .ciudad(userInfo.getCiudad())
                 .departamento(userInfo.getDepartamento())
                 .pais(userInfo.getPais())
-                .fechaNacimiento(userInfo.getFechaNacimiento())
                 .numeroIdentificacion(userInfo.getNumeroIdentificacion())
-                .tipoIdentificacionCode(userInfo.getTipoIdentificacion() != null ? 
-                                      userInfo.getTipoIdentificacion().getCode() : null)
-                .tipoIdentificacionDescription(userInfo.getTipoIdentificacion() != null ? 
-                                             userInfo.getTipoIdentificacion().getDescription() : null)
-                .genero(userInfo.getGenero())
-                .estadoCivil(userInfo.getEstadoCivil())
-                .ocupacion(userInfo.getOcupacion())
-                .createdAt(userInfo.getCreatedAt())
-                .updatedAt(userInfo.getUpdatedAt())
-                .activo(userInfo.isActivo())
+                .tipoIdentificacion(userInfo.getTipoIdentificacion() != null ?
+                                  userInfo.getTipoIdentificacion().getCode() : null)
                 .build();
     }
 

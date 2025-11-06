@@ -45,8 +45,8 @@ class CategoryRepositoryPort(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(self, id_category: UUID) -> Optional[Category]:
-        """Get category by ID"""
+    async def get_by_id(self, id_category: str) -> Optional[Category]:
+        """Get category by ID (id_category is a string like 'cat-001-retiros-efectivo')"""
         pass
 
 

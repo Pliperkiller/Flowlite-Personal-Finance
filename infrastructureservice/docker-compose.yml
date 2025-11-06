@@ -66,6 +66,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.init
+      args:
+        # Cambia este valor cuando actualices el seed para forzar rebuild
+        # Formato sugerido: YYYYMMDD-HH (ejemplo: 20251105-01)
+        SEED_VERSION: "20251105-ml-categories"
+    image: infrastructureservice-db-init:${SEED_VERSION:-latest}
     container_name: flowlite-db-init
     depends_on:
       mysql:
@@ -77,6 +82,7 @@ services:
       MYSQL_USER: ${MYSQL_USER:-flowlite_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-flowlite_password}
       DATABASE_URL: mysql+pymysql://${MYSQL_USER:-flowlite_user}:${MYSQL_PASSWORD:-flowlite_password}@mysql:3306/${MYSQL_DATABASE:-flowlite_db}
+      SEED_VERSION: ${SEED_VERSION:-20251105-ml-categories}
     networks:
       - flowlite-network
     restart: "no"
