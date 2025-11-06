@@ -1,0 +1,155 @@
+# ================================
+# General Configuration
+# ================================
+
+project_name = "flowlite"
+environment  = "dev" # dev, staging, prod
+location     = "eastus"
+
+tags = {
+  Project     = "Flowlite Personal Finance"
+  ManagedBy   = "Terraform"
+  Environment = "dev"
+  Owner       = "DevOps Team"
+}
+
+# ================================
+# Networking Configuration
+# ================================
+
+vnet_address_space       = ["10.0.0.0/16"]
+subnet_api_services      = "10.0.1.0/24"
+subnet_internal_services = "10.0.2.0/24"
+subnet_data_layer        = "10.0.3.0/24"
+subnet_app_gateway       = "10.0.4.0/24"
+
+enable_ddos_protection = false # Set to true for production (expensive)
+
+# ================================
+# Database Configuration
+# ================================
+
+mysql_admin_username = "flowliteadmin"
+mysql_admin_password = "CHANGE_ME_STRONG_PASSWORD_123!" # Store in env var or use .tfvars.local
+
+# Dev/Test: B_Standard_B2s (2 vCPU, 4GB RAM) - ~$85/month
+# Prod: GP_Standard_D2ds_v4 (2 vCPU, 8GB RAM) - ~$200/month
+mysql_sku_name = "B_Standard_B2s"
+
+mysql_storage_size_gb         = 20
+mysql_version                 = "8.0.21"
+mysql_backup_retention_days   = 7
+mysql_high_availability_enabled = false # Set to true for production
+
+# ================================
+# Redis Configuration
+# ================================
+
+# Dev: Standard C1 (1GB) - ~$15/month
+# Prod: Premium P1 (6GB) - ~$170/month
+redis_sku_name = "Standard"
+redis_capacity = 1 # C1: 1GB
+redis_family   = "C" # C for Basic/Standard, P for Premium
+
+# ================================
+# Service Bus Configuration
+# ================================
+
+# Dev/Staging: Standard - ~$10/month
+# Prod: Premium - ~$670/month (private endpoints, higher throughput)
+servicebus_sku = "Standard"
+
+# ================================
+# Container Registry Configuration
+# ================================
+
+acr_sku = "Basic" # Basic, Standard, Premium
+
+# ================================
+# Compute Configuration
+# ================================
+
+# Choose deployment model:
+# - false: Azure Container Apps (recommended, $100-200/month, serverless)
+# - true: Azure Kubernetes Service ($280+/month, more control)
+use_aks = false
+
+# AKS Configuration (only if use_aks = true)
+aks_node_count   = 2
+aks_node_vm_size = "Standard_D2s_v3"
+aks_min_count    = 2
+aks_max_count    = 10
+
+# Service Replica Configuration
+service_replicas = {
+  identity_service = 2
+  upload_service   = 2
+  data_service     = 2
+  insight_service  = 1
+}
+
+# Docker Image Tags
+docker_images = {
+  identity_service = "latest"
+  upload_service   = "latest"
+  data_service     = "latest"
+  insight_service  = "latest"
+}
+
+# ================================
+# Application Gateway Configuration
+# ================================
+
+app_gateway_sku      = "WAF_v2"
+app_gateway_capacity = 2
+enable_waf           = true
+
+# ================================
+# Ollama LLM Configuration
+# ================================
+
+# GPU VM sizes:
+# - Standard_NC6s_v3: 6 vCPU, 112GB RAM, 1x V100 GPU - ~$900/month
+# - Standard_NC12s_v3: 12 vCPU, 224GB RAM, 2x V100 GPU - ~$1,800/month
+# Alternative: Use Azure OpenAI instead (pay-per-use, ~$50-100/month)
+ollama_vm_size = "Standard_NC6s_v3"
+ollama_model   = "llama3.1:8b"
+
+# ================================
+# Monitoring Configuration
+# ================================
+
+log_retention_days         = 30
+enable_application_insights = true
+
+# ================================
+# Security Configuration
+# ================================
+
+# Add your IP addresses for management access
+allowed_ip_ranges = [
+  # "1.2.3.4/32", # Your office IP
+  # "5.6.7.8/32", # Your home IP
+]
+
+# ================================
+# Cost Optimization Configuration
+# ================================
+
+enable_auto_shutdown = true # Auto-shutdown VMs at specified time (dev/test only)
+auto_shutdown_time   = "1900" # 7:00 PM (HHmm format)
+
+# ================================
+# IMPORTANT NOTES
+# ================================
+
+# 1. NEVER commit this file with real passwords to version control
+# 2. Use environment variables or Azure Key Vault for sensitive data
+# 3. For production, enable:
+#    - mysql_high_availability_enabled = true
+#    - redis_sku_name = "Premium"
+#    - servicebus_sku = "Premium"
+#    - enable_ddos_protection = true
+#    - Private endpoints for all PaaS services
+# 4. Estimated cost for this configuration: ~$1,400-2,400/month
+# 5. Consider using Azure Reserved Instances for 30-50% savings
