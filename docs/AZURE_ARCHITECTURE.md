@@ -1,105 +1,286 @@
 # Arquitectura Azure - Flowlite Personal Finance
 
-## Diagrama de Arquitectura
+## Diagrama de Arquitectura General
 
+```mermaid
+graph TB
+    subgraph Internet["🌐 INTERNET / CLIENTES"]
+        Client[Cliente Web/Mobile]
+    end
+
+    subgraph PublicZone["🔓 RED PÚBLICA - DMZ (Subnet: 10.0.4.0/24)"]
+        AGW[Azure Application Gateway + WAF<br/>- SSL Termination<br/>- Rate Limiting<br/>- DDoS Protection<br/>Port: 443]
+    end
+
+    subgraph PrivateZone["🔐 RED PRIVADA - Azure Virtual Network (10.0.0.0/16)"]
+
+        subgraph APISubnet["📡 API Services Subnet (10.0.1.0/24)"]
+            Identity[IdentityService<br/>Java/Spring Boot<br/>Port: 8000<br/>- JWT Auth<br/>- User Mgmt<br/>- OAuth2]
+            Upload[UploadService<br/>Python/FastAPI<br/>Port: 8001<br/>- File Upload<br/>- Classification]
+            Data[DataService<br/>Python/FastAPI<br/>Port: 8003<br/>- Transactions<br/>- Dashboard<br/>- Insights]
+        end
+
+        subgraph InternalSubnet["🔒 Internal Services Subnet (10.0.2.0/24)"]
+            Insight[InsightService<br/>Python/FastAPI<br/>Port: 8002<br/>- Service Bus Consumer<br/>- AI Insights]
+            Ollama[Ollama LLM Server<br/>llama3.1:8b<br/>Port: 11434<br/>GPU VM NC6s_v3]
+            MailHog[MailHog Dev Only<br/>SMTP Mock<br/>Port: 1025/8025]
+        end
+
+        subgraph DataSubnet["💾 Data Layer Subnet (10.0.3.0/24)"]
+            MySQL[(Azure MySQL<br/>Flexible Server<br/>flowlite_db<br/>Private Endpoint)]
+            Redis[(Azure Redis Cache<br/>Token Blacklist<br/>Session Mgmt<br/>Private Endpoint)]
+            ServiceBus[(Azure Service Bus<br/>Queue: batch_processed<br/>Dead Letter Queue<br/>Private Endpoint)]
+        end
+    end
+
+    subgraph SupportServices["🛠️ SERVICIOS DE SOPORTE"]
+        ACR[Azure Container Registry<br/>Docker Images]
+        KeyVault[Azure Key Vault<br/>Secrets & Credentials]
+        AppInsights[Application Insights<br/>Monitoring & Tracing]
+        LogAnalytics[Log Analytics<br/>Centralized Logging]
+        Storage[Azure Storage<br/>Backups & Files]
+        NAT[NAT Gateway<br/>Outbound Internet]
+    end
+
+    Client -->|HTTPS:443| AGW
+    AGW -->|HTTP| Identity
+    AGW -->|HTTP| Upload
+    AGW -->|HTTP| Data
+
+    Upload -.->|Validate JWT| Identity
+    Data -.->|Validate JWT| Identity
+
+    Upload -->|Publish Event| ServiceBus
+    ServiceBus -->|Consume Event| Insight
+
+    Insight -->|Generate Insights| Ollama
+
+    Identity -->|Read/Write| MySQL
+    Upload -->|Write Transactions| MySQL
+    Data -->|Read Data| MySQL
+    Insight -->|Write Insights| MySQL
+
+    Identity -->|Token Blacklist| Redis
+
+    Upload -.->|Dev Email| MailHog
+    Identity -.->|Dev Email| MailHog
+
+    Identity -.->|Get Secrets| KeyVault
+    Upload -.->|Get Secrets| KeyVault
+    Data -.->|Get Secrets| KeyVault
+    Insight -.->|Get Secrets| KeyVault
+
+    Identity -.->|Telemetry| AppInsights
+    Upload -.->|Telemetry| AppInsights
+    Data -.->|Telemetry| AppInsights
+    Insight -.->|Telemetry| AppInsights
+
+    InternalSubnet -.->|Outbound| NAT
+
+    style Client fill:#e1f5ff
+    style AGW fill:#ffcccc
+    style Identity fill:#d4f1d4
+    style Upload fill:#d4f1d4
+    style Data fill:#d4f1d4
+    style Insight fill:#fff9cc
+    style Ollama fill:#fff9cc
+    style MailHog fill:#fff9cc
+    style MySQL fill:#e8d4f1
+    style Redis fill:#e8d4f1
+    style ServiceBus fill:#e8d4f1
+    style PublicZone fill:#ffe6e6
+    style APISubnet fill:#e6ffe6
+    style InternalSubnet fill:#ffffcc
+    style DataSubnet fill:#f0e6ff
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                            INTERNET / CLIENTE                               │
-└────────────────────────────────┬────────────────────────────────────────────┘
-                                 │ HTTPS (443)
-                                 │
-╔════════════════════════════════════════════════════════════════════════════╗
-║                           RED PÚBLICA (DMZ)                                ║
-╠════════════════════════════════════════════════════════════════════════════╣
-║                                                                            ║
-║  ┌──────────────────────────────────────────────────────────────────┐     ║
-║  │           Azure Application Gateway + WAF                        │     ║
-║  │           - SSL Termination                                      │     ║
-║  │           - Rate Limiting                                        │     ║
-║  │           - DDoS Protection                                      │     ║
-║  └────────────┬─────────────────────────────────────────────────────┘     ║
-║               │                                                            ║
-╚═══════════════╪════════════════════════════════════════════════════════════╝
-                │
-                │ HTTP Internal
-                │
-╔═══════════════╪════════════════════════════════════════════════════════════╗
-║               │          RED PRIVADA (Azure Virtual Network)               ║
-╠═══════════════╪════════════════════════════════════════════════════════════╣
-║               │                                                            ║
-║  ┌────────────▼───────────────────────────────────────────────────────┐   ║
-║  │                   SUBNET: API Services (10.0.1.0/24)               │   ║
-║  │  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────────┐   │   ║
-║  │  │ IdentityService │  │  UploadService  │  │   DataService    │   │   ║
-║  │  │   Port: 8000    │  │   Port: 8001    │  │   Port: 8003     │   │   ║
-║  │  │   Java/Spring   │  │  Python/FastAPI │  │  Python/FastAPI  │   │   ║
-║  │  │                 │  │                 │  │                  │   │   ║
-║  │  │ - JWT Auth      │  │ - File Upload   │  │ - Transactions   │   │   ║
-║  │  │ - User Mgmt     │  │ - Classification│  │ - Insights       │   │   ║
-║  │  │ - OAuth2        │  │                 │  │ - Dashboard      │   │   ║
-║  │  └────────┬────────┘  └────────┬────────┘  └─────────┬────────┘   │   ║
-║  │           │                    │                      │            │   ║
-║  │           │  ┌─────────────────▼──────────────────────▼──────┐    │   ║
-║  │           │  │     Service-to-Service Communication         │    │   ║
-║  │           │  │     (UploadService → IdentityService)        │    │   ║
-║  │           │  │     (DataService → IdentityService)          │    │   ║
-║  │           │  └──────────────────────────────────────────────┘    │   ║
-║  └───────────┼───────────────────┬──────────────────────────────────┘   ║
-║              │                   │                                       ║
-║              │                   │                                       ║
-║  ┌───────────▼───────────────────▼───────────────────────────────────┐  ║
-║  │              SUBNET: Internal Services (10.0.2.0/24)              │  ║
-║  │  ┌──────────────────┐           ┌─────────────────────────┐       │  ║
-║  │  │  InsightService  │           │    Ollama LLM Server    │       │  ║
-║  │  │   Port: 8002     │◄──────────┤    (llama3.1:8b)        │       │  ║
-║  │  │  Python/FastAPI  │           │    Port: 11434          │       │  ║
-║  │  │                  │           │    GPU VM (Standard_NC) │       │  ║
-║  │  │ - RabbitMQ       │           └─────────────────────────┘       │  ║
-║  │  │   Consumer       │                                             │  ║
-║  │  │ - AI Insights    │                                             │  ║
-║  │  └────────┬─────────┘                                             │  ║
-║  └───────────┼───────────────────────────────────────────────────────┘  ║
-║              │                                                           ║
-║              │                                                           ║
-║  ┌───────────▼──────────────────────────────────────────────────────┐   ║
-║  │               SUBNET: Data Layer (10.0.3.0/24)                   │   ║
-║  │                                                                   │   ║
-║  │  ┌──────────────────────────────────────────────────────────┐    │   ║
-║  │  │       Azure Database for MySQL (Flexible Server)         │    │   ║
-║  │  │       - Database: flowlite_db                           │    │   ║
-║  │  │       - Private Endpoint Enabled                        │    │   ║
-║  │  │       - Automated Backups                               │    │   ║
-║  │  │       - High Availability (Zone Redundant)              │    │   ║
-║  │  └──────────────────────────────────────────────────────────┘    │   ║
-║  │                                                                   │   ║
-║  │  ┌──────────────────────────────────────────────────────────┐    │   ║
-║  │  │       Azure Cache for Redis (Premium Tier)               │    │   ║
-║  │  │       - Token Blacklist                                  │    │   ║
-║  │  │       - Session Management                               │    │   ║
-║  │  │       - Private Endpoint Enabled                         │    │   ║
-║  │  └──────────────────────────────────────────────────────────┘    │   ║
-║  │                                                                   │   ║
-║  │  ┌──────────────────────────────────────────────────────────┐    │   ║
-║  │  │       Azure Service Bus (Premium Tier)                   │    │   ║
-║  │  │       - Queue: batch_processed                           │    │   ║
-║  │  │       - Dead Letter Queue Enabled                        │    │   ║
-║  │  │       - Private Endpoint Enabled                         │    │   ║
-║  │  │       Alternative: RabbitMQ en Azure Container Instance  │    │   ║
-║  │  └──────────────────────────────────────────────────────────┘    │   ║
-║  └───────────────────────────────────────────────────────────────────┘   ║
-║                                                                           ║
-╚═══════════════════════════════════════════════════════════════════════════╝
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         SERVICIOS DE SOPORTE                                │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  - Azure Container Registry (ACR): Imágenes Docker                          │
-│  - Azure Key Vault: Secretos, conexiones, API keys                          │
-│  - Azure Monitor + Application Insights: Logs y métricas                    │
-│  - Azure Log Analytics: Análisis centralizado de logs                       │
-│  - Azure Storage Account: Backups, archivos Excel procesados                │
-│  - NAT Gateway: Salida a Internet (para servicios privados)                 │
-└─────────────────────────────────────────────────────────────────────────────┘
+## Diagrama de Comunicación entre Servicios (Sequence Diagram)
+
+```mermaid
+sequenceDiagram
+    participant Client as 🌐 Cliente
+    participant AGW as Application Gateway
+    participant Identity as IdentityService<br/>(8000)
+    participant Upload as UploadService<br/>(8001)
+    participant Data as DataService<br/>(8003)
+    participant SB as Service Bus
+    participant Insight as InsightService<br/>(8002)
+    participant Ollama as Ollama LLM<br/>(11434)
+    participant MySQL as MySQL Database
+    participant Redis as Redis Cache
+
+    Note over Client,Redis: 1. AUTENTICACIÓN
+    Client->>+AGW: POST /auth/login
+    AGW->>+Identity: Forward request
+    Identity->>MySQL: Validate credentials
+    MySQL-->>Identity: User data
+    Identity->>Redis: Store session
+    Identity-->>-AGW: JWT Token
+    AGW-->>-Client: JWT Token
+
+    Note over Client,Redis: 2. UPLOAD DE ARCHIVO
+    Client->>+AGW: POST /transactions/upload<br/>(Bearer Token)
+    AGW->>+Upload: Forward request
+    Upload->>+Identity: GET /auth/validate<br/>(Verify JWT)
+    Identity->>Redis: Check token blacklist
+    Identity-->>-Upload: User ID
+    Upload->>Upload: Parse Excel<br/>Classify Transactions
+    Upload->>MySQL: Save transactions
+    Upload->>SB: Publish "batch_processed" event
+    Upload-->>-AGW: Batch ID
+    AGW-->>-Client: Upload successful
+
+    Note over Client,Redis: 3. GENERACIÓN DE INSIGHTS (Async)
+    SB->>+Insight: Consume event
+    Insight->>MySQL: Get transactions
+    Insight->>+Ollama: Generate insights with LLM
+    Ollama-->>-Insight: AI-generated insights
+    Insight->>MySQL: Save insights
+    Insight-->>-SB: ACK
+
+    Note over Client,Redis: 4. CONSULTA DE DASHBOARD
+    Client->>+AGW: GET /dashboard<br/>(Bearer Token)
+    AGW->>+Data: Forward request
+    Data->>+Identity: Validate JWT
+    Identity-->>-Data: User ID
+    Data->>MySQL: Get transactions + insights
+    MySQL-->>Data: User data
+    Data-->>-AGW: Dashboard data
+    AGW-->>-Client: Dashboard JSON
+
+    Note over Client,Redis: 5. LOGOUT
+    Client->>+AGW: POST /auth/logout
+    AGW->>+Identity: Forward request
+    Identity->>Redis: Blacklist token
+    Identity-->>-AGW: Success
+    AGW-->>-Client: Logged out
+```
+
+## Diagrama de Red y Seguridad (Network Architecture)
+
+```mermaid
+graph TB
+    subgraph AzureRegion["☁️ Azure Region: East US"]
+        subgraph VNet["Azure Virtual Network (10.0.0.0/16)"]
+
+            subgraph AGWSubnet["App Gateway Subnet<br/>10.0.4.0/24"]
+                AppGW[Application Gateway<br/>Public IP<br/>WAF Enabled]
+            end
+
+            subgraph APISubnet["API Services Subnet<br/>10.0.1.0/24<br/>🔒 NSG: Allow from AGW only"]
+                ContainerApps[Container Apps<br/>- IdentityService<br/>- UploadService<br/>- DataService]
+            end
+
+            subgraph InternalSubnet["Internal Subnet<br/>10.0.2.0/24<br/>🔒 NSG: VNet only"]
+                InternalServices[- InsightService<br/>- Ollama VM<br/>- MailHog Dev]
+                NATGateway[NAT Gateway<br/>Outbound Internet]
+            end
+
+            subgraph DataSubnet["Data Subnet<br/>10.0.3.0/24<br/>🔒 NSG: VNet only<br/>Private Endpoints"]
+                PrivateEndpoints[Private Endpoints:<br/>- MySQL<br/>- Redis<br/>- Service Bus<br/>- Key Vault]
+            end
+        end
+
+        subgraph PaaS["Azure PaaS Services"]
+            MySQLServer[(MySQL Flexible Server<br/>No Public Access)]
+            RedisCache[(Redis Cache<br/>No Public Access)]
+            ServiceBusSvc[(Service Bus<br/>No Public Access)]
+            KeyVaultSvc[Key Vault<br/>VNet Access Only]
+        end
+    end
+
+    Internet((🌐 Internet)) -->|HTTPS:443| AppGW
+    AppGW -->|HTTP Internal| ContainerApps
+    ContainerApps -.->|Service-to-Service| InternalServices
+    InternalServices -.->|NAT| NATGateway
+    NATGateway -.->|Outbound| Internet
+
+    PrivateEndpoints -.->|Private Link| MySQLServer
+    PrivateEndpoints -.->|Private Link| RedisCache
+    PrivateEndpoints -.->|Private Link| ServiceBusSvc
+    PrivateEndpoints -.->|Private Link| KeyVaultSvc
+
+    ContainerApps -.->|Private| PrivateEndpoints
+    InternalServices -.->|Private| PrivateEndpoints
+
+    style Internet fill:#e1f5ff
+    style AppGW fill:#ffcccc
+    style ContainerApps fill:#d4f1d4
+    style InternalServices fill:#fff9cc
+    style PrivateEndpoints fill:#e8d4f1
+    style MySQLServer fill:#c2a3d1
+    style RedisCache fill:#c2a3d1
+    style ServiceBusSvc fill:#c2a3d1
+    style KeyVaultSvc fill:#c2a3d1
+    style AGWSubnet fill:#ffe6e6
+    style APISubnet fill:#e6ffe6
+    style InternalSubnet fill:#ffffcc
+    style DataSubnet fill:#f0e6ff
+```
+
+## Flujo de Procesamiento de Archivos
+
+```mermaid
+flowchart TD
+    Start([👤 Usuario sube archivo Excel]) --> Upload[📤 UploadService recibe archivo]
+    Upload --> Validate{🔐 Validar JWT}
+    Validate -->|Invalid| Error1[❌ Error 401 Unauthorized]
+    Validate -->|Valid| CheckDup{🔍 Verificar duplicado<br/>SHA256 hash}
+    CheckDup -->|Duplicate| Error2[❌ Error 409: Already processed]
+    CheckDup -->|New| Parse[📊 Parse Excel<br/>Bancolombia Parser]
+    Parse --> Classify[🤖 Clasificar transacciones<br/>ML Classifier]
+    Classify --> SaveBatch[💾 Guardar batch en MySQL<br/>Status: PROCESSING]
+    SaveBatch --> SaveTx[💾 Guardar transacciones<br/>en MySQL]
+    SaveTx --> Publish[📨 Publicar evento<br/>Service Bus:<br/>batch_processed]
+    Publish --> UpdateBatch[✅ Actualizar batch<br/>Status: COMPLETED]
+    UpdateBatch --> Return[📋 Retornar Batch ID]
+
+    Publish -.-> Queue[📬 Service Bus Queue]
+    Queue -.-> Consume[🎧 InsightService<br/>consume evento]
+    Consume --> GetTx[📖 Obtener transacciones<br/>del batch]
+    GetTx --> BuildPrompt[🔨 Construir prompt<br/>para LLM]
+    BuildPrompt --> CallLLM[🤖 Llamar Ollama LLM<br/>llama3.1:8b]
+    CallLLM --> ParseResponse[📝 Parsear respuesta<br/>JSON]
+    ParseResponse --> SaveInsights[💾 Guardar insights<br/>en MySQL]
+    SaveInsights --> Done([✅ Insights disponibles<br/>para usuario])
+
+    style Start fill:#e1f5ff
+    style Upload fill:#d4f1d4
+    style Consume fill:#fff9cc
+    style CallLLM fill:#ffddaa
+    style Done fill:#d4f1d4
+    style Error1 fill:#ffcccc
+    style Error2 fill:#ffcccc
+```
+
+## Flujo de Email Service
+
+```mermaid
+flowchart LR
+    subgraph EmailOptions["📧 Email Service Options"]
+        MailHog[MailHog<br/>Dev Only<br/>Container Instance<br/>💵 Gratis]
+        Gmail[Gmail SMTP<br/>Custom SMTP<br/>smtp.gmail.com:587<br/>💵 Gratis hasta 500/día]
+        SendGrid[SendGrid<br/>Third-party<br/>API Integration<br/>💵 $0-90/mes]
+        AzureComm[Azure Communication<br/>Services<br/>Native Azure<br/>💵 $0.0012/email]
+    end
+
+    subgraph Services["Servicios que envían email"]
+        Identity[IdentityService<br/>- Email verification<br/>- Password recovery<br/>- 2FA codes]
+    end
+
+    subgraph Storage["Almacenamiento de Credenciales"]
+        KeyVault[Azure Key Vault<br/>- smtp-host<br/>- smtp-port<br/>- smtp-username<br/>- smtp-password<br/>- sendgrid-api-key<br/>- email-connection-string]
+    end
+
+    Identity --> EmailOptions
+    EmailOptions -.->|Read Config| KeyVault
+
+    style MailHog fill:#fff9cc
+    style Gmail fill:#d4f1d4
+    style SendGrid fill:#ffddaa
+    style AzureComm fill:#e1f5ff
+    style Identity fill:#d4f1d4
+    style KeyVault fill:#c2a3d1
 ```
 
 ## Tabla de Comunicación entre Servicios
