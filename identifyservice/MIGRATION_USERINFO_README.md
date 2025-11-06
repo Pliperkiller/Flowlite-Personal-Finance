@@ -67,66 +67,88 @@ CREATE TABLE UserInfo (
 
 ## Pasos de Migración
 
-### Opción 1: Base de Datos Vacía (Recomendado si no hay datos)
+### ⚡ Opción 1: Migración Automática (RECOMENDADO)
 
-Si la tabla `UserInfo` está vacía o los datos no son importantes:
+**La migración ahora se ejecuta automáticamente** al iniciar la aplicación con `build_app.sh`:
 
-```sql
--- 1. Eliminar tabla existente
-DROP TABLE IF EXISTS UserInfo;
-
--- 2. Ejecutar el script completo
-SOURCE migration_fix_userinfo.sql;
-```
-
-### Opción 2: Migración con Preservación de Datos
-
-Si ya tienes datos en la tabla:
-
-1. **Hacer backup de la base de datos:**
 ```bash
-mysqldump -u root -p flowlite_db UserInfo > userinfo_backup.sql
+# Desde la raíz del proyecto
+./build_app.sh
 ```
 
-2. **Ejecutar el script de migración:**
+El script:
+1. ✅ Inicia MySQL y otros servicios de infraestructura
+2. ✅ **Ejecuta automáticamente todas las migraciones pendientes**
+3. ✅ Inicia los servicios de la aplicación
+
+**Nota:** La migración solo se ejecuta UNA vez. Si ya fue aplicada, se salta automáticamente.
+
+---
+
+### 🔧 Opción 2: Migración Manual
+
+Si prefieres ejecutar la migración manualmente:
+
 ```bash
-mysql -u root -p flowlite_db < migration_fix_userinfo.sql
+# Desde la raíz del proyecto
+cd database
+./run-migrations.sh
 ```
 
-El script realiza:
-- Crea tabla `UserInfo_new` con la estructura correcta
-- Migra datos de `UserInfo` a `UserInfo_new` generando nuevos UUIDs para el campo `id`
-- Elimina tabla antigua
-- Renombra la nueva tabla
+Esto ejecutará todas las migraciones pendientes, incluyendo la corrección de UserInfo.
 
-3. **Verificar que los datos se migraron correctamente:**
-```sql
-SELECT COUNT(*) FROM UserInfo;
-SELECT * FROM UserInfo LIMIT 5;
+---
+
+### 📋 Verificar Estado de Migraciones
+
+Para ver qué migraciones se han aplicado:
+
+```bash
+cd database
+./run-migrations.sh list
 ```
 
-### Opción 3: Migración Segura con Backup
+Salida ejemplo:
+```
+📋 Migraciones disponibles:
 
-Para mayor seguridad:
+  ✓ 001_fix_userinfo_structure.sql (aplicada)
+  ○ 002_next_migration.sql (pendiente)
+```
 
+---
+
+### 🛠️ Migración Manual Directa (No Recomendado)
+
+Solo si necesitas ejecutar la migración directamente en MySQL:
+
+```bash
+# Ejecutar migración desde Docker
+docker exec -i flowlite-mysql mysql -uroot -pflowlite123 flowlite_db < database/migrations/001_fix_userinfo_structure.sql
+```
+
+---
+
+### 🔄 Rollback (Si algo sale mal)
+
+Si necesitas revertir los cambios:
+
+**Opción A - Restaurar desde backup:**
+```bash
+# Si hiciste backup antes
+docker exec -i flowlite-mysql mysql -uroot -pflowlite123 flowlite_db < userinfo_backup.sql
+```
+
+**Opción B - Migración de rollback manual:**
 ```sql
--- 1. Renombrar tabla antigua como backup
-RENAME TABLE UserInfo TO UserInfo_backup;
+-- Renombrar tabla nueva como backup
+RENAME TABLE UserInfo TO UserInfo_new_backup;
 
--- 2. Crear nueva tabla
--- (ejecutar solo la parte de CREATE TABLE del script)
+-- Restaurar tabla antigua si existe
+RENAME TABLE UserInfo_backup TO UserInfo;
 
--- 3. Migrar datos
-INSERT INTO UserInfo (id, id_user, primerNombre, ...)
-SELECT UUID_TO_BIN(UUID()), id_user, primerNombre, ...
-FROM UserInfo_backup;
-
--- 4. Verificar
-SELECT COUNT(*) FROM UserInfo;
-SELECT COUNT(*) FROM UserInfo_backup;
-
--- 5. Si todo está bien, eliminar backup
--- DROP TABLE UserInfo_backup;
+-- Eliminar registro de migración
+DELETE FROM schema_migrations WHERE migration_name = '001_fix_userinfo_structure.sql';
 ```
 
 ## Verificación Post-Migración

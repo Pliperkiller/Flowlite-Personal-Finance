@@ -191,6 +191,31 @@ echo ""
 sleep 2
 
 # ============================================
+# 1.1. DATABASE MIGRATIONS
+# ============================================
+echo -e "${BLUE}[1.1/6]${NC} Ejecutando migraciones de base de datos..."
+echo "      (Actualizaciones de esquema)"
+echo ""
+
+cd "$PROJECT_ROOT/database"
+
+if [ -f "run-migrations.sh" ]; then
+    # Ejecutar migraciones
+    if ./run-migrations.sh; then
+        echo -e "${GREEN}✓${NC} Migraciones ejecutadas exitosamente"
+    else
+        echo -e "${RED}✗${NC} Error al ejecutar migraciones"
+        echo -e "${YELLOW}⚠️  Continuando de todas formas...${NC}"
+        # No exit, continuar con MailHog y servicios
+    fi
+else
+    echo -e "${YELLOW}⚠️  Script de migraciones no encontrado. Saltando...${NC}"
+fi
+
+echo ""
+sleep 2
+
+# ============================================
 # 1.5. MAILHOG SERVICE
 # ============================================
 echo -e "${BLUE}[1.5/6]${NC} Iniciando MailHog..."
