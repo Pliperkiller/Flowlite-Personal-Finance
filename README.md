@@ -88,9 +88,26 @@ La base de datos está completamente separada en la carpeta `database/`. Cada se
 
 ## 📚 Documentación
 
+### Desarrollo Local
 - [Base de Datos Compartida](database/README.md)
 - [Guía de Uso de Base de Datos](database/DATABASE_SHARING_GUIDE.md)
 - [Docker - Identify Service](identifyservice/DOCKER_README.md)
+
+### ☁️ Azure Cloud Infrastructure
+- [🏗️ Arquitectura Azure con Diagramas Mermaid](docs/AZURE_ARCHITECTURE.md) - Arquitectura completa, diagramas de red, seguridad y comunicación entre servicios
+- [💰 Optimización de Costos](docs/COST_OPTIMIZATION.md) - **Comparativa de precios y configuraciones ($150-$5,000/mes)**
+- [📧 Configuración de Email](terraform/EMAIL_CONFIGURATION.md) - Guía completa de servicios de email (MailHog, Gmail, SendGrid, Azure)
+- [🚀 Guía de Terraform](terraform/README.md) - Despliegue completo de infraestructura
+
+**Resumen rápido de costos:**
+| Configuración | Costo/mes | Usuarios | Uso |
+|---------------|-----------|----------|-----|
+| 🏗️ Desarrollo | $150-250 | < 10 | Testing |
+| 🚀 MVP | $300-500 | < 100 | Lanzamiento |
+| 📈 Producción Básica | $800-1,200 | < 1,000 | Beta pública |
+| ⚡ Producción Completa | $2,400-3,000 | < 10,000 | Escala |
+
+Ver [guía completa de costos](docs/COST_OPTIMIZATION.md) para detalles y diagramas.
 
 ## 🏗️ Arquitectura
 
