@@ -12,7 +12,7 @@ public class UserInfoMapper {
         }
 
         return UserInfo.builder()
-                .id(entity.getIdUser())
+                .id(entity.getId())
                 .userId(entity.getIdUser())
                 .primerNombre(entity.getPrimerNombre())
                 .segundoNombre(entity.getSegundoNombre())
@@ -23,15 +23,15 @@ public class UserInfoMapper {
                 .ciudad(entity.getCiudad())
                 .departamento(entity.getDepartamento())
                 .pais(entity.getPais())
-                .fechaNacimiento(null)  // No existe en el esquema actual
+                .fechaNacimiento(entity.getFechaNacimiento())
                 .numeroIdentificacion(entity.getNumeroIdentificacion())
-                .tipoIdentificacion(createIdentificationType(entity.getTipoIdentificacion(), entity.getTipoIdentificacion()))
-                .genero(null)  // No existe en el esquema actual
-                .estadoCivil(null)  // No existe en el esquema actual
-                .ocupacion(null)  // No existe en el esquema actual
-                .createdAt(null)  // No existe en el esquema actual
-                .updatedAt(null)  // No existe en el esquema actual
-                .activo(true)  // Por defecto true ya que no existe en el esquema actual
+                .tipoIdentificacion(createIdentificationType(entity.getTipoIdentificacion()))
+                .genero(entity.getGenero())
+                .estadoCivil(entity.getEstadoCivil())
+                .ocupacion(entity.getOcupacion())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .activo(entity.getActivo() != null ? entity.getActivo() : true)
                 .build();
     }
 
@@ -41,6 +41,7 @@ public class UserInfoMapper {
         }
 
         return UserInfoEntity.builder()
+                .id(userInfo.getId())
                 .idUser(userInfo.getUserId())
                 .primerNombre(userInfo.getPrimerNombre())
                 .segundoNombre(userInfo.getSegundoNombre())
@@ -51,16 +52,33 @@ public class UserInfoMapper {
                 .ciudad(userInfo.getCiudad())
                 .departamento(userInfo.getDepartamento())
                 .pais(userInfo.getPais())
+                .fechaNacimiento(userInfo.getFechaNacimiento())
                 .numeroIdentificacion(userInfo.getNumeroIdentificacion())
                 .tipoIdentificacion(userInfo.getTipoIdentificacion() != null ?
                                   userInfo.getTipoIdentificacion().getCode() : null)
+                .genero(userInfo.getGenero())
+                .estadoCivil(userInfo.getEstadoCivil())
+                .ocupacion(userInfo.getOcupacion())
+                .createdAt(userInfo.getCreatedAt())
+                .updatedAt(userInfo.getUpdatedAt())
+                .activo(userInfo.isActivo())
                 .build();
     }
 
-    private static IdentificationType createIdentificationType(String code, String description) {
-        if (code == null || description == null) {
+    private static IdentificationType createIdentificationType(String code) {
+        if (code == null) {
             return null;
         }
-        return new IdentificationType(code, description);
+
+        // Mapear el código al IdentificationType correspondiente
+        return switch (code) {
+            case "CC" -> new IdentificationType("CC", "Cédula de Ciudadanía");
+            case "CE" -> new IdentificationType("CE", "Cédula de Extranjería");
+            case "PA" -> new IdentificationType("PA", "Pasaporte");
+            case "TI" -> new IdentificationType("TI", "Tarjeta de Identidad");
+            case "RC" -> new IdentificationType("RC", "Registro Civil");
+            case "NIT" -> new IdentificationType("NIT", "Número de Identificación Tributaria");
+            default -> new IdentificationType(code, code);
+        };
     }
 }
