@@ -24,14 +24,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Controlador para la gestión de información personal de usuarios
+ * Controller for managing user's personal information
  */
 @RestController
 @RequestMapping("/user-info")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "User Information", description = "Endpoints para gestión de información personal de usuarios. " +
-        "Requiere autenticación JWT. Permite actualizar y consultar información personal del usuario autenticado.")
+@Tag(name = "User Information", description = "Endpoints for managing user's personal information. " +
+        "Requires JWT authentication. Allows updating and querying authenticated user's personal information.")
 public class UserInfoController {
 
     private final CompleteInfoUserService completeInfoUserService;
@@ -95,79 +95,79 @@ public class UserInfoController {
             
             UUID userId = UUID.fromString(userIdStr);
             
-            // Validar que el número de identificación no esté en uso por otro usuario
-            if (completeInfoUserService.isIdentificationInUse(request.getNumeroIdentificacion())) {
-                // Verificar si el número ya pertenece al usuario actual
+            // Validate that identification number is not already in use by another user
+            if (completeInfoUserService.isIdentificationInUse(request.getIdentificationNumber())) {
+                // Check if the number already belongs to the current user
                 Optional<UserInfo> existingInfo = completeInfoUserService.getUserInfo(userId);
-                if (existingInfo.isEmpty() || 
-                    !request.getNumeroIdentificacion().equals(existingInfo.get().getNumeroIdentificacion())) {
+                if (existingInfo.isEmpty() ||
+                    !request.getIdentificationNumber().equals(existingInfo.get().getIdentificationNumber())) {
                     return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Número de identificación en uso",
-                        "message", "El número de identificación ya está registrado por otro usuario"
+                        "error", "Identification number in use",
+                        "message", "The identification number is already registered by another user"
                     ));
                 }
             }
-            
-            // Validar que el teléfono no esté en uso por otro usuario
-            if (completeInfoUserService.isPhoneInUse(request.getTelefono())) {
-                // Verificar si el teléfono ya pertenece al usuario actual
+
+            // Validate that phone is not already in use by another user
+            if (completeInfoUserService.isPhoneInUse(request.getPhone())) {
+                // Check if the phone already belongs to the current user
                 Optional<UserInfo> existingInfo = completeInfoUserService.getUserInfo(userId);
-                if (existingInfo.isEmpty() || 
-                    !request.getTelefono().equals(existingInfo.get().getTelefono())) {
+                if (existingInfo.isEmpty() ||
+                    !request.getPhone().equals(existingInfo.get().getPhone())) {
                     return ResponseEntity.badRequest().body(Map.of(
-                        "error", "Teléfono en uso",
-                        "message", "El número de teléfono ya está registrado por otro usuario"
+                        "error", "Phone number in use",
+                        "message", "The phone number is already registered by another user"
                     ));
                 }
             }
-            
-            // Convertir tipo de identificación
-            IdentificationType tipoIdentificacion;
+
+            // Convert identification type
+            IdentificationType identificationType;
             try {
-                tipoIdentificacion = IdentificationType.fromCode(request.getTipoIdentificacion());
+                identificationType = IdentificationType.fromCode(request.getIdentificationType());
             } catch (IllegalArgumentException e) {
                 return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Tipo de identificación inválido",
-                    "message", "El tipo de identificación proporcionado no es válido"
+                    "error", "Invalid identification type",
+                    "message", "The provided identification type is not valid"
                 ));
             }
-            
-            // Actualizar información del usuario
+
+            // Update user information
             UserInfo updatedUserInfo = completeInfoUserService.saveUserInfo(
                 userId,
-                request.getPrimerNombre(),
-                request.getSegundoNombre(),
-                request.getPrimerApellido(),
-                request.getSegundoApellido(),
-                request.getTelefono(),
-                request.getDireccion(),
-                request.getCiudad(),
-                request.getDepartamento(),
-                request.getPais(),
-                request.getFechaNacimiento(),
-                request.getNumeroIdentificacion(),
-                tipoIdentificacion,
-                request.getGenero(),
-                request.getEstadoCivil(),
-                request.getOcupacion()
+                request.getFirstName(),
+                request.getMiddleName(),
+                request.getLastName(),
+                request.getSecondLastName(),
+                request.getPhone(),
+                request.getAddress(),
+                request.getCity(),
+                request.getState(),
+                request.getCountry(),
+                request.getBirthDate(),
+                request.getIdentificationNumber(),
+                identificationType,
+                request.getGender(),
+                request.getMaritalStatus(),
+                request.getOccupation()
             );
-            
-            log.info("Información personal actualizada para usuario: {}", userId);
-            
+
+            log.info("Personal information updated for user: {}", userId);
+
             Map<String, Object> userInfoMap = new HashMap<>();
             userInfoMap.put("id", updatedUserInfo.getId());
             userInfoMap.put("userId", updatedUserInfo.getUserId());
-            userInfoMap.put("nombreCompleto", updatedUserInfo.getNombreCompleto());
-            userInfoMap.put("telefono", updatedUserInfo.getTelefono());
-            userInfoMap.put("ciudad", updatedUserInfo.getCiudad());
-            userInfoMap.put("departamento", updatedUserInfo.getDepartamento());
-            userInfoMap.put("numeroIdentificacion", updatedUserInfo.getNumeroIdentificacion());
-            userInfoMap.put("tipoIdentificacion", updatedUserInfo.getTipoIdentificacion() != null ? 
-                updatedUserInfo.getTipoIdentificacion().getDescription() : null);
-            userInfoMap.put("isComplete", updatedUserInfo.tieneInformacionCompleta());
+            userInfoMap.put("fullName", updatedUserInfo.getFullName());
+            userInfoMap.put("phone", updatedUserInfo.getPhone());
+            userInfoMap.put("city", updatedUserInfo.getCity());
+            userInfoMap.put("state", updatedUserInfo.getState());
+            userInfoMap.put("identificationNumber", updatedUserInfo.getIdentificationNumber());
+            userInfoMap.put("identificationType", updatedUserInfo.getIdentificationType() != null ?
+                updatedUserInfo.getIdentificationType().getDescription() : null);
+            userInfoMap.put("isComplete", updatedUserInfo.hasCompleteInformation());
             
             return ResponseEntity.ok(Map.of(
-                "message", "Información personal actualizada exitosamente",
+                "message", "Personal information updated successfully",
                 "userInfo", userInfoMap
             ));
             
@@ -253,29 +253,29 @@ public class UserInfoController {
             }
             
             UserInfo info = userInfo.get();
-            
+
             Map<String, Object> userInfoMap = new HashMap<>();
             userInfoMap.put("id", info.getId());
             userInfoMap.put("userId", info.getUserId());
-            userInfoMap.put("primerNombre", info.getPrimerNombre());
-            userInfoMap.put("segundoNombre", info.getSegundoNombre());
-            userInfoMap.put("primerApellido", info.getPrimerApellido());
-            userInfoMap.put("segundoApellido", info.getSegundoApellido());
-            userInfoMap.put("nombreCompleto", info.getNombreCompleto());
-            userInfoMap.put("telefono", info.getTelefono());
-            userInfoMap.put("direccion", info.getDireccion());
-            userInfoMap.put("ciudad", info.getCiudad());
-            userInfoMap.put("departamento", info.getDepartamento());
-            userInfoMap.put("pais", info.getPais());
-            userInfoMap.put("fechaNacimiento", info.getFechaNacimiento());
-            userInfoMap.put("numeroIdentificacion", info.getNumeroIdentificacion());
-            userInfoMap.put("tipoIdentificacion", info.getTipoIdentificacion() != null ? 
-                info.getTipoIdentificacion().getDescription() : null);
-            userInfoMap.put("genero", info.getGenero());
-            userInfoMap.put("estadoCivil", info.getEstadoCivil());
-            userInfoMap.put("ocupacion", info.getOcupacion());
-            userInfoMap.put("isComplete", info.tieneInformacionCompleta());
-            userInfoMap.put("activo", info.isActivo());
+            userInfoMap.put("firstName", info.getFirstName());
+            userInfoMap.put("middleName", info.getMiddleName());
+            userInfoMap.put("lastName", info.getLastName());
+            userInfoMap.put("secondLastName", info.getSecondLastName());
+            userInfoMap.put("fullName", info.getFullName());
+            userInfoMap.put("phone", info.getPhone());
+            userInfoMap.put("address", info.getAddress());
+            userInfoMap.put("city", info.getCity());
+            userInfoMap.put("state", info.getState());
+            userInfoMap.put("country", info.getCountry());
+            userInfoMap.put("birthDate", info.getBirthDate());
+            userInfoMap.put("identificationNumber", info.getIdentificationNumber());
+            userInfoMap.put("identificationType", info.getIdentificationType() != null ?
+                info.getIdentificationType().getDescription() : null);
+            userInfoMap.put("gender", info.getGender());
+            userInfoMap.put("maritalStatus", info.getMaritalStatus());
+            userInfoMap.put("occupation", info.getOccupation());
+            userInfoMap.put("isComplete", info.hasCompleteInformation());
+            userInfoMap.put("active", info.isActive());
             userInfoMap.put("createdAt", info.getCreatedAt());
             userInfoMap.put("updatedAt", info.getUpdatedAt());
             

@@ -7,93 +7,93 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Repositorio para la gestión de información personal de usuarios
+ * Repository for managing user's personal information
  */
 public interface UserInfoRepository {
 
     /**
-     * Busca información de usuario por su ID
+     * Finds user information by ID
      */
     Optional<UserInfo> findById(@NonNull UUID id);
-    
+
     /**
-     * Busca información de usuario por el ID del usuario asociado
+     * Finds user information by associated user ID
      */
     Optional<UserInfo> findByUserId(@NonNull UUID userId);
-    
+
     /**
-     * Busca información de usuario por número de identificación
+     * Finds user information by identification number
      */
-    Optional<UserInfo> findByNumeroIdentificacion(@NonNull String numeroIdentificacion);
-    
+    Optional<UserInfo> findByIdentificationNumber(@NonNull String identificationNumber);
+
     /**
-     * Busca información de usuario por teléfono
+     * Finds user information by phone number
      */
-    Optional<UserInfo> findByTelefono(@NonNull String telefono);
-    
+    Optional<UserInfo> findByPhone(@NonNull String phone);
+
     /**
-     * Busca información de usuario por nombre completo
+     * Finds user information by full name
      */
-    List<UserInfo> findByNombreCompleto(@NonNull String primerNombre, String segundoNombre, 
-                                      @NonNull String primerApellido, String segundoApellido);
-    
+    List<UserInfo> findByFullName(@NonNull String firstName, String middleName,
+                                  @NonNull String lastName, String secondLastName);
+
     /**
-     * Busca información de usuario por primer nombre
+     * Finds user information by first name
      */
-    List<UserInfo> findByPrimerNombre(@NonNull String primerNombre);
-    
+    List<UserInfo> findByFirstName(@NonNull String firstName);
+
     /**
-     * Busca información de usuario por primer apellido
+     * Finds user information by last name
      */
-    List<UserInfo> findByPrimerApellido(@NonNull String primerApellido);
-    
+    List<UserInfo> findByLastName(@NonNull String lastName);
+
     /**
-     * Busca información de usuario por ciudad
+     * Finds user information by city
      */
-    List<UserInfo> findByCiudad(@NonNull String ciudad);
-    
+    List<UserInfo> findByCity(@NonNull String city);
+
     /**
-     * Busca información de usuario por departamento
+     * Finds user information by state
      */
-    List<UserInfo> findByDepartamento(@NonNull String departamento);
-    
+    List<UserInfo> findByState(@NonNull String state);
+
     /**
-     * Busca todos los usuarios con información completa
+     * Finds all users with complete information
      */
     List<UserInfo> findUsersWithCompleteInfo();
-    
+
     /**
-     * Busca todos los usuarios activos
+     * Finds all active users
      */
     List<UserInfo> findActiveUsers();
-    
+
     /**
-     * Guarda o actualiza información de usuario
+     * Saves or updates user information
      */
     UserInfo save(@NonNull UserInfo userInfo);
-    
+
     /**
-     * Elimina información de usuario por ID
+     * Deletes user information by ID
      */
     void deleteById(@NonNull UUID id);
-    
+
     /**
-     * Elimina información de usuario por ID de usuario
+     * Deletes user information by user ID
      */
     void deleteByUserId(@NonNull UUID userId);
-    
+
     /**
-     * Verifica si existe información para un usuario
+     * Checks if information exists for a user
      */
     boolean existsByUserId(@NonNull UUID userId);
-    
+
     /**
-     * Verifica si existe información con un número de identificación
+     * Checks if information exists with an identification number
      */
-    boolean existsByNumeroIdentificacion(@NonNull String numeroIdentificacion);
-    
+    boolean existsByIdentificationNumber(@NonNull String identificationNumber);
+
     /**
-     * Verifica si existe información con un teléfono
+     * Checks if information exists with a phone number
      */
-    boolean existsByTelefono(@NonNull String telefono);
+    boolean existsByPhone(@NonNull String phone);
 }

@@ -10,32 +10,32 @@ import java.util.UUID;
 
 public interface JpaUserInfoRepository extends JpaRepository<UserInfoEntity, UUID> {
 
-    Optional<UserInfoEntity> findByIdUser(UUID idUser);
+    Optional<UserInfoEntity> findByUserId(UUID userId);
 
-    Optional<UserInfoEntity> findByNumeroIdentificacion(String numeroIdentificacion);
+    Optional<UserInfoEntity> findByIdentificationNumber(String identificationNumber);
 
-    Optional<UserInfoEntity> findByTelefono(String telefono);
+    Optional<UserInfoEntity> findByPhone(String phone);
 
-    List<UserInfoEntity> findByPrimerNombreAndSegundoNombreAndPrimerApellidoAndSegundoApellido(
-        String primerNombre, String segundoNombre, String primerApellido, String segundoApellido);
+    List<UserInfoEntity> findByFirstNameAndMiddleNameAndLastNameAndSecondLastName(
+        String firstName, String middleName, String lastName, String secondLastName);
 
-    List<UserInfoEntity> findByPrimerNombre(String primerNombre);
+    List<UserInfoEntity> findByFirstName(String firstName);
 
-    List<UserInfoEntity> findByPrimerApellido(String primerApellido);
+    List<UserInfoEntity> findByLastName(String lastName);
 
-    List<UserInfoEntity> findByCiudad(String ciudad);
+    List<UserInfoEntity> findByCity(String city);
 
-    List<UserInfoEntity> findByDepartamento(String departamento);
+    List<UserInfoEntity> findByState(String state);
 
-    @Query("SELECT u FROM UserInfoEntity u WHERE u.primerNombre IS NOT NULL AND u.primerNombre != '' " +
-           "AND u.primerApellido IS NOT NULL AND u.primerApellido != '' " +
-           "AND u.telefono IS NOT NULL AND u.telefono != '' " +
-           "AND u.numeroIdentificacion IS NOT NULL AND u.numeroIdentificacion != ''")
+    @Query("SELECT u FROM UserInfoEntity u WHERE u.firstName IS NOT NULL AND u.firstName != '' " +
+           "AND u.lastName IS NOT NULL AND u.lastName != '' " +
+           "AND u.phone IS NOT NULL AND u.phone != '' " +
+           "AND u.identificationNumber IS NOT NULL AND u.identificationNumber != ''")
     List<UserInfoEntity> findUsersWithCompleteInfo();
 
-    boolean existsByIdUser(UUID idUser);
+    boolean existsByUserId(UUID userId);
 
-    boolean existsByNumeroIdentificacion(String numeroIdentificacion);
+    boolean existsByIdentificationNumber(String identificationNumber);
 
-    boolean existsByTelefono(String telefono);
+    boolean existsByPhone(String phone);
 }

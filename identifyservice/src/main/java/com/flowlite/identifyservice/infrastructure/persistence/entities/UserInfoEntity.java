@@ -18,66 +18,66 @@ public class UserInfoEntity {
     @Column(name = "id", columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @Column(name = "id_user", columnDefinition = "BINARY(16)", nullable = false, unique = true)
-    private UUID idUser;
+    @Column(name = "user_id", columnDefinition = "BINARY(16)", nullable = false, unique = true)
+    private UUID userId;
 
-    // Información personal básica
-    @Column(name = "primerNombre", length = 50)
-    private String primerNombre;
+    // Basic personal information
+    @Column(name = "first_name", length = 50)
+    private String firstName;
 
-    @Column(name = "segundoNombre", length = 50)
-    private String segundoNombre;
+    @Column(name = "middle_name", length = 50)
+    private String middleName;
 
-    @Column(name = "primerApellido", length = 50)
-    private String primerApellido;
+    @Column(name = "last_name", length = 50)
+    private String lastName;
 
-    @Column(name = "segundoApellido", length = 50)
-    private String segundoApellido;
+    @Column(name = "second_last_name", length = 50)
+    private String secondLastName;
 
-    @Column(name = "telefono", length = 15)
-    private String telefono;
+    @Column(name = "phone", length = 15)
+    private String phone;
 
-    @Column(name = "direccion", length = 200)
-    private String direccion;
+    @Column(name = "address", length = 200)
+    private String address;
 
-    @Column(name = "ciudad", length = 100)
-    private String ciudad;
+    @Column(name = "city", length = 100)
+    private String city;
 
-    @Column(name = "departamento", length = 100)
-    private String departamento;
+    @Column(name = "state", length = 100)
+    private String state;
 
-    @Column(name = "pais", length = 100)
-    private String pais;
+    @Column(name = "country", length = 100)
+    private String country;
 
-    @Column(name = "fechaNacimiento")
-    private LocalDate fechaNacimiento;
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
 
-    // Información de identificación
-    @Column(name = "numeroIdentificacion", length = 20, unique = true)
-    private String numeroIdentificacion;
+    // Identification information
+    @Column(name = "identification_number", length = 20, unique = true)
+    private String identificationNumber;
 
-    @Column(name = "tipoIdentificacion", length = 10)
-    private String tipoIdentificacion;
+    @Column(name = "identification_type", length = 10)
+    private String identificationType;
 
-    // Información adicional
-    @Column(name = "genero", length = 20)
-    private String genero;
+    // Additional information
+    @Column(name = "gender", length = 20)
+    private String gender;
 
-    @Column(name = "estadoCivil", length = 30)
-    private String estadoCivil;
+    @Column(name = "marital_status", length = 30)
+    private String maritalStatus;
 
-    @Column(name = "ocupacion", length = 100)
-    private String ocupacion;
+    @Column(name = "occupation", length = 100)
+    private String occupation;
 
-    // Metadatos
-    @Column(name = "createdAt", updatable = false)
+    // Metadata
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updatedAt")
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "activo")
-    private Boolean activo;
+    @Column(name = "active")
+    private Boolean active;
 
     @PrePersist
     protected void onCreate() {
@@ -86,8 +86,8 @@ public class UserInfoEntity {
         }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (activo == null) {
-            activo = true;
+        if (active == null) {
+            active = true;
         }
     }
 
