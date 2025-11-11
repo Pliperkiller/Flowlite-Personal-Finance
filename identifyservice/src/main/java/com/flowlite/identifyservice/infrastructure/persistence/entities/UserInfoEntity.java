@@ -15,41 +15,84 @@ import java.util.UUID;
 public class UserInfoEntity {
 
     @Id
-    @Column(name = "id_user")
-    private UUID idUser;
+    @Column(name = "id", columnDefinition = "BINARY(16)")
+    private UUID id;
 
-    // Información personal básica
-    @Column(name = "primerNombre")
-    private String primerNombre;
+    @Column(name = "user_id", columnDefinition = "BINARY(16)", nullable = false, unique = true)
+    private UUID userId;
 
-    @Column(name = "segundoNombre")
-    private String segundoNombre;
+    // Basic personal information
+    @Column(name = "first_name", length = 50)
+    private String firstName;
 
-    @Column(name = "primerApellido")
-    private String primerApellido;
+    @Column(name = "middle_name", length = 50)
+    private String middleName;
 
-    @Column(name = "segundoApellido")
-    private String segundoApellido;
+    @Column(name = "last_name", length = 50)
+    private String lastName;
 
-    @Column(name = "telefono")
-    private String telefono;
+    @Column(name = "second_last_name", length = 50)
+    private String secondLastName;
 
-    @Column(name = "direccion")
-    private String direccion;
+    @Column(name = "phone", length = 15)
+    private String phone;
 
-    @Column(name = "ciudad")
-    private String ciudad;
+    @Column(name = "address", length = 200)
+    private String address;
 
-    @Column(name = "departamento")
-    private String departamento;
+    @Column(name = "city", length = 100)
+    private String city;
 
-    @Column(name = "pais")
-    private String pais;
+    @Column(name = "state", length = 100)
+    private String state;
 
-    // Información de identificación
-    @Column(name = "numeroIdentificacion")
-    private String numeroIdentificacion;
+    @Column(name = "country", length = 100)
+    private String country;
 
-    @Column(name = "tipoIdentificacion")
-    private String tipoIdentificacion;
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
+    // Identification information
+    @Column(name = "identification_number", length = 20, unique = true)
+    private String identificationNumber;
+
+    @Column(name = "identification_type", length = 10)
+    private String identificationType;
+
+    // Additional information
+    @Column(name = "gender", length = 20)
+    private String gender;
+
+    @Column(name = "marital_status", length = 30)
+    private String maritalStatus;
+
+    @Column(name = "occupation", length = 100)
+    private String occupation;
+
+    // Metadata
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "active")
+    private Boolean active;
+
+    @PrePersist
+    protected void onCreate() {
+        if (id == null) {
+            id = UUID.randomUUID();
+        }
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        if (active == null) {
+            active = true;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }

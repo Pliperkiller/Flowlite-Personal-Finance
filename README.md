@@ -24,17 +24,35 @@ Flowlite-Personal-Finance/
 
 ## 🚀 Inicio Rápido
 
-### 1. Iniciar Base de Datos
+### Opción 1: Inicio Automático Completo ⭐ (Recomendado)
+
+```bash
+./build_app.sh
+```
+
+**Este script hace TODO automáticamente:**
+- ✅ Inicia InfrastructureService (MySQL, Redis, RabbitMQ)
+- ✅ Prepara el schema de base de datos (elimina tabla UserInfo antigua si existe)
+- ✅ Inicia MailHog (SMTP mock server)
+- ✅ Inicia IdentityService (puerto 8000) - Hibernate crea/actualiza tablas automáticamente
+- ✅ Inicia InsightService (puerto 8002)
+- ✅ Inicia UploadService (puerto 8001)
+- ✅ Inicia DataService (puerto 8003)
+- ✅ Muestra resumen completo de servicios activos
+
+### Opción 2: Inicio Manual por Pasos
+
+#### 1. Iniciar Base de Datos
 ```bash
 ./manage-flowlite.sh start-db
 ```
 
-### 2. Iniciar Servicio de Identificación
+#### 2. Iniciar Servicio de Identificación
 ```bash
 ./manage-flowlite.sh start identifyservice
 ```
 
-### 3. Ver Estado
+#### 3. Ver Estado
 ```bash
 ./manage-flowlite.sh status
 ```
@@ -85,6 +103,31 @@ Flowlite-Personal-Finance/
 ### Base de Datos
 
 La base de datos está completamente separada en la carpeta `database/`. Cada servicio tiene su propia base de datos y usuario.
+
+#### Gestión de Schema con Hibernate
+
+El proyecto usa **Hibernate Auto-Update** (`ddl-auto=update`) para gestión automática del schema:
+
+✅ **Ventajas:**
+- No necesitas scripts SQL de migración en desarrollo
+- El schema siempre está sincronizado con las entidades Java
+- Hibernate crea/actualiza tablas automáticamente al iniciar
+- Los nombres de columnas vienen de las anotaciones `@Column`
+
+⚙️ **Cómo funciona:**
+```java
+@Column(name = "first_name", length = 50)
+private String firstName;
+```
+→ Hibernate crea en MySQL: `first_name VARCHAR(50)`
+
+📋 **Ver schema generado:**
+```bash
+docker exec flowlite-mysql mysql -uroot -prootpassword flowlite_db \
+  -e "DESCRIBE UserInfo;"
+```
+
+⚠️ **Producción:** Cambiar a `ddl-auto=validate` y usar Flyway/Liquibase para migraciones controladas.
 
 ## 📚 Documentación
 

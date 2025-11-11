@@ -12,26 +12,26 @@ public class UserInfoMapper {
         }
 
         return UserInfo.builder()
-                .id(entity.getIdUser())
-                .userId(entity.getIdUser())
-                .primerNombre(entity.getPrimerNombre())
-                .segundoNombre(entity.getSegundoNombre())
-                .primerApellido(entity.getPrimerApellido())
-                .segundoApellido(entity.getSegundoApellido())
-                .telefono(entity.getTelefono())
-                .direccion(entity.getDireccion())
-                .ciudad(entity.getCiudad())
-                .departamento(entity.getDepartamento())
-                .pais(entity.getPais())
-                .fechaNacimiento(null)  // No existe en el esquema actual
-                .numeroIdentificacion(entity.getNumeroIdentificacion())
-                .tipoIdentificacion(createIdentificationType(entity.getTipoIdentificacion(), entity.getTipoIdentificacion()))
-                .genero(null)  // No existe en el esquema actual
-                .estadoCivil(null)  // No existe en el esquema actual
-                .ocupacion(null)  // No existe en el esquema actual
-                .createdAt(null)  // No existe en el esquema actual
-                .updatedAt(null)  // No existe en el esquema actual
-                .activo(true)  // Por defecto true ya que no existe en el esquema actual
+                .id(entity.getId())
+                .userId(entity.getUserId())
+                .firstName(entity.getFirstName())
+                .middleName(entity.getMiddleName())
+                .lastName(entity.getLastName())
+                .secondLastName(entity.getSecondLastName())
+                .phone(entity.getPhone())
+                .address(entity.getAddress())
+                .city(entity.getCity())
+                .state(entity.getState())
+                .country(entity.getCountry())
+                .birthDate(entity.getBirthDate())
+                .identificationNumber(entity.getIdentificationNumber())
+                .identificationType(createIdentificationType(entity.getIdentificationType()))
+                .gender(entity.getGender())
+                .maritalStatus(entity.getMaritalStatus())
+                .occupation(entity.getOccupation())
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .active(entity.getActive() != null ? entity.getActive() : true)
                 .build();
     }
 
@@ -41,26 +41,44 @@ public class UserInfoMapper {
         }
 
         return UserInfoEntity.builder()
-                .idUser(userInfo.getUserId())
-                .primerNombre(userInfo.getPrimerNombre())
-                .segundoNombre(userInfo.getSegundoNombre())
-                .primerApellido(userInfo.getPrimerApellido())
-                .segundoApellido(userInfo.getSegundoApellido())
-                .telefono(userInfo.getTelefono())
-                .direccion(userInfo.getDireccion())
-                .ciudad(userInfo.getCiudad())
-                .departamento(userInfo.getDepartamento())
-                .pais(userInfo.getPais())
-                .numeroIdentificacion(userInfo.getNumeroIdentificacion())
-                .tipoIdentificacion(userInfo.getTipoIdentificacion() != null ?
-                                  userInfo.getTipoIdentificacion().getCode() : null)
+                .id(userInfo.getId())
+                .userId(userInfo.getUserId())
+                .firstName(userInfo.getFirstName())
+                .middleName(userInfo.getMiddleName())
+                .lastName(userInfo.getLastName())
+                .secondLastName(userInfo.getSecondLastName())
+                .phone(userInfo.getPhone())
+                .address(userInfo.getAddress())
+                .city(userInfo.getCity())
+                .state(userInfo.getState())
+                .country(userInfo.getCountry())
+                .birthDate(userInfo.getBirthDate())
+                .identificationNumber(userInfo.getIdentificationNumber())
+                .identificationType(userInfo.getIdentificationType() != null ?
+                                  userInfo.getIdentificationType().getCode() : null)
+                .gender(userInfo.getGender())
+                .maritalStatus(userInfo.getMaritalStatus())
+                .occupation(userInfo.getOccupation())
+                .createdAt(userInfo.getCreatedAt())
+                .updatedAt(userInfo.getUpdatedAt())
+                .active(userInfo.isActive())
                 .build();
     }
 
-    private static IdentificationType createIdentificationType(String code, String description) {
-        if (code == null || description == null) {
+    private static IdentificationType createIdentificationType(String code) {
+        if (code == null) {
             return null;
         }
-        return new IdentificationType(code, description);
+
+        // Mapear el código al IdentificationType correspondiente
+        return switch (code) {
+            case "CC" -> new IdentificationType("CC", "Cédula de Ciudadanía");
+            case "CE" -> new IdentificationType("CE", "Cédula de Extranjería");
+            case "PA" -> new IdentificationType("PA", "Pasaporte");
+            case "TI" -> new IdentificationType("TI", "Tarjeta de Identidad");
+            case "RC" -> new IdentificationType("RC", "Registro Civil");
+            case "NIT" -> new IdentificationType("NIT", "Número de Identificación Tributaria");
+            default -> new IdentificationType(code, code);
+        };
     }
 }

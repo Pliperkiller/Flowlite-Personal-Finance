@@ -11,76 +11,76 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 /**
- * DTO para la actualización de información personal del usuario
+ * DTO for updating user's personal information
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Schema(description = "Solicitud para actualizar información personal del usuario")
+@Schema(description = "Request to update user's personal information")
 public class UpdateUserInfoRequest {
 
-    @NotBlank(message = "El primer nombre es obligatorio")
-    @Size(min = 2, max = 50, message = "El primer nombre debe tener entre 2 y 50 caracteres")
-    @Schema(description = "Primer nombre del usuario", example = "Juan", required = true)
-    String primerNombre;
+    @NotBlank(message = "First name is required")
+    @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
+    @Schema(description = "User's first name", example = "John", required = true)
+    String firstName;
 
-    @Size(max = 50, message = "El segundo nombre no puede exceder 50 caracteres")
-    @Schema(description = "Segundo nombre del usuario (opcional)", example = "Carlos")
-    String segundoNombre;
+    @Size(max = 50, message = "Middle name cannot exceed 50 characters")
+    @Schema(description = "User's middle name (optional)", example = "Michael")
+    String middleName;
 
-    @NotBlank(message = "El primer apellido es obligatorio")
-    @Size(min = 2, max = 50, message = "El primer apellido debe tener entre 2 y 50 caracteres")
-    @Schema(description = "Primer apellido del usuario", example = "García", required = true)
-    String primerApellido;
+    @NotBlank(message = "Last name is required")
+    @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
+    @Schema(description = "User's last name", example = "Smith", required = true)
+    String lastName;
 
-    @Size(max = 50, message = "El segundo apellido no puede exceder 50 caracteres")
-    @Schema(description = "Segundo apellido del usuario (opcional)", example = "López")
-    String segundoApellido;
+    @Size(max = 50, message = "Second last name cannot exceed 50 characters")
+    @Schema(description = "User's second last name (optional)", example = "Johnson")
+    String secondLastName;
 
-    @NotBlank(message = "El teléfono es obligatorio")
-    @Pattern(regexp = "^[0-9]{10,15}$", message = "El teléfono debe contener solo números y tener entre 10 y 15 dígitos")
-    @Schema(description = "Número de teléfono del usuario", example = "3001234567", required = true)
-    String telefono;
+    @NotBlank(message = "Phone number is required")
+    @Pattern(regexp = "^[0-9]{10,15}$", message = "Phone number must contain only digits and be between 10 and 15 characters")
+    @Schema(description = "User's phone number", example = "3001234567", required = true)
+    String phone;
 
-    @Size(max = 200, message = "La dirección no puede exceder 200 caracteres")
-    @Schema(description = "Dirección del usuario", example = "Calle 123 #45-67")
-    String direccion;
+    @Size(max = 200, message = "Address cannot exceed 200 characters")
+    @Schema(description = "User's address", example = "123 Main St #45-67")
+    String address;
 
-    @Size(max = 100, message = "La ciudad no puede exceder 100 caracteres")
-    @Schema(description = "Ciudad del usuario", example = "Bogotá")
-    String ciudad;
+    @Size(max = 100, message = "City cannot exceed 100 characters")
+    @Schema(description = "User's city", example = "New York")
+    String city;
 
-    @Size(max = 100, message = "El departamento no puede exceder 100 caracteres")
-    @Schema(description = "Departamento del usuario", example = "Cundinamarca")
-    String departamento;
+    @Size(max = 100, message = "State cannot exceed 100 characters")
+    @Schema(description = "User's state/province", example = "New York")
+    String state;
 
-    @Size(max = 100, message = "El país no puede exceder 100 caracteres")
-    @Schema(description = "País del usuario", example = "Colombia")
-    String pais;
+    @Size(max = 100, message = "Country cannot exceed 100 characters")
+    @Schema(description = "User's country", example = "USA")
+    String country;
 
-    @Schema(description = "Fecha de nacimiento del usuario", example = "1990-05-15")
-    LocalDate fechaNacimiento;
+    @Schema(description = "User's birth date", example = "1990-05-15")
+    LocalDate birthDate;
 
-    @NotBlank(message = "El número de identificación es obligatorio")
-    @Pattern(regexp = "^[0-9]{6,20}$", message = "El número de identificación debe contener solo números y tener entre 6 y 20 dígitos")
-    @Schema(description = "Número de identificación del usuario", example = "12345678", required = true)
-    String numeroIdentificacion;
+    @NotBlank(message = "Identification number is required")
+    @Pattern(regexp = "^[0-9]{6,20}$", message = "Identification number must contain only digits and be between 6 and 20 characters")
+    @Schema(description = "User's identification number", example = "12345678", required = true)
+    String identificationNumber;
 
-    @NotNull(message = "El tipo de identificación es obligatorio")
-    @Schema(description = "Tipo de identificación del usuario", example = "CC", required = true)
-    String tipoIdentificacion;
+    @NotNull(message = "Identification type is required")
+    @Schema(description = "User's identification type", example = "CC", required = true)
+    String identificationType;
 
-    @Size(max = 20, message = "El género no puede exceder 20 caracteres")
-    @Schema(description = "Género del usuario", example = "Masculino")
-    String genero;
+    @Size(max = 20, message = "Gender cannot exceed 20 characters")
+    @Schema(description = "User's gender", example = "Male")
+    String gender;
 
-    @Size(max = 30, message = "El estado civil no puede exceder 30 caracteres")
-    @Schema(description = "Estado civil del usuario", example = "Soltero")
-    String estadoCivil;
+    @Size(max = 30, message = "Marital status cannot exceed 30 characters")
+    @Schema(description = "User's marital status", example = "Single")
+    String maritalStatus;
 
-    @Size(max = 100, message = "La ocupación no puede exceder 100 caracteres")
-    @Schema(description = "Ocupación del usuario", example = "Ingeniero")
-    String ocupacion;
+    @Size(max = 100, message = "Occupation cannot exceed 100 characters")
+    @Schema(description = "User's occupation", example = "Engineer")
+    String occupation;
 }

@@ -191,6 +191,69 @@ echo ""
 sleep 2
 
 # ============================================
+# 1.1. DATABASE SCHEMA PREPARATION
+# ============================================
+echo -e "${BLUE}[1.1/6]${NC} Preparando schema de base de datos..."
+echo "      (Hibernate gestionará el schema automáticamente)"
+echo ""
+
+# Función para detectar contenedor MySQL
+detect_mysql_container() {
+    local containers=("flowlite-mysql" "flowlite-shared-mysql" "mysql")
+    for container in "${containers[@]}"; do
+        if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "^${container}$"; then
+            echo "$container"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Función para detectar password MySQL
+detect_mysql_password() {
+    local container=$1
+    local passwords=("rootpassword" "Flowlite10+" "flowlite123" "")
+    for password in "${passwords[@]}"; do
+        if docker exec "$container" mysql -uroot -p"$password" -e "SELECT 1" >/dev/null 2>&1; then
+            echo "$password"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Detectar contenedor MySQL
+MYSQL_CONTAINER=$(detect_mysql_container)
+
+if [ -n "$MYSQL_CONTAINER" ]; then
+    # Detectar password
+    DB_PASSWORD=$(detect_mysql_password "$MYSQL_CONTAINER")
+
+    if [ -n "$DB_PASSWORD" ]; then
+        echo -e "${YELLOW}🔄 Eliminando tabla UserInfo antigua (si existe)...${NC}"
+
+        # Intentar eliminar tabla UserInfo
+        docker exec "$MYSQL_CONTAINER" mysql -uroot -p"$DB_PASSWORD" flowlite_db \
+            -e "DROP TABLE IF EXISTS UserInfo;" 2>/dev/null
+
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}✓${NC} Tabla UserInfo eliminada (Hibernate la recreará con schema correcto)"
+        else
+            echo -e "${YELLOW}⚠️${NC}  No se pudo eliminar tabla (probablemente no existe)"
+        fi
+
+        echo -e "${CYAN}ℹ${NC}  Hibernate creará/actualizará tablas automáticamente al iniciar IdentityService"
+    else
+        echo -e "${YELLOW}⚠️${NC}  No se detectaron credenciales MySQL - Hibernate gestionará el schema"
+    fi
+else
+    echo -e "${YELLOW}⚠️${NC}  No se detectó contenedor MySQL - Hibernate gestionará el schema"
+fi
+
+echo ""
+sleep 2
+
+# ============================================
 # 1.5. MAILHOG SERVICE
 # ============================================
 echo -e "${BLUE}[1.5/6]${NC} Iniciando MailHog..."
@@ -402,6 +465,7 @@ echo "      • API:      http://localhost:$IDENTITY_SERVICE_PORT"
 echo "      • Swagger:  http://localhost:$IDENTITY_SERVICE_PORT/swagger-ui/index.html"
 echo "      • API Docs: http://localhost:$IDENTITY_SERVICE_PORT/v3/api-docs"
 echo "      • Health:   http://localhost:$IDENTITY_SERVICE_PORT/actuator/health"
+echo "      • Schema:   Gestionado automáticamente por Hibernate (ddl-auto=update)"
 echo ""
 echo -e "  ${GREEN}✓${NC} InsightService (PID: $INSIGHT_PID)"
 echo "      • API:      http://localhost:$INSIGHT_SERVICE_PORT"

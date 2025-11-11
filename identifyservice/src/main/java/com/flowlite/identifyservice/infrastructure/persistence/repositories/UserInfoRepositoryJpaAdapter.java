@@ -25,59 +25,59 @@ public class UserInfoRepositoryJpaAdapter implements UserInfoRepository {
 
     @Override
     public Optional<UserInfo> findByUserId(UUID userId) {
-        return jpaUserInfoRepository.findByIdUser(userId)
+        return jpaUserInfoRepository.findByUserId(userId)
                 .map(UserInfoMapper::toDomain);
     }
 
     @Override
-    public Optional<UserInfo> findByNumeroIdentificacion(String numeroIdentificacion) {
-        return jpaUserInfoRepository.findByNumeroIdentificacion(numeroIdentificacion)
+    public Optional<UserInfo> findByIdentificationNumber(String identificationNumber) {
+        return jpaUserInfoRepository.findByIdentificationNumber(identificationNumber)
                 .map(UserInfoMapper::toDomain);
     }
 
     @Override
-    public Optional<UserInfo> findByTelefono(String telefono) {
-        return jpaUserInfoRepository.findByTelefono(telefono)
+    public Optional<UserInfo> findByPhone(String phone) {
+        return jpaUserInfoRepository.findByPhone(phone)
                 .map(UserInfoMapper::toDomain);
     }
 
     @Override
-    public List<UserInfo> findByNombreCompleto(String primerNombre, String segundoNombre, 
-                                             String primerApellido, String segundoApellido) {
-        return jpaUserInfoRepository.findByPrimerNombreAndSegundoNombreAndPrimerApellidoAndSegundoApellido(
-                primerNombre, segundoNombre, primerApellido, segundoApellido)
+    public List<UserInfo> findByFullName(String firstName, String middleName,
+                                         String lastName, String secondLastName) {
+        return jpaUserInfoRepository.findByFirstNameAndMiddleNameAndLastNameAndSecondLastName(
+                firstName, middleName, lastName, secondLastName)
                 .stream()
                 .map(UserInfoMapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<UserInfo> findByPrimerNombre(String primerNombre) {
-        return jpaUserInfoRepository.findByPrimerNombre(primerNombre)
+    public List<UserInfo> findByFirstName(String firstName) {
+        return jpaUserInfoRepository.findByFirstName(firstName)
                 .stream()
                 .map(UserInfoMapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<UserInfo> findByPrimerApellido(String primerApellido) {
-        return jpaUserInfoRepository.findByPrimerApellido(primerApellido)
+    public List<UserInfo> findByLastName(String lastName) {
+        return jpaUserInfoRepository.findByLastName(lastName)
                 .stream()
                 .map(UserInfoMapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<UserInfo> findByCiudad(String ciudad) {
-        return jpaUserInfoRepository.findByCiudad(ciudad)
+    public List<UserInfo> findByCity(String city) {
+        return jpaUserInfoRepository.findByCity(city)
                 .stream()
                 .map(UserInfoMapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<UserInfo> findByDepartamento(String departamento) {
-        return jpaUserInfoRepository.findByDepartamento(departamento)
+    public List<UserInfo> findByState(String state) {
+        return jpaUserInfoRepository.findByState(state)
                 .stream()
                 .map(UserInfoMapper::toDomain)
                 .collect(Collectors.toList());
@@ -93,10 +93,10 @@ public class UserInfoRepositoryJpaAdapter implements UserInfoRepository {
 
     @Override
     public List<UserInfo> findActiveUsers() {
-        // La tabla actual no tiene columna 'activo', retornar todos los usuarios
         return jpaUserInfoRepository.findAll()
                 .stream()
                 .map(UserInfoMapper::toDomain)
+                .filter(UserInfo::isActive)
                 .collect(Collectors.toList());
     }
 
@@ -114,22 +114,22 @@ public class UserInfoRepositoryJpaAdapter implements UserInfoRepository {
 
     @Override
     public void deleteByUserId(UUID userId) {
-        jpaUserInfoRepository.findByIdUser(userId)
-                .ifPresent(entity -> jpaUserInfoRepository.deleteById(entity.getIdUser()));
+        jpaUserInfoRepository.findByUserId(userId)
+                .ifPresent(entity -> jpaUserInfoRepository.deleteById(entity.getUserId()));
     }
 
     @Override
     public boolean existsByUserId(UUID userId) {
-        return jpaUserInfoRepository.existsByIdUser(userId);
+        return jpaUserInfoRepository.existsByUserId(userId);
     }
 
     @Override
-    public boolean existsByNumeroIdentificacion(String numeroIdentificacion) {
-        return jpaUserInfoRepository.existsByNumeroIdentificacion(numeroIdentificacion);
+    public boolean existsByIdentificationNumber(String identificationNumber) {
+        return jpaUserInfoRepository.existsByIdentificationNumber(identificationNumber);
     }
 
     @Override
-    public boolean existsByTelefono(String telefono) {
-        return jpaUserInfoRepository.existsByTelefono(telefono);
+    public boolean existsByPhone(String phone) {
+        return jpaUserInfoRepository.existsByPhone(phone);
     }
 }

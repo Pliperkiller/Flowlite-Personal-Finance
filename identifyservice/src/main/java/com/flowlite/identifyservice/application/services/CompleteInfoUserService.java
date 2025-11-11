@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Servicio para gestionar la información completa de usuarios
+ * Service for managing complete user information
  */
 @Service
 @RequiredArgsConstructor
@@ -27,174 +27,174 @@ public class CompleteInfoUserService {
     UserInfoRepository userInfoRepository;
 
     /**
-     * Crea o actualiza la información personal de un usuario
+     * Creates or updates a user's personal information
      */
     @Transactional
-    public UserInfo saveUserInfo(@NonNull UUID userId, @NonNull String primerNombre, String segundoNombre, 
-                               @NonNull String primerApellido, String segundoApellido, @NonNull String telefono,
-                               String direccion, String ciudad, String departamento, String pais,
-                               LocalDate fechaNacimiento, @NonNull String numeroIdentificacion,
-                               @NonNull IdentificationType tipoIdentificacion, String genero,
-                               String estadoCivil, String ocupacion) {
-        
-        // Verificar si ya existe información para este usuario
+    public UserInfo saveUserInfo(@NonNull UUID userId, @NonNull String firstName, String middleName,
+                               @NonNull String lastName, String secondLastName, @NonNull String phone,
+                               String address, String city, String state, String country,
+                               LocalDate birthDate, @NonNull String identificationNumber,
+                               @NonNull IdentificationType identificationType, String gender,
+                               String maritalStatus, String occupation) {
+
+        // Check if information already exists for this user
         Optional<UserInfo> existingInfo = userInfoRepository.findByUserId(userId);
-        
+
         UserInfo userInfo;
         if (existingInfo.isPresent()) {
-            // Actualizar información existente
+            // Update existing information
             userInfo = existingInfo.get();
-            userInfo.actualizarInformacion(primerNombre, segundoNombre, primerApellido, 
-                                         segundoApellido, telefono, direccion, ciudad, departamento);
-            userInfo.actualizarIdentificacion(numeroIdentificacion, tipoIdentificacion);
-            
-            // Actualizar campos adicionales
-            userInfo.setGenero(genero);
-            userInfo.setEstadoCivil(estadoCivil);
-            userInfo.setOcupacion(ocupacion);
-            userInfo.setPais(pais);
-            userInfo.setFechaNacimiento(fechaNacimiento);
+            userInfo.updateInformation(firstName, middleName, lastName,
+                                     secondLastName, phone, address, city, state);
+            userInfo.updateIdentification(identificationNumber, identificationType);
+
+            // Update additional fields
+            userInfo.setGender(gender);
+            userInfo.setMaritalStatus(maritalStatus);
+            userInfo.setOccupation(occupation);
+            userInfo.setCountry(country);
+            userInfo.setBirthDate(birthDate);
         } else {
-            // Crear nueva información
+            // Create new information
             userInfo = UserInfo.builder()
                     .id(UUID.randomUUID())
                     .userId(userId)
-                    .primerNombre(primerNombre)
-                    .segundoNombre(segundoNombre)
-                    .primerApellido(primerApellido)
-                    .segundoApellido(segundoApellido)
-                    .telefono(telefono)
-                    .direccion(direccion)
-                    .ciudad(ciudad)
-                    .departamento(departamento)
-                    .pais(pais)
-                    .fechaNacimiento(fechaNacimiento)
-                    .numeroIdentificacion(numeroIdentificacion)
-                    .tipoIdentificacion(tipoIdentificacion)
-                    .genero(genero)
-                    .estadoCivil(estadoCivil)
-                    .ocupacion(ocupacion)
+                    .firstName(firstName)
+                    .middleName(middleName)
+                    .lastName(lastName)
+                    .secondLastName(secondLastName)
+                    .phone(phone)
+                    .address(address)
+                    .city(city)
+                    .state(state)
+                    .country(country)
+                    .birthDate(birthDate)
+                    .identificationNumber(identificationNumber)
+                    .identificationType(identificationType)
+                    .gender(gender)
+                    .maritalStatus(maritalStatus)
+                    .occupation(occupation)
                     .createdAt(LocalDateTime.now())
                     .updatedAt(LocalDateTime.now())
-                    .activo(true)
+                    .active(true)
                     .build();
         }
-        
+
         return userInfoRepository.save(userInfo);
     }
 
     /**
-     * Obtiene la información personal de un usuario
+     * Gets a user's personal information
      */
     public Optional<UserInfo> getUserInfo(@NonNull UUID userId) {
         return userInfoRepository.findByUserId(userId);
     }
 
     /**
-     * Obtiene la información personal por ID
+     * Gets personal information by ID
      */
     public Optional<UserInfo> getUserInfoById(@NonNull UUID userInfoId) {
         return userInfoRepository.findById(userInfoId);
     }
 
     /**
-     * Busca usuarios por nombre completo
+     * Searches users by full name
      */
-    public List<UserInfo> searchByFullName(@NonNull String primerNombre, String segundoNombre, 
-                                          @NonNull String primerApellido, String segundoApellido) {
-        return userInfoRepository.findByNombreCompleto(primerNombre, segundoNombre, 
-                                                     primerApellido, segundoApellido);
+    public List<UserInfo> searchByFullName(@NonNull String firstName, String middleName,
+                                          @NonNull String lastName, String secondLastName) {
+        return userInfoRepository.findByFullName(firstName, middleName,
+                                                lastName, secondLastName);
     }
 
     /**
-     * Busca usuarios por primer nombre
+     * Searches users by first name
      */
-    public List<UserInfo> searchByFirstName(@NonNull String primerNombre) {
-        return userInfoRepository.findByPrimerNombre(primerNombre);
+    public List<UserInfo> searchByFirstName(@NonNull String firstName) {
+        return userInfoRepository.findByFirstName(firstName);
     }
 
     /**
-     * Busca usuarios por primer apellido
+     * Searches users by last name
      */
-    public List<UserInfo> searchByLastName(@NonNull String primerApellido) {
-        return userInfoRepository.findByPrimerApellido(primerApellido);
+    public List<UserInfo> searchByLastName(@NonNull String lastName) {
+        return userInfoRepository.findByLastName(lastName);
     }
 
     /**
-     * Busca usuarios por ciudad
+     * Searches users by city
      */
-    public List<UserInfo> searchByCity(@NonNull String ciudad) {
-        return userInfoRepository.findByCiudad(ciudad);
+    public List<UserInfo> searchByCity(@NonNull String city) {
+        return userInfoRepository.findByCity(city);
     }
 
     /**
-     * Busca usuarios por departamento
+     * Searches users by state
      */
-    public List<UserInfo> searchByDepartment(@NonNull String departamento) {
-        return userInfoRepository.findByDepartamento(departamento);
+    public List<UserInfo> searchByState(@NonNull String state) {
+        return userInfoRepository.findByState(state);
     }
 
     /**
-     * Obtiene todos los usuarios con información completa
+     * Gets all users with complete information
      */
     public List<UserInfo> getUsersWithCompleteInfo() {
         return userInfoRepository.findUsersWithCompleteInfo();
     }
 
     /**
-     * Obtiene todos los usuarios activos
+     * Gets all active users
      */
     public List<UserInfo> getActiveUsers() {
         return userInfoRepository.findActiveUsers();
     }
 
     /**
-     * Verifica si un usuario tiene información personal
+     * Checks if a user has personal information
      */
     public boolean hasUserInfo(@NonNull UUID userId) {
         return userInfoRepository.existsByUserId(userId);
     }
 
     /**
-     * Verifica si un número de identificación ya está en uso
+     * Checks if an identification number is already in use
      */
-    public boolean isIdentificationInUse(@NonNull String numeroIdentificacion) {
-        return userInfoRepository.existsByNumeroIdentificacion(numeroIdentificacion);
+    public boolean isIdentificationInUse(@NonNull String identificationNumber) {
+        return userInfoRepository.existsByIdentificationNumber(identificationNumber);
     }
 
     /**
-     * Verifica si un teléfono ya está en uso
+     * Checks if a phone number is already in use
      */
-    public boolean isPhoneInUse(@NonNull String telefono) {
-        return userInfoRepository.existsByTelefono(telefono);
+    public boolean isPhoneInUse(@NonNull String phone) {
+        return userInfoRepository.existsByPhone(phone);
     }
 
     /**
-     * Desactiva la información personal de un usuario
+     * Deactivates a user's personal information
      */
     @Transactional
     public void deactivateUserInfo(@NonNull UUID userId) {
         userInfoRepository.findByUserId(userId)
                 .ifPresent(userInfo -> {
-                    userInfo.desactivar();
+                    userInfo.deactivate();
                     userInfoRepository.save(userInfo);
                 });
     }
 
     /**
-     * Activa la información personal de un usuario
+     * Activates a user's personal information
      */
     @Transactional
     public void activateUserInfo(@NonNull UUID userId) {
         userInfoRepository.findByUserId(userId)
                 .ifPresent(userInfo -> {
-                    userInfo.activar();
+                    userInfo.activate();
                     userInfoRepository.save(userInfo);
                 });
     }
 
     /**
-     * Elimina la información personal de un usuario
+     * Deletes a user's personal information
      */
     @Transactional
     public void deleteUserInfo(@NonNull UUID userId) {
@@ -202,7 +202,7 @@ public class CompleteInfoUserService {
     }
 
     /**
-     * Elimina la información personal por ID
+     * Deletes personal information by ID
      */
     @Transactional
     public void deleteUserInfoById(@NonNull UUID userInfoId) {
@@ -210,11 +210,11 @@ public class CompleteInfoUserService {
     }
 
     /**
-     * Valida si la información personal está completa
+     * Validates if personal information is complete
      */
     public boolean isUserInfoComplete(@NonNull UUID userId) {
         return userInfoRepository.findByUserId(userId)
-                .map(UserInfo::tieneInformacionCompleta)
+                .map(UserInfo::hasCompleteInformation)
                 .orElse(false);
     }
 }

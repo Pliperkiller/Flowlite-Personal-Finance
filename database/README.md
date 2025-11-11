@@ -182,6 +182,57 @@ chmod +x manage-database.sh
 4. Usar connection pooling
 5. Configurar SSL/TLS
 
+## 🔄 Gestión de Schema (Hibernate)
+
+### Enfoque Simple: Hibernate Auto-Update
+
+El proyecto usa **Hibernate con `ddl-auto=update`** que gestiona automáticamente el schema de la base de datos basándose en las entidades JPA.
+
+#### ¿Qué significa esto?
+
+✅ **NO necesitas scripts de migración SQL**
+✅ **Hibernate crea/actualiza tablas automáticamente**
+✅ **Los nombres de columnas se toman de las anotaciones `@Column`**
+✅ **Todo está sincronizado con el código Java**
+
+### Si tienes una tabla UserInfo vieja
+
+Si ya tienes una tabla `UserInfo` con nombres en español, simplemente elimínala y deja que Hibernate la recree:
+
+```bash
+cd database
+./drop-userinfo.sh
+```
+
+Luego reinicia el IdentityService:
+
+```bash
+cd ../identifyservice
+./kill.sh && ./start.sh
+```
+
+Hibernate creará automáticamente la tabla `UserInfo` con:
+- ✅ Nombres de columnas en inglés
+- ✅ UUIDs como BINARY(16)
+- ✅ Estructura correcta según las entidades
+
+### Verificar estructura de tabla
+
+```bash
+# Ver estructura de tabla
+docker exec flowlite-mysql mysql -uroot -prootpassword flowlite_db \
+  -e "DESCRIBE UserInfo;"
+```
+
+### Para Producción
+
+⚠️ En producción, cambia la configuración a:
+```properties
+spring.jpa.hibernate.ddl-auto=validate
+```
+
+Y usa herramientas como **Flyway** o **Liquibase** para migraciones controladas.
+
 ---
 
 **Nota**: Esta configuración es ideal para desarrollo. Para producción, considera servicios gestionados como AWS RDS, Google Cloud SQL, o Azure Database.
