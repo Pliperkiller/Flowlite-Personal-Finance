@@ -55,7 +55,7 @@ Este directorio contiene la documentación completa del proceso de diseño arqui
 | **Nombre** | Flowlite - Personal Finance |
 | **Tipo** | Aplicación Móvil de Finanzas Personales |
 | **Alcance** | MVP con 3 fases planificadas |
-| **Arquitecto** | Equipo de Desarrollo Flowlite |
+| **Arquitecto** | Equipo de Desarrollo Flowlite: Carlos Caro, Joiver González |
 | **Fecha** | Octubre 2025 |
 | **Metodología** | Attribute-Driven Design (ADD 3.0) |
 | **Iteraciones** | 3 completadas |
@@ -373,5 +373,5 @@ Este documento es propiedad de Flowlite y está destinado únicamente para uso i
 |---------|-------|---------|-------|
 | 1.0 | 2025-10-01 | Iteración 1 completada | Carlos Caro |
 | 2.0 | 2025-10-15 | Iteración 2 completada | Carlos Caro |
-| 3.0 | 2025-10-30 | Iteración 3 completada | Carlos Caro |
-| 3.1 | 2025-11-25 | Consolidación de documentación | Carlos Caro |
+| 3.0 | 2025-10-30 | Iteración 3 completada | Carlos Caro, Joiver González |
+| 3.1 | 2025-11-25 | Consolidación de documentación | Carlos Caro, Joiver González |
