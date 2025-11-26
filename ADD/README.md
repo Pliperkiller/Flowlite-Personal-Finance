@@ -34,7 +34,7 @@ Este directorio contiene la documentación completa del proceso de diseño arqui
    - Arquitectura de aplicación móvil (Flutter + BLoC)
    - Procedimientos operacionales (Backup, Recovery, Scaling)
 
-4. **[C4]** - Vistas Arquitectónicas Consolidadas
+4. **[Views/](Views/)** - Vistas Arquitectónicas Consolidadas
    - Vista de Contexto
    - Vista de Contenedores
    - Vista de Componentes
