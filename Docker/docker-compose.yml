@@ -1,0 +1,231 @@
+version: '3.8'
+
+# ===========================================
+# FLOWLITE PERSONAL FINANCE - DOCKER COMPOSE
+# ===========================================
+# Autores: Carlos Felipe Caro Arroyave & Joiver Andrés Gómez Coronado
+# Descripción: Orquestación de microservicios para Flowlite Personal Finance
+
+networks:
+  flowlite-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:
+  rabbitmq-data:
+  ollama-data:
+
+services:
+  # ===========================================
+  # INFRAESTRUCTURA - BASE DE DATOS
+  # ===========================================
+  mysql:
+    image: mysql:8.0
+    container_name: flowlite-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: flowlite_db
+      MYSQL_USER: flowlite_user
+      MYSQL_PASSWORD: flowlite_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - flowlite-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # INFRAESTRUCTURA - CACHE (REDIS)
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: flowlite-redis
+    restart: unless-stopped
+    command: redis-server --requirepass flowlite_redis_pass_2024
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - flowlite-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # INFRAESTRUCTURA - MESSAGE BROKER (RABBITMQ)
+  # ===========================================
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: flowlite-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: flowlite
+      RABBITMQ_DEFAULT_PASS: flowlite_rabbitmq_pass
+    ports:
+      - "5672:5672"      # AMQP protocol
+      - "15672:15672"    # Management UI
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - flowlite-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # INFRAESTRUCTURA - LLM (OLLAMA)
+  # ===========================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: flowlite-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - flowlite-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ===========================================
+  # INFRAESTRUCTURA - EMAIL (MAILHOG)
+  # ===========================================
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: flowlite-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"      # SMTP
+      - "8025:8025"      # Web UI
+    networks:
+      - flowlite-network
+
+  # ===========================================
+  # MICROSERVICIOS - IDENTIFY SERVICE
+  # ===========================================
+  identifyservice:
+    build:
+      context: ..
+      dockerfile: Docker/IdentifyService/Dockerfile
+    container_name: flowlite-identifyservice
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - IdentifyService/.env.example
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    networks:
+      - flowlite-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  # ===========================================
+  # MICROSERVICIOS - UPLOAD SERVICE
+  # ===========================================
+  uploadservice:
+    build:
+      context: ..
+      dockerfile: Docker/UploadService/Dockerfile
+    container_name: flowlite-uploadservice
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    env_file:
+      - UploadService/.env.example
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      identifyservice:
+        condition: service_healthy
+    networks:
+      - flowlite-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+  # ===========================================
+  # MICROSERVICIOS - INSIGHT SERVICE
+  # ===========================================
+  insightservice:
+    build:
+      context: ..
+      dockerfile: Docker/InsightService/Dockerfile
+    container_name: flowlite-insightservice
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    env_file:
+      - InsightService/.env.example
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    networks:
+      - flowlite-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+  # ===========================================
+  # MICROSERVICIOS - DATA SERVICE
+  # ===========================================
+  dataservice:
+    build:
+      context: ..
+      dockerfile: Docker/DataService/Dockerfile
+    container_name: flowlite-dataservice
+    restart: unless-stopped
+    ports:
+      - "8003:8003"
+    env_file:
+      - DataService/.env.example
+    depends_on:
+      mysql:
+        condition: service_healthy
+      identifyservice:
+        condition: service_healthy
+    networks:
+      - flowlite-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
