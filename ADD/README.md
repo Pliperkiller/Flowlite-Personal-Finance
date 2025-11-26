@@ -34,15 +34,12 @@ Este directorio contiene la documentación completa del proceso de diseño arqui
    - Arquitectura de aplicación móvil (Flutter + BLoC)
    - Procedimientos operacionales (Backup, Recovery, Scaling)
 
-4. **[ARCHITECTURAL_VIEWS.md](ARCHITECTURAL_VIEWS.md)** - Vistas Arquitectónicas Consolidadas
+4. **[C4]** - Vistas Arquitectónicas Consolidadas
    - Vista de Contexto
-   - Vista de Contenedores (C4)
+   - Vista de Contenedores
    - Vista de Componentes
-   - Vista de Módulos
-   - Vista de Componentes y Conectores
-   - Vista de Deployment
-   - Vista de Datos (ERD + SQL Schema)
-   - Vista de Seguridad
+   - Vista de Datos
+   - Vista de Secuencia
 
 ---
 
@@ -307,7 +304,7 @@ sequenceDiagram
 - [ ] Monitoreo en producción (Prometheus + Grafana)
 - [ ] Alerting configurado
 - [ ] Pipeline ML de reentrenamiento
-- [ ] CDN para assets estáticos
+
 
 ---
 
